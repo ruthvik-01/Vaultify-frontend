@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FileCard({ file, viewMode = 'grid', isTrashView = false }) {
-  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare } = useFiles();
+  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile } = useFiles();
   const [showMenu, setShowMenu] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
@@ -64,8 +64,8 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
     alert(`File shared with ${shareEmail.trim()}`);
   };
 
-  const handleDownloadMock = () => {
-    alert(`Mocking Download: ${file.name} (File transfer initiated safely)`);
+  const handleDownload = () => {
+    downloadFile(file.id, file.name);
     setShowMenu(false);
   };
 
@@ -159,7 +159,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                           <span>Share / Permissions</span>
                         </button>
                         <button
-                          onClick={handleDownloadMock}
+                          onClick={handleDownload}
                           className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -262,7 +262,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                           <span>Share / Link</span>
                         </button>
                         <button
-                          onClick={handleDownloadMock}
+                          onClick={handleDownload}
                           className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -507,7 +507,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                       Safe PDF & Document Reader. StudentVault verified encryption guarantees no tracking scripts or adware are attached.
                     </p>
                     <button
-                      onClick={handleDownloadMock}
+                      onClick={handleDownload}
                       className="mt-6 inline-flex bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold items-center space-x-2 transition-all shadow-sm"
                     >
                       <Download className="w-4 h-4" />
