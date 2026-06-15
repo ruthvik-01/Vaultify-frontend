@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Lora", Georgia, serif;
+  --font-sans: "Outfit", system-ui, -apple-system, sans-serif;
+  
+  --color-brand-olive: #4A5D4E;
+  --color-brand-olive-dark: #37463B;
+  --color-brand-olive-light: #5A715F;
+  --color-brand-sage: #A3B19B;
+  --color-brand-sage-light: #D5DDD1;
+  --color-brand-cream: #FAF9F6;
+  --color-brand-cream-dark: #F3F1EC;
+  --color-brand-sand: #E3E1DC;
+  --color-brand-tan: #D8C3A5;
+  --color-brand-charcoal: #1F2320;
+}
+
+/* Custom scrollbars for a premium SaaS look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-sage);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-olive);
+}
+
+/* Base style resets and configuration */
+@layer base {
+  body {
+    background-color: var(--color-brand-cream);
+    color: var(--color-brand-charcoal);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    color: var(--color-brand-charcoal);
+  }
+}
+
+/* Reset template specific styles */
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  text-align: left !important;
+  border-inline: none !important;
+  min-height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-sizing: border-box !important;
+}
+
+/* Custom glassmorphism details */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(227, 225, 220, 0.5);
+}

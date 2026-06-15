@@ -1,0 +1,58 @@
+import React from 'react';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useFiles } from '../context/FileContext';
+import DashboardLayout from '../layouts/DashboardLayout';
+import AuthLayout from '../layouts/AuthLayout';
+
+// Guest Pages & Landing
+import Landing from '../pages/Landing';
+import Login from '../pages/Login';
+import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
+
+// Inner Dashboard Pages
+import Dashboard from '../pages/Dashboard';
+import MyFiles from '../pages/MyFiles';
+import UploadFiles from '../pages/UploadFiles';
+import SharedFiles from '../pages/SharedFiles';
+import Trash from '../pages/Trash';
+import Profile from '../pages/Profile';
+import Settings from '../pages/Settings';
+
+// Protected Route wrapper
+function ProtectedRoute() {
+  const { isAuthenticated } = useFiles();
+  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+}
+
+export default function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public SaaS Landing Page */}
+      <Route path="/" element={<Landing />} />
+
+      {/* Public/Guest Authentication Routes */}
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+      </Route>
+
+      {/* Authenticated Dashboard Core Routes */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/my-files" element={<MyFiles />} />
+          <Route path="/upload" element={<UploadFiles />} />
+          <Route path="/shared" element={<SharedFiles />} />
+          <Route path="/trash" element={<Trash />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+      </Route>
+
+      {/* Fallback Redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
