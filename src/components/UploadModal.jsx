@@ -11,6 +11,7 @@ export default function UploadModal({ isOpen, onClose }) {
   const [progress, setProgress] = useState(0);
   const [uploadedName, setUploadedName] = useState('');
   const fileInputRef = useRef(null);
+  const selectedFileRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -24,29 +25,32 @@ export default function UploadModal({ isOpen, onClose }) {
     }
   };
 
-  const startMockUpload = (fileName, fileSize, fileType) => {
-    setUploadedName(fileName);
+  const startUpload = async (file) => {
+    setUploadedName(file.name);
     setUploadState('uploading');
     setProgress(0);
 
+    // Simulate progress while the real upload runs
+    let currentProgress = 0;
     const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploadState('success');
-          // Add to context database
-          uploadFile({
-            name: fileName,
-            category: selectedCategory,
-            type: fileType || 'pdf',
-            size: fileSize || 1800000,
-            tags: ['Uploaded', selectedCategory]
-          });
-          return 100;
-        }
-        return prev + 10;
-      });
+      currentProgress += 10;
+      setProgress(Math.min(currentProgress, 90));
+      if (currentProgress >= 90) clearInterval(interval);
     }, 150);
+
+    try {
+      await uploadFile({
+        file,
+        category: selectedCategory,
+      });
+      clearInterval(interval);
+      setProgress(100);
+      setUploadState('success');
+    } catch (err) {
+      clearInterval(interval);
+      setUploadState('idle');
+      console.error('Upload error:', err);
+    }
   };
 
   const handleDrop = (e) => {
@@ -56,16 +60,16 @@ export default function UploadModal({ isOpen, onClose }) {
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      const ext = file.name.split('.').pop().toLowerCase();
-      startMockUpload(file.name, file.size, ext);
+      selectedFileRef.current = file;
+      startUpload(file);
     }
   };
 
   const handleFileSelect = (e) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const ext = file.name.split('.').pop().toLowerCase();
-      startMockUpload(file.name, file.size, ext);
+      selectedFileRef.current = file;
+      startUpload(file);
     }
   };
 

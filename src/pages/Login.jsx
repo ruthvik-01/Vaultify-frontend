@@ -6,27 +6,26 @@ import { useFiles } from '../context/FileContext';
 
 export default function Login() {
   const { login } = useFiles();
-  const [email, setEmail] = useState('demo@studentvault.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // Simulating API validation delay
-    setTimeout(() => {
-      setLoading(false);
-      const success = login(email, password);
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setError('Invalid credentials. Use demo@studentvault.com and password123.');
-      }
-    }, 800);
+    
+    const result = await login(email, password);
+    setLoading(false);
+    
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.message || 'Invalid credentials. Please try again.');
+    }
   };
 
   return (
@@ -125,13 +124,7 @@ export default function Login() {
         </button>
       </form>
 
-      {/* Mock login notice */}
-      <div className="mt-5 p-3 bg-brand-cream border border-brand-sand/60 rounded-xl text-[10px] text-gray-500 flex items-start space-x-2">
-        <ShieldCheck className="w-4 h-4 text-brand-olive shrink-0 mt-0.5" />
-        <span>
-          <strong>Developer Demo:</strong> Credentials are pre-filled. Select Sign In to enter without authentication.
-        </span>
-      </div>
+
 
       {/* Redirect Footer */}
       <div className="mt-8 pt-4 border-t border-brand-sand text-center text-xs text-gray-500">
