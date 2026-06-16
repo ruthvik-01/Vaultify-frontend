@@ -229,138 +229,140 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
     <>
       <motion.div
         layout
-        className="bg-white border border-brand-sand rounded-2xl p-4 relative group hover:shadow-md transition-all flex flex-col justify-between"
-        whileHover={{ y: -3 }}
+        className="bg-white border border-brand-sand rounded-2xl overflow-hidden hover:shadow-lg transition-all flex flex-col justify-between h-80 group/card relative"
+        whileHover={{ y: -4 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       >
-        {/* Top Header Card Info */}
-        <div className="flex justify-between items-start mb-3">
-          <div className="p-2.5 bg-brand-cream rounded-xl border border-brand-sand/40">
-            {getFileIcon()}
+        {/* File Preview Pane */}
+        <div className="h-44 bg-brand-cream-dark/40 border-b border-brand-sand/45 relative flex items-center justify-center overflow-hidden shrink-0 group">
+          {(() => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
+            
+            if (isImage) {
+              const token = localStorage.getItem('vaultify_token');
+              const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?token=${token}&disposition=inline`;
+              return (
+                <img 
+                  src={imageUrl} 
+                  alt={file.name} 
+                  loading="lazy"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentNode.innerHTML = '<div class="text-gray-400 flex flex-col items-center"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[9px] mt-1">Image Unloaded</span></div>';
+                  }}
+                />
+              );
+            }
+            if (ext === 'pdf') {
+              return (
+                <div className="flex flex-col items-center space-y-1">
+                  <div className="p-3 bg-red-50 text-red-500 rounded-2xl border border-red-100 shadow-sm">
+                    <FileText className="w-8 h-8" />
+                  </div>
+                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest bg-red-50 border border-red-100/50 px-2 py-0.5 rounded-md">PDF Document</span>
+                </div>
+              );
+            }
+            return (
+              <div className="flex flex-col items-center space-y-2">
+                <div className="p-2.5 bg-brand-cream border border-brand-sand/55 rounded-2xl shadow-sm">
+                  {getFileIcon()}
+                </div>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{ext.toUpperCase() || 'FILE'}</span>
+              </div>
+            );
+          })()}
+
+          {/* Star Badge */}
+          {!isTrashView && (
+            <button
+              onClick={() => toggleStar(file.id)}
+              className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/80 shadow-sm backdrop-blur-sm transition-all text-amber-500 z-10 cursor-pointer"
+            >
+              <Star className={`w-3.5 h-3.5 ${file.isStarred ? 'fill-current' : 'stroke-[1.8] text-gray-400 hover:text-amber-500'}`} />
+            </button>
+          )}
+        </div>
+
+        {/* File Metadata Details */}
+        <div className="p-3 flex-grow flex flex-col justify-between text-left">
+          <div>
+            <div className="flex justify-between items-start mb-1">
+              <h4 className="text-xs font-bold text-brand-charcoal block line-clamp-1 flex-1 pr-2 cursor-pointer hover:text-brand-olive transition-all" title={file.name} onClick={handleOpenPreview}>
+                {file.name}
+              </h4>
+              <span className="text-[9px] text-brand-olive bg-brand-sage-light/25 font-bold px-1.5 py-0.5 rounded-md shrink-0">
+                {file.category}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-gray-400 mt-1 font-mono">
+              <span>{formatSize(file.size)}</span>
+              <span>{formatDate(file.dateAdded)}</span>
+            </div>
           </div>
-          
-          <div className="flex items-center space-x-1.5">
-            {!isTrashView && (
-              <>
+
+          {/* Action Row */}
+          <div className="mt-3 pt-2 border-t border-brand-sand/40 flex items-center justify-between">
+            {isTrashView ? (
+              <div className="flex space-x-1.5 w-full">
+                <button
+                  onClick={() => restoreFile(file.id)}
+                  className="flex-1 py-1.5 bg-brand-olive/10 hover:bg-brand-olive text-brand-olive hover:text-white rounded-lg text-[10px] font-bold flex items-center justify-center space-x-1 transition-all"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Restore</span>
+                </button>
+                <button
+                  onClick={() => {
+                    if (confirm('Delete forever? This action cannot be undone.')) {
+                      permanentlyDeleteFile(file.id);
+                    }
+                  }}
+                  className="flex-1 py-1.5 bg-red-50 hover:bg-red-500 text-red-500 hover:text-white rounded-lg text-[10px] font-bold flex items-center justify-center space-x-1 transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>Purge</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between w-full">
                 <button
                   onClick={handleOpenPreview}
-                  className="p-1 text-gray-400 hover:text-brand-olive hover:bg-brand-cream rounded-md transition-all cursor-pointer"
-                  title="Quick Preview"
+                  className="px-2.5 py-1.5 bg-brand-cream border border-brand-sand hover:bg-brand-olive hover:text-white text-brand-charcoal rounded-xl text-[10px] font-bold transition-all flex items-center space-x-1 shadow-sm cursor-pointer"
                 >
-                  <Eye className="w-4 h-4" />
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Preview</span>
                 </button>
-                <button
-                  onClick={() => toggleStar(file.id)}
-                  className={`p-1 rounded-md transition-all hover:bg-brand-cream ${file.isStarred ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`}
-                >
-                  <Star className="w-4 h-4 fill-current" />
-                </button>
-              </>
-            )}
-            
-            <div className="relative">
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-1 text-gray-400 hover:text-brand-charcoal hover:bg-brand-cream rounded-md transition-all cursor-pointer"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-
-              {/* Popover Action Menu */}
-              {showMenu && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => { setShowMenu(false); setShowSharePanel(false); }} />
-                  <div className="absolute right-0 mt-1 w-44 bg-white border border-brand-sand rounded-xl shadow-lg z-50 py-1 text-left">
-                    {isTrashView ? (
-                      <>
-                        <button
-                          onClick={() => { restoreFile(file.id); setShowMenu(false); }}
-                          className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-brand-olive hover:bg-brand-cream"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5" />
-                          <span>Restore File</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (confirm('Permanently delete this file? This cannot be undone.')) {
-                              permanentlyDeleteFile(file.id);
-                            }
-                            setShowMenu(false);
-                          }}
-                          className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Delete Forever</span>
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => { handleOpenPreview(); setShowMenu(false); }}
-                          className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Quick Preview</span>
-                        </button>
-                        <button
-                          onClick={() => setShowSharePanel(!showSharePanel)}
-                          className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
-                        >
-                          <Share2 className="w-3.5 h-3.5" />
-                          <span>Share / Link</span>
-                        </button>
-                        <button
-                          onClick={handleDownload}
-                          className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download</span>
-                        </button>
-                        <div className="border-t border-brand-sand my-1" />
-                        <button
-                          onClick={() => { deleteFile(file.id); setShowMenu(false); }}
-                          className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Move to Trash</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* File Details */}
-        <div className="mt-2">
-          <span className="text-[10px] text-brand-olive bg-brand-sage-light/25 font-semibold px-2 py-0.5 rounded-full inline-block mb-1">
-            {file.category}
-          </span>
-          <h4 className="text-xs font-bold text-brand-charcoal block line-clamp-1 group-hover:text-brand-olive transition-all" title={file.name}>
-            {file.name}
-          </h4>
-          
-          <div className="flex justify-between items-center text-[10px] text-gray-400 mt-2">
-            <span>{formatSize(file.size)}</span>
-            <span>{formatDate(file.dateAdded)}</span>
-          </div>
-        </div>
-
-        {/* Display shared indicator */}
-        {!isTrashView && file.sharedWith && file.sharedWith.length > 0 && (
-          <div className="mt-3 pt-2 border-t border-brand-sand/40 flex items-center justify-between">
-            <span className="text-[9px] font-sans font-medium text-gray-500">Shared with {file.sharedWith.length} user(s)</span>
-            <div className="flex -space-x-1">
-              {file.sharedWith.slice(0, 3).map((email, idx) => (
-                <div key={idx} className="w-4 h-4 rounded-full bg-brand-olive text-white text-[7px] font-bold flex items-center justify-center border border-white uppercase" title={email}>
-                  {email.charAt(0)}
+                
+                <div className="flex space-x-0.5 text-gray-400">
+                  <button
+                    onClick={handleDownload}
+                    className="p-1.5 rounded-lg hover:bg-brand-cream border border-transparent hover:border-brand-sand hover:text-brand-charcoal transition-all cursor-pointer"
+                    title="Download"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setShowSharePanel(true)}
+                    className="p-1.5 rounded-lg hover:bg-brand-cream border border-transparent hover:border-brand-sand hover:text-brand-charcoal transition-all cursor-pointer"
+                    title="Share File"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => deleteFile(file.id)}
+                    className="p-1.5 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all cursor-pointer"
+                    title="Move to Trash"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </motion.div>
 
       {/* Sharing Details Overlay Drawer */}
@@ -452,7 +454,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                 <button
                   type="button"
                   onClick={() => {
-                    navigator.clipboard.writeText(`https://studentvault.co/shared-preview/${file.id}`);
+                    navigator.clipboard.writeText(`${window.location.origin}/shared-preview/${file.id}`);
                     alert('Copied secure file share link to clipboard!');
                   }}
                   className="bg-brand-cream-dark hover:bg-brand-sand text-brand-charcoal px-3 py-2 rounded-xl text-[10px] font-bold border border-brand-sand transition-all flex items-center space-x-1"

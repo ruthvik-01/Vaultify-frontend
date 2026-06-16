@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import FileCard from '../components/FileCard';
 import { 
   Sparkles, Upload, FileText, ArrowRight, ExternalLink, 
-  CheckCircle, Plus, Calendar, Compass, ShieldAlert, Award
+  CheckCircle, Plus, Calendar, Compass, ShieldAlert, Award,
+  HardDrive, Users, Share2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -16,7 +17,7 @@ const GithubIcon = (props) => (
 );
 
 export default function Dashboard() {
-  const { files, activities, user, uploadFile } = useFiles();
+  const { files, activities, user, uploadFile, storageStats } = useFiles();
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
 
@@ -33,6 +34,25 @@ export default function Dashboard() {
 
   // Get certificate files
   const certificateFiles = activeFiles.filter(f => f.category === 'Certificates');
+
+  // Calculate stats
+  const totalFiles = activeFiles.length;
+  
+  const formatSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const totalStorageUsed = formatSize(storageStats.used);
+  const totalStorageLimit = formatSize(storageStats.totalCapacity);
+  const sharedFilesCount = activeFiles.filter(f => f.sharedWith && f.sharedWith.length > 0).length;
+  
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const recentUploadsCount = activeFiles.filter(f => new Date(f.dateAdded) >= sevenDaysAgo).length;
 
   // Drag and drop handlers for Quick Upload widget
   const handleDrag = (e) => {
@@ -95,32 +115,133 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       
-      {/* 1. Welcome Profile Completion Bar */}
-      <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-        <div>
-          <h1 className="font-serif text-3xl font-bold text-brand-charcoal leading-tight">
-            Welcome back, {user.name.split(' ')[0]} 👋
-          </h1>
-          <p className="text-xs text-gray-500 mt-1 font-sans">
-            Student ID: <span className="font-mono font-semibold">{user.studentId}</span> • {user.major}
-          </p>
-        </div>
-        
-        {/* Profile Completion Indicator */}
-        <div className="w-full md:w-64 bg-brand-cream border border-brand-sand rounded-2xl p-3.5">
-          <div className="flex justify-between items-center text-[10px] font-semibold text-gray-500 mb-1">
-            <span>Portfolio Locker Status</span>
-            <span className="text-brand-olive">85% Complete</span>
+      {/* Welcome & Premium Vault Header */}
+      <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm">
+        <h1 className="font-serif text-3xl font-bold text-brand-charcoal leading-tight">
+          Welcome back, {user.name ? user.name.split(' ')[0] : 'User'} 👋
+        </h1>
+        <p className="text-xs text-gray-500 mt-1.5 max-w-2xl font-sans">
+          Welcome to your Vaultify digital repository. Securely archive, manage, preview, and share your personal files, credentials, and academic documents in one centralized, premium cloud-encrypted space.
+        </p>
+      </div>
+
+      {/* Bento Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Storage Used Card */}
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex justify-between items-start">
+            <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
+              <HardDrive className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <span className="text-[10px] font-bold text-brand-olive uppercase tracking-wider bg-brand-sage-light/25 px-2 py-0.5 rounded-full">
+              {user.storage_plan === 'pro' ? 'Pro 1 TB' : 'Free 100 GB'}
+            </span>
           </div>
-          <div className="w-full bg-brand-cream-dark h-1.5 rounded-full overflow-hidden">
-            <div className="bg-brand-olive h-full rounded-full" style={{ width: '85%' }} />
+          <div className="mt-4">
+            <h4 className="text-2xl font-serif font-bold text-brand-charcoal leading-none">
+              {storageStats.totalCapacity > 0 ? ((storageStats.used / storageStats.totalCapacity) * 100).toFixed(1) : '0.0'}%
+            </h4>
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1.5">Storage Capacity</p>
+            <div className="w-full bg-brand-cream-dark h-1.5 rounded-full overflow-hidden mt-2">
+              <div 
+                className="bg-brand-olive h-full rounded-full transition-all duration-500" 
+                style={{ width: `${Math.min(storageStats.totalCapacity > 0 ? (storageStats.used / storageStats.totalCapacity) * 100 : 0, 100)}%` }} 
+              />
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">
+              {totalStorageUsed} of {totalStorageLimit} used
+            </p>
           </div>
           <button 
-            onClick={() => navigate('/profile')}
-            className="text-[9px] font-bold text-brand-olive mt-2 hover:underline flex items-center space-x-0.5 cursor-pointer"
+            onClick={() => navigate('/settings')}
+            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
           >
-            <span>Complete profile portfolio</span>
-            <ArrowRight className="w-2.5 h-2.5" />
+            <span>Manage Storage Plan</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Total Files Card */}
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex justify-between items-start">
+            <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
+              <FileText className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-brand-cream-dark px-2 py-0.5 rounded-full">
+              Files
+            </span>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-3xl font-serif font-bold text-brand-charcoal leading-none">
+              {totalFiles}
+            </h4>
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1.5">Total Vault Items</p>
+            <p className="text-[10px] text-gray-400 mt-2">
+              Academic & personal documents
+            </p>
+          </div>
+          <button 
+            onClick={() => navigate('/my-files')}
+            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
+          >
+            <span>Browse All Files</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Shared Files Card */}
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex justify-between items-start">
+            <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
+              <Share2 className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-brand-cream-dark px-2 py-0.5 rounded-full">
+              Links
+            </span>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-3xl font-serif font-bold text-brand-charcoal leading-none">
+              {sharedFilesCount}
+            </h4>
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1.5">Shared Items</p>
+            <p className="text-[10px] text-gray-400 mt-2">
+              Active links with access codes
+            </p>
+          </div>
+          <button 
+            onClick={() => navigate('/shared')}
+            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
+          >
+            <span>Manage Access Nodes</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        {/* Recent Uploads Card */}
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+          <div className="flex justify-between items-start">
+            <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
+              <Sparkles className="w-5 h-5 stroke-[1.5]" />
+            </div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-brand-cream-dark px-2 py-0.5 rounded-full">
+              Weekly
+            </span>
+          </div>
+          <div className="mt-4">
+            <h4 className="text-3xl font-serif font-bold text-brand-charcoal leading-none">
+              {recentUploadsCount}
+            </h4>
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1.5">Recent Uploads</p>
+            <p className="text-[10px] text-gray-400 mt-2">
+              Archived in the past 7 days
+            </p>
+          </div>
+          <button 
+            onClick={() => navigate('/upload')}
+            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
+          >
+            <span>Upload Documents</span>
+            <ArrowRight className="w-3 h-3" />
           </button>
         </div>
       </div>

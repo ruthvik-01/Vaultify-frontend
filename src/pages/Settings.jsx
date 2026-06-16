@@ -21,21 +21,21 @@ export default function Settings() {
   const [weeklyReport, setWeeklyReport] = useState(notifications.weeklyReport);
 
   // Preference / Styling states (initialized from active user settings)
-  const [themeColor, setThemeColor] = useState(user.theme_color || 'sage');
-  const [darkMode, setDarkMode] = useState(!!user.dark_mode);
-  const [sidebarColor, setSidebarColor] = useState(user.sidebar_color || 'default');
-  const [accentColor, setAccentColor] = useState(user.accent_color || 'olive');
-  const [fontSize, setFontSize] = useState(user.font_size || 'base');
+  const [themeColor, setThemeColor] = useState(user.theme_color || 'grid');
+  const [darkMode, setDarkMode] = useState(user.dark_mode !== undefined ? parseInt(user.dark_mode, 10) : 0);
+  const [sidebarColor, setSidebarColor] = useState(user.sidebar_color || 'expanded');
+  const [accentColor, setAccentColor] = useState(user.accent_color || 'blue');
+  const [fontSize, setFontSize] = useState(user.font_size || 'medium');
 
   useEffect(() => {
-    setName(user.name);
-    setEmail(user.email);
-    setUniversity(user.university);
-    setThemeColor(user.theme_color || 'sage');
-    setDarkMode(!!user.dark_mode);
-    setSidebarColor(user.sidebar_color || 'default');
-    setAccentColor(user.accent_color || 'olive');
-    setFontSize(user.font_size || 'base');
+    setName(user.name || '');
+    setEmail(user.email || '');
+    setUniversity(user.university || '');
+    setThemeColor(user.theme_color || 'grid');
+    setDarkMode(user.dark_mode !== undefined ? parseInt(user.dark_mode, 10) : 0);
+    setSidebarColor(user.sidebar_color || 'expanded');
+    setAccentColor(user.accent_color || 'blue');
+    setFontSize(user.font_size || 'medium');
   }, [user]);
 
   const handleAccountSave = (e) => {
@@ -64,7 +64,7 @@ export default function Settings() {
   const handlePreferencesSave = () => {
     updateProfile({
       theme_color: themeColor,
-      dark_mode: darkMode ? 1 : 0,
+      dark_mode: darkMode,
       sidebar_color: sidebarColor,
       accent_color: accentColor,
       font_size: fontSize
@@ -268,89 +268,85 @@ export default function Settings() {
           <div className="space-y-6 max-w-xl">
             <div>
               <h3 className="font-serif text-lg font-bold text-brand-charcoal">Display & Styling</h3>
-              <p className="text-xs text-gray-500 mt-1">Customize your Vaultify workspace looks, themes, and font configurations.</p>
+              <p className="text-xs text-gray-500 mt-1">Customize your Vaultify workspace looks, themes, and layouts.</p>
             </div>
 
             <div className="space-y-5">
               
-              {/* Theme Color Selector */}
+              {/* Display View Preference */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
-                  Theme Color Palette
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                  Display View Layout
                 </label>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-3 max-w-sm">
                   {[
-                    { id: 'sage', name: 'Sage Green', color: 'bg-[#4A5D4E]' },
-                    { id: 'blue', name: 'Vault Blue', color: 'bg-blue-600' },
-                    { id: 'purple', name: 'Royal Purple', color: 'bg-purple-600' },
-                    { id: 'emerald', name: 'Emerald', color: 'bg-emerald-600' },
-                    { id: 'amber', name: 'Amber Gold', color: 'bg-amber-600' }
-                  ].map((colorOpt) => (
+                    { id: 'grid', name: 'Card View' },
+                    { id: 'list', name: 'List View' }
+                  ].map((viewOpt) => (
                     <button
-                      key={colorOpt.id}
-                      onClick={() => setThemeColor(colorOpt.id)}
-                      className={`flex items-center space-x-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        themeColor === colorOpt.id
-                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                      key={viewOpt.id}
+                      type="button"
+                      onClick={() => setThemeColor(viewOpt.id)}
+                      className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                        themeColor === viewOpt.id
+                          ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
                           : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
                       }`}
                     >
-                      <span className={`w-3 h-3 rounded-full ${colorOpt.color}`} />
-                      <span>{colorOpt.name}</span>
+                      {viewOpt.name}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Dark Mode toggle */}
+              {/* Theme Options */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
-                  Interface Dark/Light Mode
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                  Theme Options
                 </label>
-                <div className="grid grid-cols-2 gap-3 max-w-sm">
-                  <button
-                    onClick={() => setDarkMode(false)}
-                    className={`flex items-center justify-center space-x-2 p-3 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      !darkMode
-                        ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
-                        : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
-                    }`}
-                  >
-                    <Sun className="w-4 h-4 text-amber-500" />
-                    <span>Light Mode</span>
-                  </button>
-                  <button
-                    onClick={() => setDarkMode(true)}
-                    className={`flex items-center justify-center space-x-2 p-3 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      darkMode
-                        ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
-                        : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
-                    }`}
-                  >
-                    <Moon className="w-4 h-4 text-indigo-400" />
-                    <span>Dark Mode</span>
-                  </button>
+                <div className="grid grid-cols-3 gap-3 max-w-md">
+                  {[
+                    { id: 0, name: 'Light Mode', icon: Sun, iconColor: 'text-amber-500' },
+                    { id: 1, name: 'Dark Mode', icon: Moon, iconColor: 'text-indigo-400' },
+                    { id: 2, name: 'System Mode', icon: Monitor, iconColor: 'text-gray-500' }
+                  ].map((themeOpt) => {
+                    const Icon = themeOpt.icon;
+                    return (
+                      <button
+                        key={themeOpt.id}
+                        type="button"
+                        onClick={() => setDarkMode(themeOpt.id)}
+                        className={`flex flex-col items-center justify-center p-3 border rounded-xl text-xs font-bold transition-all cursor-pointer space-y-1.5 ${
+                          darkMode === themeOpt.id
+                            ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
+                            : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
+                        }`}
+                      >
+                        <Icon className={`w-4 h-4 ${themeOpt.iconColor}`} />
+                        <span>{themeOpt.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Sidebar color choice */}
+              {/* Sidebar Customization */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
-                  Sidebar Accent Palette
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                  Sidebar Customization
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3 max-w-sm">
                   {[
-                    { id: 'default', name: 'Classic Cream' },
-                    { id: 'sage', name: 'Forest Green' },
-                    { id: 'charcoal', name: 'Dark Slate' },
-                    { id: 'light', name: 'Pure White' }
+                    { id: 'compact', name: 'Compact Sidebar' },
+                    { id: 'expanded', name: 'Expanded Sidebar' }
                   ].map((sidebarOpt) => (
                     <button
                       key={sidebarOpt.id}
+                      type="button"
                       onClick={() => setSidebarColor(sidebarOpt.id)}
-                      className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                      className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
                         sidebarColor === sidebarOpt.id
-                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
                           : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
                       }`}
                     >
@@ -360,28 +356,31 @@ export default function Settings() {
                 </div>
               </div>
 
-              {/* Accent Color Selector */}
+              {/* Accent Colors */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
-                  Highlight Accent Color
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                  Accent Color
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="flex flex-wrap gap-2">
                   {[
-                    { id: 'olive', name: 'Olive Green' },
-                    { id: 'blue', name: 'Ocean Blue' },
-                    { id: 'rose', name: 'Rose Red' },
-                    { id: 'emerald', name: 'Deep Emerald' }
+                    { id: 'blue', name: 'Blue', color: 'bg-blue-500' },
+                    { id: 'purple', name: 'Purple', color: 'bg-purple-500' },
+                    { id: 'green', name: 'Green', color: 'bg-green-500' },
+                    { id: 'orange', name: 'Orange', color: 'bg-orange-500' },
+                    { id: 'red', name: 'Red', color: 'bg-red-500' }
                   ].map((accentOpt) => (
                     <button
                       key={accentOpt.id}
+                      type="button"
                       onClick={() => setAccentColor(accentOpt.id)}
-                      className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                      className={`flex items-center space-x-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         accentColor === accentOpt.id
-                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
                           : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
                       }`}
                     >
-                      {accentOpt.name}
+                      <span className={`w-3 h-3 rounded-full ${accentOpt.color}`} />
+                      <span>{accentOpt.name}</span>
                     </button>
                   ))}
                 </div>
@@ -389,21 +388,22 @@ export default function Settings() {
 
               {/* Font Size Selector */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
-                  Font Size Preference
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
+                  Font Size
                 </label>
                 <div className="grid grid-cols-3 gap-3 max-w-sm">
                   {[
-                    { id: 'sm', name: 'Compact' },
-                    { id: 'base', name: 'Normal' },
-                    { id: 'lg', name: 'Enlarged' }
+                    { id: 'small', name: 'Small' },
+                    { id: 'medium', name: 'Medium' },
+                    { id: 'large', name: 'Large' }
                   ].map((fontOpt) => (
                     <button
                       key={fontOpt.id}
+                      type="button"
                       onClick={() => setFontSize(fontOpt.id)}
                       className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
                         fontSize === fontOpt.id
-                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
                           : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
                       }`}
                     >
@@ -420,7 +420,7 @@ export default function Settings() {
                 className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2"
               >
                 <Save className="w-4 h-4" />
-                <span>Save preferences</span>
+                <span>Save Preferences</span>
               </button>
 
             </div>

@@ -14,7 +14,7 @@ export const categories = [
 
 export const FileProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return !!localStorage.getItem('studentvault_token');
+    return !!localStorage.getItem('vaultify_token');
   });
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -39,22 +39,43 @@ export const FileProvider = ({ children }) => {
 
   const applySettingsToDOM = (settings) => {
     const root = document.documentElement;
-    if (settings.dark_mode) {
+    
+    // 1. Theme mode (0 = light, 1 = dark, 2 = system)
+    let isDark = false;
+    const dm = parseInt(settings.dark_mode, 10);
+    if (dm === 2) {
+      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } else {
+      isDark = dm === 1;
+    }
+    
+    if (isDark) {
       root.classList.add('dark');
     } else {
       root.classList.remove('dark');
     }
-    root.setAttribute('data-theme-color', settings.theme_color || 'sage');
-    root.setAttribute('data-sidebar-color', settings.sidebar_color || 'default');
-    root.setAttribute('data-accent-color', settings.accent_color || 'olive');
-    root.setAttribute('data-font-size', settings.font_size || 'base');
+    
+    // Store active dark mode as boolean helper attribute for global styling reference
+    root.setAttribute('data-dark-mode-active', isDark ? 'true' : 'false');
+    
+    // 2. Accent color (blue, purple, green, orange, red)
+    root.setAttribute('data-accent-color', settings.accent_color || 'blue');
+    
+    // 3. Sidebar mode (compact, expanded)
+    root.setAttribute('data-sidebar-mode', settings.sidebar_color || 'expanded');
+    
+    // 4. Display preference (grid, list)
+    root.setAttribute('data-display-view', settings.theme_color || 'grid');
+    
+    // 5. Font size (small, medium, large)
+    root.setAttribute('data-font-size', settings.font_size || 'medium');
     
     localStorage.setItem('vaultify_settings', JSON.stringify({
-      theme_color: settings.theme_color,
-      dark_mode: !!settings.dark_mode,
-      sidebar_color: settings.sidebar_color,
-      accent_color: settings.accent_color,
-      font_size: settings.font_size
+      theme_color: settings.theme_color || 'grid',
+      dark_mode: settings.dark_mode !== undefined ? parseInt(settings.dark_mode, 10) : 0,
+      sidebar_color: settings.sidebar_color || 'expanded',
+      accent_color: settings.accent_color || 'blue',
+      font_size: settings.font_size || 'medium'
     }));
   };
 
@@ -65,6 +86,23 @@ export const FileProvider = ({ children }) => {
         applySettingsToDOM(JSON.parse(cached));
       } catch (_) {}
     }
+    
+    // Media query listener for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = () => {
+      const current = localStorage.getItem('vaultify_settings');
+      if (current) {
+        try {
+          const parsed = JSON.parse(current);
+          if (parseInt(parsed.dark_mode, 10) === 2) {
+            applySettingsToDOM(parsed);
+          }
+        } catch (_) {}
+      }
+    };
+    
+    mediaQuery.addEventListener('change', handleSystemThemeChange);
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
   }, []);
 
   const [notifications, setNotifications] = useState({
@@ -156,11 +194,11 @@ export const FileProvider = ({ children }) => {
           bio: userData.bio || '',
           profile_image: userData.profile_image || null,
           storage_plan: userData.storage_plan || 'free',
-          theme_color: userData.theme_color || 'sage',
-          dark_mode: userData.dark_mode === 1 || userData.dark_mode === true,
-          sidebar_color: userData.sidebar_color || 'default',
-          accent_color: userData.accent_color || 'olive',
-          font_size: userData.font_size || 'base',
+          theme_color: userData.theme_color || 'grid',
+          dark_mode: userData.dark_mode !== undefined ? parseInt(userData.dark_mode, 10) : 0,
+          sidebar_color: userData.sidebar_color || 'expanded',
+          accent_color: userData.accent_color || 'blue',
+          font_size: userData.font_size || 'medium',
           avatar:
             userData.profile_image ||
             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name || 'SV')}`,
@@ -224,7 +262,7 @@ export const FileProvider = ({ children }) => {
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/trash`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('studentvault_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
           },
         }
       );
@@ -302,7 +340,7 @@ export const FileProvider = ({ children }) => {
         {
           method: 'PATCH',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('studentvault_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
           },
         }
       );
@@ -328,7 +366,7 @@ export const FileProvider = ({ children }) => {
         {
           method: 'DELETE',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('studentvault_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
           },
         }
       );
@@ -413,7 +451,7 @@ export const FileProvider = ({ children }) => {
         {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('studentvault_token')}`,
+            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ file_id: id, permission, expiry_hours: expiryHours }),
@@ -448,7 +486,7 @@ export const FileProvider = ({ children }) => {
     try {
       const res = await api.login(email, password);
       if (res.token) {
-        localStorage.setItem('studentvault_token', res.token);
+        localStorage.setItem('vaultify_token', res.token);
         setIsAuthenticated(true);
         return { success: true };
       }
@@ -459,11 +497,26 @@ export const FileProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (googleData) => {
+    try {
+      const res = await api.googleLogin(googleData);
+      if (res.token) {
+        localStorage.setItem('vaultify_token', res.token);
+        setIsAuthenticated(true);
+        return { success: true };
+      }
+      return { success: false, message: 'Google login failed.' };
+    } catch (err) {
+      console.error('Google login error:', err.message);
+      return { success: false, message: err.message || 'Google Login failed.' };
+    }
+  };
+
   const register = async (userData) => {
     try {
       const res = await api.register(userData);
       if (res.token) {
-        localStorage.setItem('studentvault_token', res.token);
+        localStorage.setItem('vaultify_token', res.token);
         setIsAuthenticated(true);
         return { success: true };
       }
@@ -479,7 +532,7 @@ export const FileProvider = ({ children }) => {
       await api.logout();
     } catch (_) {}
     setIsAuthenticated(false);
-    localStorage.removeItem('studentvault_token');
+    localStorage.removeItem('vaultify_token');
     setFiles([]);
     setFolders([]);
     setActivities([]);
@@ -496,7 +549,7 @@ export const FileProvider = ({ children }) => {
             ...prev, 
             ...updatedUser,
             avatar: updatedUser.profile_image || prev.avatar,
-            dark_mode: updatedUser.dark_mode === 1 || updatedUser.dark_mode === true,
+            dark_mode: updatedUser.dark_mode !== undefined ? parseInt(updatedUser.dark_mode, 10) : prev.dark_mode,
             created_at: updatedUser.created_at || prev.created_at
           };
           applySettingsToDOM(nextUser);
@@ -539,6 +592,7 @@ export const FileProvider = ({ children }) => {
         updateNotifications,
         isAuthenticated,
         login,
+        googleLogin,
         register,
         logout,
         fetchAllFiles,

@@ -17,7 +17,7 @@ export default function AuthLayout() {
           <div className="bg-brand-cream text-brand-olive-dark p-2 rounded-xl">
             <FolderLock className="w-6 h-6" />
           </div>
-          <span className="font-serif text-2xl font-bold tracking-tight">StudentVault</span>
+          <span className="font-serif text-2xl font-bold tracking-tight">Vaultify</span>
         </div>
 
         {/* Content Showcase */}
@@ -28,13 +28,13 @@ export default function AuthLayout() {
             transition={{ duration: 0.8, ease: 'easeOut' }}
           >
             <span className="text-xs uppercase tracking-widest text-brand-sage font-medium bg-brand-cream/10 px-3 py-1 rounded-full border border-brand-cream/10">
-              Cloud Storage & Showcase
+              Cloud Storage & Sharing
             </span>
             <h1 className="text-5xl xl:text-6xl font-serif text-brand-cream font-bold mt-4 leading-tight">
-              Organize your career assets in one secure locker.
+              Organize your digital assets in one secure vault.
             </h1>
             <p className="mt-6 text-brand-sage-light max-w-md text-lg leading-relaxed font-sans">
-              Designed specifically for ambitious students. Store resumes, verify certificates, track projects, and share credentials instantly with recruiters.
+              Designed for premium security. Store personal credentials, verify academic logs, catalog projects, and share files instantly under your terms.
             </p>
           </motion.div>
 
@@ -51,7 +51,7 @@ export default function AuthLayout() {
                 <div className="w-3 h-3 rounded-full bg-yellow-400/60" />
                 <div className="w-3 h-3 rounded-full bg-green-400/60" />
               </div>
-              <span className="text-xs text-brand-sage font-mono">studentvault.co/vrajraju</span>
+              <span className="text-xs text-brand-sage font-mono">vaultify.co/vrajraju</span>
             </div>
             
             <div className="mt-4 grid grid-cols-2 gap-4">
@@ -85,7 +85,7 @@ export default function AuthLayout() {
 
         {/* Footer */}
         <div className="flex justify-between items-center text-xs text-brand-sage z-10">
-          <p>© {new Date().getFullYear()} StudentVault. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Vaultify. All rights reserved.</p>
           <div className="flex space-x-4">
             <a href="#" className="hover:underline">Privacy</a>
             <a href="#" className="hover:underline">Terms</a>
@@ -105,8 +105,8 @@ export default function AuthLayout() {
             <div className="inline-flex bg-brand-olive text-brand-cream p-3 rounded-2xl mb-3">
               <FolderLock className="w-8 h-8" />
             </div>
-            <h2 className="text-3xl font-serif font-bold text-brand-charcoal">StudentVault</h2>
-            <p className="text-sm text-gray-500 mt-1">Cloud career asset locker</p>
+            <h2 className="text-3xl font-serif font-bold text-brand-charcoal">Vaultify</h2>
+            <p className="text-sm text-gray-500 mt-1">Cloud digital asset vault</p>
           </div>
           <Outlet />
         </motion.div>

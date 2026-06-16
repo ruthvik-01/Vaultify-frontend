@@ -84,13 +84,13 @@ export default function Landing() {
 
   const testimonials = [
     {
-      quote: "StudentVault completely transformed how I handled my senior placement. Being able to share a single link containing my certified AWS badge, resume, and React source code was a game-changer.",
+      quote: "Vaultify completely transformed how I handled my senior placement. Being able to share a single link containing my certified AWS badge, resume, and React source code was a game-changer.",
       author: "Rahul Mehta",
       role: "CS Graduate, State Tech",
       dest: "Software Engineer at Google"
     },
     {
-      quote: "No more messy Google Drive links with broken permissions. StudentVault lets our graduates manage credential sharing with recruiters securely and professionally.",
+      quote: "No more messy Google Drive links with broken permissions. Vaultify lets our graduates manage credential sharing with recruiters securely and professionally.",
       author: "Dr. Clara Thorne",
       role: "Director of Placement Cells",
       dest: "National Science University"
@@ -105,15 +105,16 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <BrandIcon />
-            <span className="font-serif text-lg font-bold tracking-tight text-brand-charcoal">StudentVault</span>
+            <span className="font-serif text-lg font-bold tracking-tight text-brand-charcoal">Vaultify</span>
           </div>
 
           {/* Desktop Links */}
           <nav className="hidden md:flex space-x-8 text-xs font-semibold text-gray-500">
+            <a href="#" className="hover:text-brand-olive transition-all">Home</a>
+            <a href="#about" className="hover:text-brand-olive transition-all">About</a>
             <a href="#features" className="hover:text-brand-olive transition-all">Features</a>
-            <a href="#how-it-works" className="hover:text-brand-olive transition-all">How It Works</a>
-            <a href="#benefits" className="hover:text-brand-olive transition-all">Benefits</a>
             <a href="#pricing" className="hover:text-brand-olive transition-all">Pricing</a>
+            <a href="#footer" className="hover:text-brand-olive transition-all">Contact</a>
           </nav>
 
           <div className="flex items-center space-x-4">
@@ -187,7 +188,7 @@ export default function Landing() {
               <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
               <div className="w-3 h-3 rounded-full bg-green-400/80" />
             </div>
-            <span className="text-[10px] text-gray-400 font-mono">studentvault.co/vrajraju/showcase</span>
+            <span className="text-[10px] text-gray-400 font-mono">vaultify.co/vrajraju/showcase</span>
             <div className="w-16" />
           </div>
 
@@ -196,14 +197,14 @@ export default function Landing() {
             <div className="border border-brand-sand rounded-2xl p-4 bg-brand-cream/40 space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-[9px] uppercase font-bold text-gray-400">Vault Capacity</span>
-                <span className="text-[9px] text-brand-olive bg-brand-sage-light/20 px-2 py-0.5 rounded-full font-bold">Pro Scholar</span>
+                <span className="text-[9px] text-brand-olive bg-brand-sage-light/20 px-2 py-0.5 rounded-full font-bold">Pro Vault</span>
               </div>
               <div className="w-full bg-brand-cream-dark h-1.5 rounded-full overflow-hidden">
                 <div className="bg-brand-olive h-full w-[24%]" />
               </div>
               <div className="flex justify-between text-[9px] text-gray-400 font-mono">
                 <span>2.4 GB Used</span>
-                <span>10 GB Max</span>
+                <span>100 GB Max</span>
               </div>
 
               {/* Stacked details */}
@@ -422,52 +423,197 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 9. Call To Action Section */}
-      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 pt-6">
-        <div className="bg-brand-olive-dark text-brand-cream border border-brand-olive/20 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden shadow-lg space-y-6">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-brand-olive/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-sage-light/10 rounded-full blur-3xl pointer-events-none" />
+      {/* About Section & Team Credits */}
+      <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 border-t border-brand-sand/60">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-[10px] uppercase tracking-widest text-brand-olive bg-brand-sage-light/25 border border-brand-sage-light/40 px-3.5 py-1.5 rounded-full font-bold inline-block">
+            Meet the Builders
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-charcoal">
+            The Team behind Vaultify
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-sans leading-relaxed">
+            Vaultify is designed, built, and optimized by a dedicated group of engineers passionate about secure, seamless, and high-fidelity cloud workspaces.
+          </p>
+        </div>
 
-          <div className="max-w-2xl mx-auto space-y-4 relative z-10">
-            <span className="text-[10px] uppercase tracking-widest text-brand-sage font-bold bg-white/10 px-3 py-1 rounded-full border border-white/10 inline-block">
-              Free Scholar plan
-            </span>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-brand-cream leading-tight">
-              Ready to secure your credentials?
-            </h2>
-            <p className="text-xs sm:text-sm text-brand-sage-light leading-relaxed font-sans max-w-md mx-auto">
-              Create your free student locker today. Get 10 GB secure cloud space, verification badges, and custom share directories.
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 max-w-5xl mx-auto">
+          {/* Vangada Raju */}
+          <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-all">
+            <img 
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Vangada%20Raju" 
+              alt="Vangada Raju" 
+              className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
+            />
+            <div>
+              <h4 className="font-serif text-base font-bold text-brand-charcoal">Vangada Raju</h4>
+              <span className="text-xs text-brand-olive font-semibold font-sans">Frontend Developer</span>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed font-sans">
+              Crafts responsive, premium UI components, styling design systems, and glassmorphic micro-animations.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 pt-4 relative z-10 max-w-sm mx-auto">
-            <Link 
-              to="/register" 
-              className="w-full sm:w-auto bg-brand-cream hover:bg-brand-cream-dark text-brand-olive-dark px-6 py-3 rounded-xl text-xs font-semibold shadow-md transition-all flex items-center justify-center space-x-1.5"
-            >
-              <span>Get Started Free</span>
-              <ArrowRight className="w-4 h-4 text-brand-olive" />
-            </Link>
-            <Link 
-              to="/login" 
-              className="w-full sm:w-auto bg-brand-olive hover:bg-brand-olive-light text-white px-6 py-3 rounded-xl text-xs font-semibold border border-brand-cream/15 transition-all"
-            >
-              Demo Preview
-            </Link>
+          {/* Lokeshreddy Devireddy */}
+          <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-all">
+            <img 
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Lokeshreddy%20Devireddy" 
+              alt="Lokeshreddy Devireddy" 
+              className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
+            />
+            <div>
+              <h4 className="font-serif text-base font-bold text-brand-charcoal">Lokeshreddy Devireddy</h4>
+              <span className="text-xs text-brand-olive font-semibold font-sans">Frontend Developer</span>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed font-sans">
+              Specialize in client-side state synchronization, complex user settings configurations, and routing architectures.
+            </p>
+          </div>
+
+          {/* Pitchika Ruthvik */}
+          <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-all sm:col-span-2 lg:col-span-1 mx-auto max-w-sm lg:max-w-none w-full">
+            <img 
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Pitchika%20Ruthvik" 
+              alt="Pitchika Ruthvik" 
+              className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
+            />
+            <div>
+              <h4 className="font-serif text-base font-bold text-brand-charcoal">Pitchika Ruthvik</h4>
+              <span className="text-xs text-brand-olive font-semibold font-sans">Backend & Cloud Engineer</span>
+            </div>
+            <p className="text-xs text-gray-500 leading-relaxed font-sans">
+              Architects secure MySQL databases, token authorization layers, AWS S3 storage APIs, and verified mailing relays.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 9. Pricing Section */}
+      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-[10px] uppercase tracking-widest text-brand-olive bg-brand-sage-light/25 border border-brand-sage-light/40 px-3.5 py-1.5 rounded-full font-bold inline-block">
+            Vaultify Quotas
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-charcoal">
+            Secure storage plans for everyone
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-sans">
+            Choose the secure cloud quota that matches your cataloging and sharing requirements.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto pt-4">
+          {/* Free Plan Card */}
+          <div className="bg-white border border-brand-sand rounded-3xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-all relative overflow-hidden">
+            <div className="space-y-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-serif text-xl font-bold text-brand-charcoal">Free Locker Plan</h3>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Essential digital archiving</p>
+                </div>
+                <span className="bg-brand-cream-dark text-gray-600 text-[10px] font-bold px-2.5 py-1 rounded-lg">
+                  Standard
+                </span>
+              </div>
+              <div className="flex items-baseline">
+                <span className="font-serif text-4xl font-bold text-brand-charcoal">$0</span>
+                <span className="text-xs text-gray-400 ml-1">/ month</span>
+              </div>
+              
+              <ul className="space-y-3 pt-4 border-t border-brand-sand/65 text-xs text-gray-600">
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span><strong>100 GB</strong> Secure SSD Cloud space</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Academic Memo & personal document drawers</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Standard search & folder management</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Generate up to 5 secure shared links</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="mt-8 pt-4">
+              <Link 
+                to="/register" 
+                className="w-full bg-brand-cream hover:bg-brand-sand/50 text-brand-charcoal px-4 py-3 rounded-xl text-xs font-semibold shadow-sm transition-all block text-center cursor-pointer border border-brand-sand"
+              >
+                Get Started Free
+              </Link>
+            </div>
+          </div>
+
+          {/* Pro Plan Card */}
+          <div className="bg-white border-2 border-brand-olive rounded-3xl p-8 shadow-md flex flex-col justify-between hover:shadow-lg transition-all relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-brand-olive text-white text-[9px] uppercase tracking-wider font-bold px-4 py-1.5 rounded-bl-2xl">
+              Most Popular
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-serif text-xl font-bold text-brand-charcoal">Pro Vault Plan</h3>
+                  <p className="text-[10px] text-brand-olive font-semibold mt-0.5">High-capacity digital vault</p>
+                </div>
+              </div>
+              <div className="flex items-baseline">
+                <span className="font-serif text-4xl font-bold text-brand-charcoal">$2.99</span>
+                <span className="text-xs text-gray-400 ml-1">/ month</span>
+              </div>
+              
+              <ul className="space-y-3 pt-4 border-t border-brand-sand/65 text-xs text-gray-600">
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span><strong>1 TB (1,000 GB)</strong> Premium SSD space</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Unlimited document and file sizes</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Unlimited share nodes & direct download keys</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Detailed access and download log analytics</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
+                  <span>Priority verification badge lookup index</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="mt-8 pt-4">
+              <Link 
+                to="/register" 
+                className="w-full bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-3 rounded-xl text-xs font-semibold shadow-md transition-all block text-center cursor-pointer"
+              >
+                Upgrade to Pro Vault
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* 10. Footer Section */}
-      <footer className="bg-white border-t border-brand-sand py-12 text-xs text-gray-500 font-sans">
+      <footer id="footer" className="bg-white border-t border-brand-sand py-12 text-xs text-gray-500 font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <BrandIcon className="w-7 h-7" />
-              <span className="font-serif text-base font-bold text-brand-charcoal">StudentVault</span>
+              <span className="font-serif text-base font-bold text-brand-charcoal">Vaultify</span>
             </div>
             <p className="text-[11px] text-gray-400 leading-relaxed max-w-[200px]">
-              The public cloud storage space designed specifically for verified student recruitment portfolios.
+              The public cloud storage space designed specifically for verified personal and student document lockers.
             </p>
           </div>
 
@@ -503,7 +649,7 @@ export default function Landing() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 border-t border-brand-sand/60 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 text-[11px] text-gray-400">
-          <p>© {new Date().getFullYear()} StudentVault. Cloud locker verification engine.</p>
+          <p>© {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
           <div className="flex space-x-4">
             <a href="#" className="hover:underline">LinkedIn</a>
             <a href="#" className="hover:underline">GitHub</a>

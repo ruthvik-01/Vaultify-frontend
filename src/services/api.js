@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const getHeaders = (isFormData = false) => {
-  const token = localStorage.getItem('studentvault_token');
+  const token = localStorage.getItem('vaultify_token');
   const headers = {};
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
@@ -37,6 +37,15 @@ export const api = {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(userData),
+    });
+    return handleResponse(res);
+  },
+
+  googleLogin: async (googleData) => {
+    const res = await fetch(`${API_URL}/auth/google`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify(googleData),
     });
     return handleResponse(res);
   },

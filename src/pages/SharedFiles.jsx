@@ -95,7 +95,7 @@ export default function SharedFiles() {
   };
 
   const handleCopyLink = (fileId) => {
-    navigator.clipboard.writeText(`https://studentvault.co/shared-preview/${fileId}`);
+    navigator.clipboard.writeText(`https://vaultify.co/shared-preview/${fileId}`);
     alert('Secure share link copied to clipboard!');
   };
 
