@@ -4,7 +4,7 @@ import { UploadCloud, X, CheckCircle2, FileUp, Sparkles, FolderDot } from 'lucid
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UploadModal({ isOpen, onClose }) {
-  const { uploadFile } = useFiles();
+  const { uploadFile, showNotification } = useFiles();
   const [dragActive, setDragActive] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('Resumes');
   const [uploadState, setUploadState] = useState('idle'); // idle | uploading | success
@@ -25,7 +25,39 @@ export default function UploadModal({ isOpen, onClose }) {
     }
   };
 
+  // Allowed file extensions matching backend's fileValidation.js whitelist
+  const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'zip', 'txt'];
+  const allowedMimeTypes = [
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg', 'image/png',
+    'application/zip', 'application/x-zip-compressed',
+    'text/plain'
+  ];
+  const maxFileSize = 10 * 1024 * 1024; // 10 MB
+
+  const validateFile = (file) => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(ext) && !allowedMimeTypes.includes(file.type)) {
+      showNotification(
+        `Unsupported file type (.${ext}). Allowed: PDF, DOC/DOCX, JPEG, PNG, ZIP, and TXT.`,
+        'error'
+      );
+      return false;
+    }
+    if (file.size > maxFileSize) {
+      showNotification(
+        `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: 10 MB.`,
+        'error'
+      );
+      return false;
+    }
+    return true;
+  };
+
   const startUpload = async (file) => {
+    if (!validateFile(file)) return;
+
     setUploadedName(file.name);
     setUploadState('uploading');
     setProgress(0);
@@ -164,7 +196,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 </div>
                 <h4 className="text-xs font-bold text-brand-charcoal">Drag and drop file here, or browse</h4>
                 <p className="text-[10px] text-gray-400 mt-1 max-w-[240px]">
-                  Supports PDF, DOCX, ZIP, PNG, and MP4 up to 50 MB
+                  Supports PDF, DOCX, ZIP, JPEG, PNG, and TXT up to 10 MB
                 </p>
               </div>
             </div>

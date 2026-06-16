@@ -332,70 +332,59 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const deleteFile = async (id) => {
-    try {
-      const file = files.find((f) => f.id === id);
-      await api.deleteFile(id);
-      // Backend permanently deletes — remove from state
-      if (file) {
-        addActivity('deleted', file.name, file.category);
-      }
-      setFiles((prev) => prev.filter((f) => f.id !== id));
-    } catch (err) {
-      console.error('Delete failed:', err.message);
+  // Soft-delete: marks file as trashed in local state (file stays on server)
+  const moveToTrash = (id) => {
+    const file = files.find((f) => f.id === id);
+    if (file) {
+      addActivity('trashed', file.name, file.category);
+      showNotification(`"${file.name}" moved to trash`, 'success');
     }
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === id ? { ...f, inTrash: true } : f
+      )
+    );
   };
 
-  const restoreFile = async (id) => {
-    try {
-      await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/${id}/restore`,
-        {
-          method: 'PATCH',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
-          },
-        }
-      );
-      setFiles((prev) =>
-        prev.map((f) => {
-          if (f.id === id) {
-            addActivity('restored', f.name, f.category);
-            return { ...f, inTrash: false };
-          }
-          return f;
-        })
-      );
-    } catch (err) {
-      console.error('Restore failed:', err.message);
+  // Keep the old name as alias for backward compat (some components still call deleteFile)
+  const deleteFile = moveToTrash;
+
+  // Restore: moves file back from trash to active state
+  const restoreFile = (id) => {
+    const file = files.find((f) => f.id === id);
+    if (file) {
+      addActivity('restored', file.name, file.category);
+      showNotification(`"${file.name}" restored from trash`, 'success');
     }
+    setFiles((prev) =>
+      prev.map((f) =>
+        f.id === id ? { ...f, inTrash: false } : f
+      )
+    );
   };
 
+  // Permanent delete: actually removes file from backend (S3 + DB)
   const permanentlyDeleteFile = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
-      await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/${id}/permanent`,
-        {
-          method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
-          },
-        }
-      );
+      await api.deleteFile(id);
       setFiles((prev) => prev.filter((f) => f.id !== id));
       if (file) {
         addActivity('purged', file.name, file.category);
+        showNotification(`"${file.name}" permanently deleted`, 'success');
       }
     } catch (err) {
       console.error('Permanent delete failed:', err.message);
+      showNotification('Failed to permanently delete file', 'error');
     }
   };
 
   const clearTrash = async () => {
     const trashFiles = files.filter((f) => f.inTrash);
+    if (trashFiles.length === 0) return;
     await Promise.all(trashFiles.map((f) => permanentlyDeleteFile(f.id)));
     addActivity('cleared_trash', 'Trash Bin Emptied');
+    showNotification('Trash emptied successfully', 'success');
   };
 
   const toggleStar = async (id) => {

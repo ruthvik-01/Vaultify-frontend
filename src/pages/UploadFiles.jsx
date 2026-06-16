@@ -56,8 +56,38 @@ export default function UploadFiles() {
     }
   };
 
+  // Allowed file extensions matching backend's fileValidation.js whitelist
+  const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'zip', 'txt'];
+  const allowedMimeTypes = [
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'image/jpeg', 'image/png',
+    'application/zip', 'application/x-zip-compressed',
+    'text/plain'
+  ];
+  const maxFileSize = 10 * 1024 * 1024; // 10 MB
+
   const setupFileDetails = (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
+
+    // Validate file type
+    if (!allowedExtensions.includes(ext) && !allowedMimeTypes.includes(file.type)) {
+      showNotification(
+        `Unsupported file type (.${ext}). Allowed: PDF, DOC/DOCX, JPEG, PNG, ZIP, and TXT.`,
+        'error'
+      );
+      return;
+    }
+
+    // Validate file size
+    if (file.size > maxFileSize) {
+      showNotification(
+        `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: 10 MB.`,
+        'error'
+      );
+      return;
+    }
+
     selectedFileRef.current = file; // Store the actual File object
     setFileName(file.name);
     setFileSize(file.size);
