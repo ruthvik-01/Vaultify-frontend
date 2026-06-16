@@ -77,56 +77,41 @@
    VAULTIFY CUSTOMIZATION SYSTEM variables and overrides
    ────────────────────────────────────────────────────────────────────────── */
 
-/* Dynamic Theme Colors */
-:root[data-theme-color="blue"] {
+/* Dynamic Accent Colors & Themes (Harmonized brand palettes) */
+:root[data-accent-color="green"] {
+  --color-brand-olive: #4A5D4E;
+  --color-brand-olive-dark: #37463B;
+  --color-brand-olive-light: #5A715F;
+  --color-brand-sage: #A3B19B;
+  --color-brand-sage-light: #D5DDD1;
+}
+:root[data-accent-color="blue"] {
   --color-brand-olive: #2563EB;
   --color-brand-olive-dark: #1D4ED8;
   --color-brand-olive-light: #3B82F6;
   --color-brand-sage: #93C5FD;
   --color-brand-sage-light: #DBEAFE;
 }
-:root[data-theme-color="purple"] {
+:root[data-accent-color="purple"] {
   --color-brand-olive: #7C3AED;
   --color-brand-olive-dark: #6D28D9;
   --color-brand-olive-light: #8B5CF6;
   --color-brand-sage: #C7D2FE;
   --color-brand-sage-light: #E0E7FF;
 }
-:root[data-theme-color="emerald"] {
-  --color-brand-olive: #059669;
-  --color-brand-olive-dark: #047857;
-  --color-brand-olive-light: #10B981;
-  --color-brand-sage: #A7F3D0;
-  --color-brand-sage-light: #D1FAE5;
-}
-:root[data-theme-color="amber"] {
-  --color-brand-olive: #D97706;
-  --color-brand-olive-dark: #B45309;
-  --color-brand-olive-light: #F59E0B;
-  --color-brand-sage: #FDE68A;
-  --color-brand-sage-light: #FEF3C7;
-}
-
-/* Dynamic Accent Colors */
-:root[data-accent-color="blue"] {
-  --color-brand-olive: #2563EB;
-  --color-brand-olive-dark: #1D4ED8;
-}
-:root[data-accent-color="purple"] {
-  --color-brand-olive: #7C3AED;
-  --color-brand-olive-dark: #6D28D9;
-}
-:root[data-accent-color="green"] {
-  --color-brand-olive: #4A5D4E;
-  --color-brand-olive-dark: #37463B;
-}
 :root[data-accent-color="orange"] {
-  --color-brand-olive: #D97706;
-  --color-brand-olive-dark: #B45309;
+  --color-brand-olive: #EA580C;
+  --color-brand-olive-dark: #C2410C;
+  --color-brand-olive-light: #F97316;
+  --color-brand-sage: #FED7AA;
+  --color-brand-sage-light: #FFEDD5;
 }
 :root[data-accent-color="red"] {
   --color-brand-olive: #DC2626;
   --color-brand-olive-dark: #B91C1C;
+  --color-brand-olive-light: #EF4444;
+  --color-brand-sage: #FCA5A5;
+  --color-brand-sage-light: #FEE2E2;
 }
 
 /* Dynamic Sidebar Colors */
@@ -174,13 +159,13 @@
 }
 
 /* Dynamic Font Sizes */
-:root[data-font-size="sm"] {
+:root[data-font-size="small"] {
   font-size: 14px;
 }
-:root[data-font-size="base"] {
+:root[data-font-size="medium"] {
   font-size: 16px;
 }
-:root[data-font-size="lg"] {
+:root[data-font-size="large"] {
   font-size: 18px;
 }
 
@@ -226,5 +211,16 @@
 }
 .dark tr:hover {
   background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+@keyframes toast-enter {
+  from {
+    transform: translate(-50%, -20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
 }
 

@@ -22,7 +22,7 @@ export default function Settings() {
 
   // Preference / Styling states (initialized from active user settings)
   const [themeColor, setThemeColor] = useState(user.theme_color || 'grid');
-  const [darkMode, setDarkMode] = useState(user.dark_mode !== undefined ? parseInt(user.dark_mode, 10) : 0);
+  const [darkMode, setDarkMode] = useState(user.dark_mode || 'light');
   const [sidebarColor, setSidebarColor] = useState(user.sidebar_color || 'expanded');
   const [accentColor, setAccentColor] = useState(user.accent_color || 'green');
   const [fontSize, setFontSize] = useState(user.font_size || 'medium');
@@ -32,7 +32,7 @@ export default function Settings() {
     setEmail(user.email || '');
     setUniversity(user.university || '');
     setThemeColor(user.theme_color || 'grid');
-    setDarkMode(user.dark_mode !== undefined ? parseInt(user.dark_mode, 10) : 0);
+    setDarkMode(user.dark_mode || 'light');
     setSidebarColor(user.sidebar_color || 'expanded');
     setAccentColor(user.accent_color || 'green');
     setFontSize(user.font_size || 'medium');
@@ -48,9 +48,7 @@ export default function Settings() {
   const handleAccountSave = (e) => {
     e.preventDefault();
     updateProfile({
-      name,
-      email,
-      university
+      name
     }).then(() => {
       showNotification('Account credentials saved successfully!', 'success');
     }).catch(err => {
@@ -313,9 +311,9 @@ export default function Settings() {
                 </label>
                 <div className="grid grid-cols-3 gap-3 max-w-md">
                   {[
-                    { id: 0, name: 'Light Mode', icon: Sun, iconColor: 'text-amber-500' },
-                    { id: 1, name: 'Dark Mode', icon: Moon, iconColor: 'text-indigo-400' },
-                    { id: 2, name: 'System Mode', icon: Monitor, iconColor: 'text-gray-500' }
+                    { id: 'light', name: 'Light Mode', icon: Sun, iconColor: 'text-amber-500' },
+                    { id: 'dark', name: 'Dark Mode', icon: Moon, iconColor: 'text-indigo-400' },
+                    { id: 'system', name: 'System Mode', icon: Monitor, iconColor: 'text-gray-500' }
                   ].map((themeOpt) => {
                     const Icon = themeOpt.icon;
                     return (

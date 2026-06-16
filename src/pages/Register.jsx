@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFiles } from '../context/FileContext';
 
 export default function Register() {
-  const { register, googleLogin } = useFiles();
+  const { register, googleLogin, showNotification } = useFiles();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,6 +36,7 @@ export default function Register() {
     setLoading(false);
 
     if (result.success) {
+      showNotification('Account created successfully! Welcome to Vaultify.', 'success');
       navigate('/dashboard');
     } else {
       setError(result.message || 'Registration failed. Please try again.');
@@ -50,11 +51,12 @@ export default function Register() {
     const result = await googleLogin({
       email: account.email,
       name: account.name,
-      imageUrl: account.avatar
+      profile_image: account.avatar
     });
     
     setLoading(false);
     if (result.success) {
+      showNotification('Signed in with Google successfully!', 'success');
       navigate('/dashboard');
     } else {
       setError(result.message || 'Google authentication failed.');

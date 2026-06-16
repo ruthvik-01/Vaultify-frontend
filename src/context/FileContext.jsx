@@ -45,23 +45,23 @@ export const FileProvider = ({ children }) => {
     bio: '',
     storage_plan: 'free',
     theme_color: 'grid',
-    dark_mode: false,
-    sidebar_color: 'default',
+    dark_mode: 'light',
+    sidebar_color: 'expanded',
     accent_color: 'green',
-    font_size: 'base',
+    font_size: 'medium',
     created_at: '',
   });
 
   const applySettingsToDOM = (settings) => {
     const root = document.documentElement;
     
-    // 1. Theme mode (0 = light, 1 = dark, 2 = system)
+    // 1. Theme mode ('light', 'dark', 'system')
     let isDark = false;
-    const dm = parseInt(settings.dark_mode, 10);
-    if (dm === 2) {
+    const dm = settings.dark_mode || 'light';
+    if (dm === 'system') {
       isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     } else {
-      isDark = dm === 1;
+      isDark = dm === 'dark';
     }
     
     if (isDark) {
@@ -77,18 +77,19 @@ export const FileProvider = ({ children }) => {
     root.setAttribute('data-accent-color', settings.accent_color || 'green');
     
     // 3. Sidebar mode (compact, expanded)
-    root.setAttribute('data-sidebar-mode', settings.sidebar_color || 'expanded');
+    root.setAttribute('data-sidebar-mode', settings.sidebar_color === 'compact' ? 'compact' : 'expanded');
     
-    // 4. Display preference (grid, list)
-    root.setAttribute('data-display-view', settings.theme_color || 'grid');
+    // 4. Display preference (grid, list) — backend may return 'sage' or other color name as legacy default
+    const viewMode = ['grid', 'list'].includes(settings.theme_color) ? settings.theme_color : 'grid';
+    root.setAttribute('data-display-view', viewMode);
     
     // 5. Font size (small, medium, large)
     root.setAttribute('data-font-size', settings.font_size || 'medium');
     
     localStorage.setItem('vaultify_settings', JSON.stringify({
-      theme_color: settings.theme_color || 'grid',
-      dark_mode: settings.dark_mode !== undefined ? parseInt(settings.dark_mode, 10) : 0,
-      sidebar_color: settings.sidebar_color || 'expanded',
+      theme_color: viewMode,
+      dark_mode: dm,
+      sidebar_color: settings.sidebar_color === 'compact' ? 'compact' : 'expanded',
       accent_color: settings.accent_color || 'green',
       font_size: settings.font_size || 'medium'
     }));
@@ -100,6 +101,8 @@ export const FileProvider = ({ children }) => {
       try {
         applySettingsToDOM(JSON.parse(cached));
       } catch (_) {}
+    } else {
+      applySettingsToDOM(user);
     }
     
     // Media query listener for system theme changes
@@ -109,7 +112,7 @@ export const FileProvider = ({ children }) => {
       if (current) {
         try {
           const parsed = JSON.parse(current);
-          if (parseInt(parsed.dark_mode, 10) === 2) {
+          if (parsed.dark_mode === 'system') {
             applySettingsToDOM(parsed);
           }
         } catch (_) {}
@@ -209,9 +212,9 @@ export const FileProvider = ({ children }) => {
           bio: userData.bio || '',
           profile_image: userData.profile_image || null,
           storage_plan: userData.storage_plan || 'free',
-          theme_color: userData.theme_color || 'grid',
-          dark_mode: userData.dark_mode !== undefined ? parseInt(userData.dark_mode, 10) : 0,
-          sidebar_color: userData.sidebar_color || 'expanded',
+          theme_color: ['grid', 'list'].includes(userData.theme_color) ? userData.theme_color : 'grid',
+          dark_mode: ['light', 'dark', 'system'].includes(userData.dark_mode) ? userData.dark_mode : 'light',
+          sidebar_color: userData.sidebar_color === 'compact' ? 'compact' : 'expanded',
           accent_color: userData.accent_color || 'green',
           font_size: userData.font_size || 'medium',
           avatar:
@@ -331,18 +334,13 @@ export const FileProvider = ({ children }) => {
 
   const deleteFile = async (id) => {
     try {
-      await api.deleteFile(id);
       const file = files.find((f) => f.id === id);
-      // Move to trash (soft delete)
-      setFiles((prev) =>
-        prev.map((f) => {
-          if (f.id === id) {
-            addActivity('deleted', f.name, f.category);
-            return { ...f, inTrash: true };
-          }
-          return f;
-        })
-      );
+      await api.deleteFile(id);
+      // Backend permanently deletes — remove from state
+      if (file) {
+        addActivity('deleted', file.name, file.category);
+      }
+      setFiles((prev) => prev.filter((f) => f.id !== id));
     } catch (err) {
       console.error('Delete failed:', err.message);
     }
@@ -459,10 +457,10 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const shareFile = async (id, permission = 'view', expiryHours = 24) => {
+  const shareFile = async (id, permission = 'read', expiryHours = 24) => {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/share`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/share`,
         {
           method: 'POST',
           headers: {
@@ -488,8 +486,9 @@ export const FileProvider = ({ children }) => {
   const fetchAllFolders = async () => {
     try {
       const res = await api.getFolders();
-      if (res.data) {
-        setFolders(res.data);
+      const foldersList = res.data?.folders || res.data;
+      if (foldersList) {
+        setFolders(Array.isArray(foldersList) ? foldersList : []);
       }
     } catch (err) {
       console.error('Failed to fetch folders:', err.message);
@@ -551,7 +550,7 @@ export const FileProvider = ({ children }) => {
     setFiles([]);
     setFolders([]);
     setActivities([]);
-    setUser({ name: '', email: '', studentId: '', university: '', major: '' });
+    setUser({ name: '', email: '', studentId: '', university: '', major: '', storage_plan: 'free', theme_color: 'grid', dark_mode: 'light', sidebar_color: 'expanded', accent_color: 'green', font_size: 'medium', created_at: '' });
   };
 
   const updateProfile = async (profileData) => {
@@ -564,7 +563,8 @@ export const FileProvider = ({ children }) => {
             ...prev, 
             ...updatedUser,
             avatar: updatedUser.profile_image || prev.avatar,
-            dark_mode: updatedUser.dark_mode !== undefined ? parseInt(updatedUser.dark_mode, 10) : prev.dark_mode,
+            theme_color: ['grid', 'list'].includes(updatedUser.theme_color) ? updatedUser.theme_color : prev.theme_color,
+            dark_mode: ['light', 'dark', 'system'].includes(updatedUser.dark_mode) ? updatedUser.dark_mode : prev.dark_mode,
             created_at: updatedUser.created_at || prev.created_at
           };
           applySettingsToDOM(nextUser);
@@ -614,9 +614,50 @@ export const FileProvider = ({ children }) => {
         fetchAllFolders,
         fetchTrashFiles,
         fetchUserProfile,
+        showNotification,
       }}
     >
       {children}
+      {/* Centered Modern Toast Notification overlay */}
+      {toast && (
+        <div 
+          style={{ animation: 'toast-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center space-x-3 px-4.5 py-3 rounded-2xl border shadow-xl backdrop-blur-md pointer-events-auto max-w-sm sm:max-w-md w-auto ${
+            toast.type === 'error'
+              ? 'bg-rose-50/95 border-rose-200 text-rose-800 dark:bg-rose-950/95 dark:border-rose-900/50 dark:text-rose-200'
+              : toast.type === 'info'
+              ? 'bg-blue-50/95 border-blue-200 text-blue-800 dark:bg-blue-950/95 dark:border-blue-900/50 dark:text-blue-200'
+              : 'bg-emerald-50/95 border-emerald-200 text-emerald-800 dark:bg-emerald-950/95 dark:border-emerald-900/50 dark:text-emerald-200'
+          }`}
+        >
+          {toast.type === 'error' ? (
+            <div className="bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 p-1.5 rounded-xl border border-rose-200/30 shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+          ) : toast.type === 'info' ? (
+            <div className="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 p-1.5 rounded-xl border border-blue-200/30 shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
+              </svg>
+            </div>
+          ) : (
+            <div className="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 p-1.5 rounded-xl border border-emerald-200/30 shrink-0">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
+          
+          <div className="flex-1 min-w-0 pr-1 text-left">
+            <span className="text-[12px] font-bold tracking-tight leading-normal block">
+              {toast.message}
+            </span>
+          </div>
+        </div>
+      )}
     </FileContext.Provider>
   );
 };

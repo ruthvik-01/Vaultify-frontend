@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useFiles } from '../context/FileContext';
 
 export default function Login() {
-  const { login, googleLogin } = useFiles();
+  const { login, googleLogin, showNotification } = useFiles();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +30,7 @@ export default function Login() {
     setLoading(false);
     
     if (result.success) {
+      showNotification('Signed in successfully! Welcome back to Vaultify.', 'success');
       navigate('/dashboard');
     } else {
       setError(result.message || 'Invalid credentials. Please try again.');
@@ -44,11 +45,12 @@ export default function Login() {
     const result = await googleLogin({
       email: account.email,
       name: account.name,
-      imageUrl: account.avatar
+      profile_image: account.avatar
     });
     
     setLoading(false);
     if (result.success) {
+      showNotification('Signed in with Google successfully!', 'success');
       navigate('/dashboard');
     } else {
       setError(result.message || 'Google authentication failed.');

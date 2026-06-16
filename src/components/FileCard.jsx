@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
   FileText, Award, FolderGit, FileCode, Video, File, 
@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FileCard({ file, viewMode = 'grid', isTrashView = false }) {
-  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl } = useFiles();
+  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl, showNotification } = useFiles();
   const [showMenu, setShowMenu] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
@@ -16,6 +16,18 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [textContent, setTextContent] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+
+  // Fetch presigned thumbnail URL for image files on mount
+  useEffect(() => {
+    const ext = file.name.split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
+    if (isImage && viewMode === 'grid' && !isTrashView) {
+      getPreviewUrl(file.id).then((url) => {
+        if (url) setThumbnailUrl(url);
+      });
+    }
+  }, [file.id]);
 
   const handleOpenPreview = async () => {
     setShowPreviewPanel(true);
@@ -91,7 +103,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
     if (!shareEmail.trim()) return;
     shareFile(file.id, shareEmail.trim());
     setShareEmail('');
-    alert(`File shared with ${shareEmail.trim()}`);
+    showNotification(`File shared with ${shareEmail.trim()}`, 'success');
   };
 
   const handleDownload = () => {
@@ -239,12 +251,10 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
             const ext = file.name.split('.').pop().toLowerCase();
             const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
             
-            if (isImage) {
-              const token = localStorage.getItem('vaultify_token');
-              const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?token=${token}&disposition=inline&redirect=true`;
+            if (isImage && thumbnailUrl) {
               return (
                 <img 
-                  src={imageUrl} 
+                  src={thumbnailUrl} 
                   alt={file.name} 
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
@@ -253,6 +263,14 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     e.target.parentNode.innerHTML = '<div class="text-gray-400 flex flex-col items-center"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg><span class="text-[9px] mt-1">Image Unloaded</span></div>';
                   }}
                 />
+              );
+            }
+            if (isImage && !thumbnailUrl) {
+              return (
+                <div className="flex flex-col items-center space-y-1">
+                  <Loader2 className="w-6 h-6 text-brand-olive animate-spin" />
+                  <span className="text-[9px] text-gray-400">Loading preview...</span>
+                </div>
               );
             }
             if (ext === 'pdf') {
@@ -429,7 +447,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                           type="button"
                           onClick={() => {
                             removeShare(file.id, email);
-                            alert(`Removed share permission for ${email}`);
+                            showNotification(`Removed share permission for ${email}`, 'success');
                           }}
                           className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 rounded transition-all"
                         >
@@ -455,7 +473,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                   type="button"
                   onClick={() => {
                     navigator.clipboard.writeText(`${window.location.origin}/shared-preview/${file.id}`);
-                    alert('Copied secure file share link to clipboard!');
+                    showNotification('Copied secure file share link to clipboard!', 'success');
                   }}
                   className="bg-brand-cream-dark hover:bg-brand-sand text-brand-charcoal px-3 py-2 rounded-xl text-[10px] font-bold border border-brand-sand transition-all flex items-center space-x-1"
                 >

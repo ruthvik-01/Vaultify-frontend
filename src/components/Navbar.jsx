@@ -4,10 +4,12 @@ import { Menu, Plus, Bell, Calendar } from 'lucide-react';
 import SearchBar from './SearchBar';
 import UserMenu from './UserMenu';
 import UploadModal from './UploadModal';
+import { useFiles } from '../context/FileContext';
 
 export default function Navbar({ onMenuToggle }) {
   const location = useLocation();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const { showNotification } = useFiles();
 
   // Derive page title from path
   const getPageTitle = (pathname) => {
@@ -80,7 +82,7 @@ export default function Navbar({ onMenuToggle }) {
 
           {/* Dummy notification button */}
           <button
-            onClick={() => alert('Activity Logs: No new alerts.')}
+            onClick={() => showNotification('Activity Logs: No new alerts.', 'info')}
             className="p-2 bg-brand-cream border border-brand-sand hover:bg-brand-cream-dark rounded-xl text-gray-500 hover:text-brand-charcoal relative transition-all cursor-pointer"
           >
             <Bell className="w-4.5 h-4.5" />
