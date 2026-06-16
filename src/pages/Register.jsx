@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useFiles } from '../context/FileContext';
 
 export default function Register() {
-  const { login } = useFiles();
+  const { register } = useFiles();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,16 +14,29 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Mock login using demo credentials for immediate sandbox access
-      login('demo@studentvault.com', 'password123');
-      alert('Mock account registered successfully! Entering your StudentVault.');
+    setError('');
+    
+    const userData = {
+      name,
+      email,
+      password,
+      studentId,
+      university
+    };
+
+    const result = await register(userData);
+    setLoading(false);
+
+    if (result.success) {
       navigate('/dashboard');
-    }, 800);
+    } else {
+      setError(result.message || 'Registration failed. Please try again.');
+    }
   };
 
   return (
@@ -32,6 +45,12 @@ export default function Register() {
         <h3 className="font-serif text-2xl font-bold text-brand-charcoal">Create student vault</h3>
         <p className="text-xs text-gray-500 mt-1">Get 10 GB of free encrypted storage for your career assets</p>
       </div>
+
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-600 font-medium text-left">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full Name */}
