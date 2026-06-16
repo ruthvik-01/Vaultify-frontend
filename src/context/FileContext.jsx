@@ -259,13 +259,50 @@ export const FileProvider = ({ children }) => {
   }, [files]);
 
   // Operations
-  const uploadFile = (fileData) => {
+  const uploadFile = async (fileData) => {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const token = localStorage.getItem('studentvault_token');
+
+    // Build FormData with the actual file blob
+    const formData = new FormData();
+    if (fileData.file) {
+      formData.append('file', fileData.file);
+    }
+    formData.append('category', fileData.category || 'Resumes');
+
+    let serverFileId = null;
+
+    try {
+      const response = await fetch(`${API_URL}/files/upload`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          // NOTE: Do NOT set 'Content-Type' — the browser sets it with the correct multipart boundary
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      serverFileId = result?.data?.file?.id;
+      console.log('File uploaded to backend successfully:', result);
+    } catch (error) {
+      console.error('Backend upload error:', error);
+      // Re-throw so the component can handle the error state
+      throw error;
+    }
+
+    // Update local state for UI
     const newFile = {
-      id: `f_${Date.now()}`,
+      id: serverFileId || `f_${Date.now()}`,
       name: fileData.name,
       category: fileData.category || 'Resumes',
       type: fileData.type || 'pdf',
-      size: fileData.size || 1500000, // default ~1.5MB
+      size: fileData.size || 1500000,
       dateAdded: new Date().toISOString(),
       isStarred: false,
       inTrash: false,

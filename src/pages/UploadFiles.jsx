@@ -26,6 +26,7 @@ export default function UploadFiles() {
   const [progress, setProgress] = useState(0);
 
   const fileInputRef = useRef(null);
+  const selectedFileRef = useRef(null);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -57,6 +58,7 @@ export default function UploadFiles() {
 
   const setupFileDetails = (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
+    selectedFileRef.current = file; // Store the actual File object
     setFileName(file.name);
     setFileSize(file.size);
     setFileType(ext);
@@ -86,32 +88,44 @@ export default function UploadFiles() {
     setTags(tags.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const executeUpload = () => {
+  const executeUpload = async () => {
     setUploadState('uploading');
     setProgress(0);
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploadState('success');
-          
-          // Add file with complete details to context
-          uploadFile({
-            name: fileName,
-            category,
-            type: fileType,
-            size: fileSize,
-            tags,
-            certificateIssuer: category === 'Certificates' ? certificateIssuer : undefined,
-            credentialId: category === 'Certificates' ? credentialId : undefined,
-            projectLink: category === 'Projects' ? projectLink : undefined
-          });
-          return 100;
-        }
-        return prev + 10;
+    try {
+      // Start a progress animation while the real upload happens
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90; // Hold at 90% until real upload completes
+          }
+          return prev + 10;
+        });
+      }, 120);
+
+      // Upload the actual file to the backend
+      await uploadFile({
+        file: selectedFileRef.current, // The actual File blob
+        name: fileName,
+        category,
+        type: fileType,
+        size: fileSize,
+        tags,
+        certificateIssuer: category === 'Certificates' ? certificateIssuer : undefined,
+        credentialId: category === 'Certificates' ? credentialId : undefined,
+        projectLink: category === 'Projects' ? projectLink : undefined
       });
-    }, 120);
+
+      clearInterval(progressInterval);
+      setProgress(100);
+      setUploadState('success');
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setUploadState('idle');
+      setProgress(0);
+      alert('Upload failed: ' + (error?.message || 'Unknown error'));
+    }
   };
 
   const formatSize = (bytes) => {
@@ -121,6 +135,7 @@ export default function UploadFiles() {
   };
 
   const resetUploadPage = () => {
+    selectedFileRef.current = null; // Clear stored file
     setFileName('');
     setFileSize(0);
     setFileType('');
