@@ -241,7 +241,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
             
             if (isImage) {
               const token = localStorage.getItem('vaultify_token');
-              const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?token=${token}&disposition=inline`;
+              const imageUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?token=${token}&disposition=inline&redirect=true`;
               return (
                 <img 
                   src={imageUrl} 

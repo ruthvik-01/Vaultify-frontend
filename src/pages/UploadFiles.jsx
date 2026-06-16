@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UploadFiles() {
-  const { uploadFile, files } = useFiles();
+  const { uploadFile, files, showNotification } = useFiles();
   const [dragActive, setDragActive] = useState(false);
   const [uploadState, setUploadState] = useState('idle'); // idle | configuring | uploading | success
   
@@ -124,7 +124,7 @@ export default function UploadFiles() {
       console.error('Upload failed:', error);
       setUploadState('idle');
       setProgress(0);
-      alert('Upload failed: ' + (error?.message || 'Unknown error'));
+      showNotification('Upload failed: ' + (error?.message || 'Unknown error'), 'error');
     }
   };
 

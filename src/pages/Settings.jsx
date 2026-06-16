@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 
 export default function Settings() {
-  const { user, notifications, updateProfile, updateNotifications } = useFiles();
+  const { user, notifications, updateProfile, updateNotifications, showNotification } = useFiles();
   const [activeSubTab, setActiveSubTab] = useState('account'); // account | notifications | preferences | plan
 
   // Account Form states
@@ -24,7 +24,7 @@ export default function Settings() {
   const [themeColor, setThemeColor] = useState(user.theme_color || 'grid');
   const [darkMode, setDarkMode] = useState(user.dark_mode !== undefined ? parseInt(user.dark_mode, 10) : 0);
   const [sidebarColor, setSidebarColor] = useState(user.sidebar_color || 'expanded');
-  const [accentColor, setAccentColor] = useState(user.accent_color || 'blue');
+  const [accentColor, setAccentColor] = useState(user.accent_color || 'green');
   const [fontSize, setFontSize] = useState(user.font_size || 'medium');
 
   useEffect(() => {
@@ -34,9 +34,16 @@ export default function Settings() {
     setThemeColor(user.theme_color || 'grid');
     setDarkMode(user.dark_mode !== undefined ? parseInt(user.dark_mode, 10) : 0);
     setSidebarColor(user.sidebar_color || 'expanded');
-    setAccentColor(user.accent_color || 'blue');
+    setAccentColor(user.accent_color || 'green');
     setFontSize(user.font_size || 'medium');
   }, [user]);
+
+  useEffect(() => {
+    setEmailOnShare(notifications.emailOnShare);
+    setEmailOnDownload(notifications.emailOnDownload);
+    setPlacementAlerts(notifications.placementAlerts);
+    setWeeklyReport(notifications.weeklyReport);
+  }, [notifications]);
 
   const handleAccountSave = (e) => {
     e.preventDefault();
@@ -45,43 +52,47 @@ export default function Settings() {
       email,
       university
     }).then(() => {
-      alert('Account credentials saved successfully!');
+      showNotification('Account credentials saved successfully!', 'success');
     }).catch(err => {
-      alert('Failed to save credentials: ' + err.message);
+      showNotification('Failed to save credentials: ' + err.message, 'error');
     });
   };
 
-  const handleNotificationSave = () => {
-    updateNotifications({
-      emailOnShare,
-      emailOnDownload,
-      placementAlerts,
-      weeklyReport
-    });
-    alert('Notification rules updated successfully!');
+  const updateNotificationPreference = (key, value) => {
+    // Immediate state change
+    if (key === 'emailOnShare') setEmailOnShare(value);
+    if (key === 'emailOnDownload') setEmailOnDownload(value);
+    if (key === 'placementAlerts') setPlacementAlerts(value);
+    if (key === 'weeklyReport') setWeeklyReport(value);
+
+    updateNotifications({ [key]: value });
+    showNotification('Notification preference auto-saved!', 'success');
   };
 
-  const handlePreferencesSave = () => {
-    updateProfile({
-      theme_color: themeColor,
-      dark_mode: darkMode,
-      sidebar_color: sidebarColor,
-      accent_color: accentColor,
-      font_size: fontSize
-    }).then(() => {
-      alert('Custom styling preferences saved and applied successfully!');
-    }).catch(err => {
-      alert('Failed to save preferences: ' + err.message);
-    });
+  const updatePreference = (key, value) => {
+    // Immediate state change
+    if (key === 'theme_color') setThemeColor(value);
+    if (key === 'dark_mode') setDarkMode(value);
+    if (key === 'sidebar_color') setSidebarColor(value);
+    if (key === 'accent_color') setAccentColor(value);
+    if (key === 'font_size') setFontSize(value);
+
+    updateProfile({ [key]: value })
+      .then(() => {
+        showNotification('Styling preference updated immediately!', 'success');
+      })
+      .catch(err => {
+        showNotification('Failed to auto-save styling preference: ' + err.message, 'error');
+      });
   };
 
   const handleUpgradePlan = (planName) => {
     updateProfile({
       storage_plan: planName === 'pro' ? 'pro' : 'free'
     }).then(() => {
-      alert(`Successfully configured account storage allocation plan to ${planName.toUpperCase()}!`);
+      showNotification(`Successfully configured account storage allocation plan to ${planName.toUpperCase()}!`, 'success');
     }).catch(err => {
-      alert('Plan update failed: ' + err.message);
+      showNotification('Plan update failed: ' + err.message, 'error');
     });
   };
 
@@ -220,8 +231,8 @@ export default function Settings() {
                 <input
                   type="checkbox"
                   checked={emailOnShare}
-                  onChange={(e) => setEmailOnShare(e.target.checked)}
-                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand"
+                  onChange={(e) => updateNotificationPreference('emailOnShare', e.target.checked)}
+                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand cursor-pointer"
                 />
               </div>
 
@@ -233,8 +244,8 @@ export default function Settings() {
                 <input
                   type="checkbox"
                   checked={emailOnDownload}
-                  onChange={(e) => setEmailOnDownload(e.target.checked)}
-                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand"
+                  onChange={(e) => updateNotificationPreference('emailOnDownload', e.target.checked)}
+                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand cursor-pointer"
                 />
               </div>
 
@@ -246,19 +257,15 @@ export default function Settings() {
                 <input
                   type="checkbox"
                   checked={weeklyReport}
-                  onChange={(e) => setWeeklyReport(e.target.checked)}
-                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand"
+                  onChange={(e) => updateNotificationPreference('weeklyReport', e.target.checked)}
+                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand cursor-pointer"
                 />
               </div>
 
-              <button
-                type="button"
-                onClick={handleNotificationSave}
-                className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save Notification Rules</span>
-              </button>
+              <div className="text-[10px] text-gray-400 font-medium italic flex items-center pt-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse" />
+                <span>Preferences auto-save instantly</span>
+              </div>
             </div>
           </div>
         )}
@@ -273,7 +280,7 @@ export default function Settings() {
 
             <div className="space-y-5">
               
-              {/* Display View Preference */}
+              {/* Display View Layout Preference */}
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-2">
                   Display View Layout
@@ -286,7 +293,7 @@ export default function Settings() {
                     <button
                       key={viewOpt.id}
                       type="button"
-                      onClick={() => setThemeColor(viewOpt.id)}
+                      onClick={() => updatePreference('theme_color', viewOpt.id)}
                       className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
                         themeColor === viewOpt.id
                           ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
@@ -315,7 +322,7 @@ export default function Settings() {
                       <button
                         key={themeOpt.id}
                         type="button"
-                        onClick={() => setDarkMode(themeOpt.id)}
+                        onClick={() => updatePreference('dark_mode', themeOpt.id)}
                         className={`flex flex-col items-center justify-center p-3 border rounded-xl text-xs font-bold transition-all cursor-pointer space-y-1.5 ${
                           darkMode === themeOpt.id
                             ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
@@ -343,7 +350,7 @@ export default function Settings() {
                     <button
                       key={sidebarOpt.id}
                       type="button"
-                      onClick={() => setSidebarColor(sidebarOpt.id)}
+                      onClick={() => updatePreference('sidebar_color', sidebarOpt.id)}
                       className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
                         sidebarColor === sidebarOpt.id
                           ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
@@ -363,16 +370,16 @@ export default function Settings() {
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {[
+                    { id: 'green', name: 'Green (Default)', color: 'bg-emerald-600' },
                     { id: 'blue', name: 'Blue', color: 'bg-blue-500' },
                     { id: 'purple', name: 'Purple', color: 'bg-purple-500' },
-                    { id: 'green', name: 'Green', color: 'bg-green-500' },
                     { id: 'orange', name: 'Orange', color: 'bg-orange-500' },
                     { id: 'red', name: 'Red', color: 'bg-red-500' }
                   ].map((accentOpt) => (
                     <button
                       key={accentOpt.id}
                       type="button"
-                      onClick={() => setAccentColor(accentOpt.id)}
+                      onClick={() => updatePreference('accent_color', accentOpt.id)}
                       className={`flex items-center space-x-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         accentColor === accentOpt.id
                           ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
@@ -400,7 +407,7 @@ export default function Settings() {
                     <button
                       key={fontOpt.id}
                       type="button"
-                      onClick={() => setFontSize(fontOpt.id)}
+                      onClick={() => updatePreference('font_size', fontOpt.id)}
                       className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
                         fontSize === fontOpt.id
                           ? 'border-brand-olive bg-brand-olive/10 text-brand-olive'
@@ -414,14 +421,10 @@ export default function Settings() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={handlePreferencesSave}
-                className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save Preferences</span>
-              </button>
+              <div className="text-[10px] text-gray-400 font-medium italic flex items-center pt-2">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse" />
+                <span>Preferences auto-save instantly</span>
+              </div>
 
             </div>
           </div>

@@ -16,6 +16,21 @@ export const FileProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return !!localStorage.getItem('vaultify_token');
   });
+  const [toast, setToast] = useState(null);
+
+  const showNotification = (message, type = 'success') => {
+    setToast({ message, type, id: Date.now() });
+  };
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -29,10 +44,10 @@ export const FileProvider = ({ children }) => {
     phone: '',
     bio: '',
     storage_plan: 'free',
-    theme_color: 'sage',
+    theme_color: 'grid',
     dark_mode: false,
     sidebar_color: 'default',
-    accent_color: 'olive',
+    accent_color: 'green',
     font_size: 'base',
     created_at: '',
   });
@@ -59,7 +74,7 @@ export const FileProvider = ({ children }) => {
     root.setAttribute('data-dark-mode-active', isDark ? 'true' : 'false');
     
     // 2. Accent color (blue, purple, green, orange, red)
-    root.setAttribute('data-accent-color', settings.accent_color || 'blue');
+    root.setAttribute('data-accent-color', settings.accent_color || 'green');
     
     // 3. Sidebar mode (compact, expanded)
     root.setAttribute('data-sidebar-mode', settings.sidebar_color || 'expanded');
@@ -74,7 +89,7 @@ export const FileProvider = ({ children }) => {
       theme_color: settings.theme_color || 'grid',
       dark_mode: settings.dark_mode !== undefined ? parseInt(settings.dark_mode, 10) : 0,
       sidebar_color: settings.sidebar_color || 'expanded',
-      accent_color: settings.accent_color || 'blue',
+      accent_color: settings.accent_color || 'green',
       font_size: settings.font_size || 'medium'
     }));
   };
@@ -197,7 +212,7 @@ export const FileProvider = ({ children }) => {
           theme_color: userData.theme_color || 'grid',
           dark_mode: userData.dark_mode !== undefined ? parseInt(userData.dark_mode, 10) : 0,
           sidebar_color: userData.sidebar_color || 'expanded',
-          accent_color: userData.accent_color || 'blue',
+          accent_color: userData.accent_color || 'green',
           font_size: userData.font_size || 'medium',
           avatar:
             userData.profile_image ||

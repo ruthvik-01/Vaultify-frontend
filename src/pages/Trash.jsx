@@ -5,7 +5,7 @@ import EmptyState from '../components/EmptyState';
 import { Trash2, RefreshCcw, ShieldAlert, ArchiveRestore } from 'lucide-react';
 
 export default function Trash() {
-  const { files, clearTrash, restoreFile } = useFiles();
+  const { files, clearTrash, restoreFile, showNotification } = useFiles();
 
   // Filter files that ARE in trash
   const trashFiles = files.filter(f => f.inTrash);
@@ -22,7 +22,7 @@ export default function Trash() {
     trashFiles.forEach(f => {
       restoreFile(f.id);
     });
-    alert('Restored all trash items back to their active locker directories!');
+    showNotification('Restored all trash items back to their directories!', 'success');
   };
 
   return (

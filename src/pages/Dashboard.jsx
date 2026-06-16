@@ -17,7 +17,7 @@ const GithubIcon = (props) => (
 );
 
 export default function Dashboard() {
-  const { files, activities, user, uploadFile, storageStats } = useFiles();
+  const { files, activities, user, uploadFile, storageStats, showNotification } = useFiles();
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
 
@@ -90,9 +90,9 @@ export default function Dashboard() {
         size: file.size,
         tags: ['Quick Upload']
       }).then(() => {
-        alert(`Successfully uploaded "${file.name}" to ${cat} category!`);
+        showNotification(`Successfully uploaded "${file.name}" to ${cat} category!`, 'success');
       }).catch((err) => {
-        alert('Upload failed: ' + (err?.message || 'Unknown error'));
+        showNotification('Upload failed: ' + (err?.message || 'Unknown error'), 'error');
       });
     }
   };
@@ -296,11 +296,34 @@ export default function Dashboard() {
             </div>
             
             {recentFiles.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recentFiles.map(file => (
-                  <FileCard key={file.id} file={file} viewMode="grid" />
-                ))}
-              </div>
+              user.theme_color === 'list' ? (
+                <div className="bg-white border border-brand-sand rounded-2xl overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-brand-sand/70 text-left">
+                      <thead className="bg-brand-cream">
+                        <tr>
+                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">File Name</th>
+                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Category</th>
+                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Size</th>
+                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Date Added</th>
+                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-brand-sand/55">
+                        {recentFiles.map(file => (
+                          <FileCard key={file.id} file={file} viewMode="list" />
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {recentFiles.map(file => (
+                    <FileCard key={file.id} file={file} viewMode="grid" />
+                  ))}
+                </div>
+              )
             ) : (
               <div className="bg-white border border-brand-sand p-8 rounded-3xl text-center text-xs text-gray-500">
                 Locker is currently empty. Drop some files above to get started.
@@ -347,7 +370,7 @@ export default function Dashboard() {
 
                   <div className="flex space-x-2.5 mt-4 pt-3 border-t border-brand-sand/65">
                     <button
-                      onClick={() => alert('Viewing repository mock details.')}
+                      onClick={() => showNotification('Opening workspace presentation node.', 'info')}
                       className="flex-1 bg-brand-cream hover:bg-brand-sand/50 text-brand-charcoal font-bold py-2 rounded-xl text-[10px] border border-brand-sand transition-all flex items-center justify-center space-x-1"
                     >
                       <Compass className="w-3 h-3" />

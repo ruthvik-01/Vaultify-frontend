@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import EmptyState from '../components/EmptyState';
 
 export default function SharedFiles() {
-  const { files, removeShare, getPreviewUrl } = useFiles();
+  const { files, removeShare, getPreviewUrl, showNotification } = useFiles();
   const [activeTab, setActiveTab] = useState('by-me'); // by-me | with-me
 
   // Preview panel states
@@ -96,7 +96,7 @@ export default function SharedFiles() {
 
   const handleCopyLink = (fileId) => {
     navigator.clipboard.writeText(`https://vaultify.co/shared-preview/${fileId}`);
-    alert('Secure share link copied to clipboard!');
+    showNotification('Secure share link copied to clipboard!', 'success');
   };
 
   const handleOpenPreview = async (file) => {
@@ -224,7 +224,7 @@ export default function SharedFiles() {
                           <button
                             onClick={() => {
                               removeShare(file.id, email);
-                              alert(`Access revoked for ${email}`);
+                              showNotification(`Access revoked for ${email}`, 'success');
                             }}
                             className="text-red-500 hover:text-red-700 font-bold text-xs"
                           >

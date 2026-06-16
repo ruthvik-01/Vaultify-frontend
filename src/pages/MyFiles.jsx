@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MyFiles() {
-  const { files, user, searchQuery, setSearchQuery } = useFiles();
+  const { files, user, searchQuery, setSearchQuery, updateProfile } = useFiles();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // States
@@ -243,14 +243,20 @@ export default function MyFiles() {
           {/* List/Grid View Mode toggle */}
           <div className="flex items-center space-x-1.5 bg-brand-cream border border-brand-sand p-1 rounded-xl">
             <button
-              onClick={() => setViewMode('grid')}
+              onClick={() => {
+                setViewMode('grid');
+                updateProfile({ theme_color: 'grid' });
+              }}
               className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-brand-olive shadow-sm' : 'text-gray-400 hover:text-brand-charcoal'}`}
               title="Grid Layout"
             >
               <Grid className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => {
+                setViewMode('list');
+                updateProfile({ theme_color: 'list' });
+              }}
               className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-brand-olive shadow-sm' : 'text-gray-400 hover:text-brand-charcoal'}`}
               title="List Layout"
             >

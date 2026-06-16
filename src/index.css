@@ -117,8 +117,8 @@
   --color-brand-olive-dark: #6D28D9;
 }
 :root[data-accent-color="green"] {
-  --color-brand-olive: #059669;
-  --color-brand-olive-dark: #047857;
+  --color-brand-olive: #4A5D4E;
+  --color-brand-olive-dark: #37463B;
 }
 :root[data-accent-color="orange"] {
   --color-brand-olive: #D97706;

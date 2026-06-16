@@ -4,7 +4,7 @@ import { HardDrive, HelpCircle, Sparkles, X } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 export default function StorageCard({ isCompact = false }) {
-  const { storageStats } = useFiles();
+  const { storageStats, showNotification } = useFiles();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const formatSize = (bytes) => {
@@ -227,7 +227,7 @@ export default function StorageCard({ isCompact = false }) {
                   </button>
                   <button
                     onClick={() => {
-                      alert('Thank you! This is a demo presentation. Upgrading plans represents integration with Stripe.');
+                      showNotification('Pro Plan Sandbox: Upgrade features represent full payment gateway integrations.', 'info');
                       setShowUpgradeModal(false);
                     }}
                     className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white font-semibold py-2.5 rounded-xl text-xs transition-all shadow-sm"
