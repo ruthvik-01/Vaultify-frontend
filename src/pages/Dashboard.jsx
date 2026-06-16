@@ -63,13 +63,17 @@ export default function Dashboard() {
       }
 
       uploadFile({
+        file: file,
         name: file.name,
         category: cat,
         type: ext,
         size: file.size,
         tags: ['Quick Upload']
+      }).then(() => {
+        alert(`Successfully uploaded "${file.name}" to ${cat} category!`);
+      }).catch((err) => {
+        alert('Upload failed: ' + (err?.message || 'Unknown error'));
       });
-      alert(`Successfully uploaded "${file.name}" to ${cat} category!`);
     }
   };
 

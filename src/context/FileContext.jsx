@@ -156,9 +156,10 @@ export const FileProvider = ({ children }) => {
   const fetchAllFiles = async () => {
     try {
       const res = await api.getFiles();
-      // Backend returns: { status, results, data: [...files] }
-      if (res.data) {
-        const mapped = res.data.map(mapBackendFile);
+      // Backend returns: { status, results, data: { files: [...] } }
+      const filesList = res.data?.files || res.data;
+      if (Array.isArray(filesList)) {
+        const mapped = filesList.map(mapBackendFile);
         setFiles(mapped);
       }
     } catch (err) {
@@ -212,8 +213,9 @@ export const FileProvider = ({ children }) => {
       }
 
       const res = await api.uploadFile(formData);
-      if (res.data) {
-        const newFile = mapBackendFile(res.data);
+      const fileData2 = res.data?.file || res.data;
+      if (fileData2) {
+        const newFile = mapBackendFile(fileData2);
         setFiles((prev) => [newFile, ...prev]);
         addActivity('uploaded', newFile.name, newFile.category);
       }
