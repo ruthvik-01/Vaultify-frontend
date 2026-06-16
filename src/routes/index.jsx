@@ -9,6 +9,8 @@ import Landing from '../pages/Landing';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
+import VerifyEmail from '../pages/VerifyEmail';
+import ResetPassword from '../pages/ResetPassword';
 
 // Inner Dashboard Pages
 import Dashboard from '../pages/Dashboard';
@@ -36,6 +38,8 @@ export default function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       {/* Authenticated Dashboard Core Routes */}

@@ -3,16 +3,46 @@ import { useFiles } from '../context/FileContext';
 import { 
   FileText, Award, FolderGit, FileCode, Video, File, 
   MoreVertical, Star, Share2, Trash2, ArrowUpRight, 
-  Download, Eye, UserPlus, ShieldAlert, Check, X, RefreshCw
+  Download, Eye, UserPlus, ShieldAlert, Check, X, RefreshCw, Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FileCard({ file, viewMode = 'grid', isTrashView = false }) {
-  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile } = useFiles();
+  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl } = useFiles();
   const [showMenu, setShowMenu] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
   const [showPreviewPanel, setShowPreviewPanel] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [textContent, setTextContent] = useState('');
+
+  const handleOpenPreview = async () => {
+    setShowPreviewPanel(true);
+    setPreviewLoading(true);
+    setPreviewUrl(null);
+    setTextContent('');
+    try {
+      const url = await getPreviewUrl(file.id);
+      setPreviewUrl(url);
+      
+      const ext = file.name.split('.').pop().toLowerCase();
+      const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'));
+      if (isText && url) {
+        const textRes = await fetch(url);
+        if (textRes.ok) {
+          const txt = await textRes.text();
+          setTextContent(txt);
+        } else {
+          setTextContent(`Failed to load text content: HTTP ${textRes.status}`);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching preview:', err);
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
 
   const formatSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -98,12 +128,21 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
         <td className="py-4 px-4 whitespace-nowrap text-right text-xs">
           <div className="flex items-center justify-end space-x-2">
             {!isTrashView && (
-              <button
-                onClick={() => toggleStar(file.id)}
-                className={`p-1.5 rounded-lg transition-all ${file.isStarred ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`}
-              >
-                <Star className="w-4 h-4 fill-current" />
-              </button>
+              <>
+                <button
+                  onClick={handleOpenPreview}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-brand-olive hover:bg-brand-cream transition-all"
+                  title="Quick Preview"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => toggleStar(file.id)}
+                  className={`p-1.5 rounded-lg transition-all ${file.isStarred ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`}
+                >
+                  <Star className="w-4 h-4 fill-current" />
+                </button>
+              </>
             )}
             
             {/* Actions triggers */}
@@ -145,7 +184,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     ) : (
                       <>
                         <button
-                          onClick={() => { setShowPreviewPanel(true); setShowMenu(false); }}
+                          onClick={() => { handleOpenPreview(); setShowMenu(false); }}
                           className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -202,12 +241,21 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
           
           <div className="flex items-center space-x-1.5">
             {!isTrashView && (
-              <button
-                onClick={() => toggleStar(file.id)}
-                className={`p-1 rounded-md transition-all hover:bg-brand-cream ${file.isStarred ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`}
-              >
-                <Star className="w-4 h-4 fill-current" />
-              </button>
+              <>
+                <button
+                  onClick={handleOpenPreview}
+                  className="p-1 text-gray-400 hover:text-brand-olive hover:bg-brand-cream rounded-md transition-all cursor-pointer"
+                  title="Quick Preview"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => toggleStar(file.id)}
+                  className={`p-1 rounded-md transition-all hover:bg-brand-cream ${file.isStarred ? 'text-amber-500' : 'text-gray-300 hover:text-amber-500'}`}
+                >
+                  <Star className="w-4 h-4 fill-current" />
+                </button>
+              </>
             )}
             
             <div className="relative">
@@ -248,7 +296,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     ) : (
                       <>
                         <button
-                          onClick={() => { setShowPreviewPanel(true); setShowMenu(false); }}
+                          onClick={() => { handleOpenPreview(); setShowMenu(false); }}
                           className="w-full flex items-center space-x-2 px-3.5 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
                         >
                           <Eye className="w-3.5 h-3.5" />
@@ -453,66 +501,69 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                   </p>
                 </div>
               </div>
-
               {/* Dynamic Preview Frame based on category or properties */}
-              <div className="bg-brand-cream border border-brand-sand/80 rounded-2xl flex-grow overflow-y-auto p-6 flex flex-col items-center justify-center min-h-[300px]">
-                {file.category === 'Certificates' ? (
-                  <div className="w-full max-w-md border border-amber-200 bg-amber-50/20 p-6 rounded-2xl text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full" />
-                    <Award className="w-16 h-16 text-amber-600 mx-auto mb-3" />
-                    <span className="text-[10px] tracking-widest text-amber-700 uppercase font-bold bg-amber-100 px-3 py-1 rounded-full">
-                      Verified Scholastic Credential
-                    </span>
-                    <h4 className="font-serif text-xl font-semibold mt-4 text-brand-charcoal">
-                      {file.name.replace(/_/g, ' ').replace('.pdf', '')}
-                    </h4>
-                    <p className="text-xs text-gray-500 mt-1">Verified Issuer: {file.certificateIssuer || 'State Tech University'}</p>
-                    
-                    <div className="mt-6 pt-4 border-t border-amber-200/50 flex justify-between items-center text-xs">
-                      <div>
-                        <span className="text-gray-400 block text-[10px] text-left">Credential ID</span>
-                        <span className="font-mono font-bold text-brand-charcoal">{file.credentialId || 'SV-88390-CERT'}</span>
-                      </div>
-                      <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">
-                        Status Active
-                      </span>
-                    </div>
+              <div className="bg-brand-cream border border-brand-sand/80 rounded-2xl flex-grow overflow-hidden flex flex-col items-center justify-center min-h-[350px] relative">
+                {previewLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <Loader2 className="w-10 h-10 animate-spin text-brand-olive" />
+                    <span className="text-xs text-gray-500 mt-2">Retrieving vault item...</span>
                   </div>
-                ) : file.category === 'Projects' ? (
-                  <div className="w-full max-w-md bg-white border border-brand-sand p-6 rounded-2xl shadow-sm">
-                    <FolderGit className="w-12 h-12 text-brand-olive mb-3" />
-                    <h4 className="font-serif text-lg font-bold text-brand-charcoal">{file.name}</h4>
-                    <p className="text-xs text-gray-500 mt-1">Contains source files, design tokens, and documentation.</p>
+                ) : previewUrl ? (
+                  (() => {
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
+                    const isPdf = ext === 'pdf' || (file.mimeType && file.mimeType === 'application/pdf');
+                    const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'));
 
-                    {file.projectLink && (
-                      <div className="mt-4 bg-brand-cream border border-brand-sand p-3 rounded-xl flex justify-between items-center text-xs">
-                        <span className="font-mono text-gray-500 truncate max-w-[200px]">{file.projectLink}</span>
-                        <a
-                          href={file.projectLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-brand-olive text-white px-3 py-1.5 rounded-lg font-semibold flex items-center space-x-1 hover:bg-brand-olive-dark transition-all text-[10px]"
-                        >
-                          <span>Visit Repo</span>
-                          <ArrowUpRight className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-                    )}
-                  </div>
+                    if (isImage) {
+                      return (
+                        <div className="w-full h-full flex items-center justify-center p-2">
+                          <img 
+                            src={previewUrl} 
+                            className="max-h-[55vh] max-w-full object-contain rounded-xl shadow border border-brand-sand/40 bg-white" 
+                            alt={file.name} 
+                          />
+                        </div>
+                      );
+                    } else if (isPdf) {
+                      return (
+                        <iframe 
+                          src={previewUrl} 
+                          className="w-full h-[55vh] rounded-xl border border-brand-sand/50 bg-white" 
+                          title={file.name} 
+                        />
+                      );
+                    } else if (isText) {
+                      return (
+                        <pre className="w-full h-[55vh] p-4 bg-brand-charcoal text-emerald-400 font-mono text-[11px] rounded-xl overflow-auto whitespace-pre-wrap text-left border border-brand-charcoal">
+                          {textContent}
+                        </pre>
+                      );
+                    } else {
+                      return (
+                        <div className="text-center max-w-md p-6">
+                          <FileText className="w-16 h-16 text-brand-olive/60 mx-auto mb-3" />
+                          <h4 className="font-semibold text-brand-charcoal text-sm mb-1">{file.name}</h4>
+                          <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                            Preview not directly supported for <strong>.{ext.toUpperCase()}</strong> files. Please download the file to view its contents.
+                          </p>
+                          <a
+                            href={previewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center space-x-2 transition-all shadow-sm"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Download File</span>
+                          </a>
+                        </div>
+                      );
+                    }
+                  })()
                 ) : (
-                  <div className="text-center max-w-md">
-                    <FileText className="w-16 h-16 text-brand-olive/60 mx-auto mb-3" />
-                    <h4 className="font-semibold text-brand-charcoal text-sm mb-1">{file.name}</h4>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Safe PDF & Document Reader. StudentVault verified encryption guarantees no tracking scripts or adware are attached.
-                    </p>
-                    <button
-                      onClick={handleDownload}
-                      className="mt-6 inline-flex bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold items-center space-x-2 transition-all shadow-sm"
-                    >
-                      <Download className="w-4 h-4" />
-                      <span>Download PDF Preview</span>
-                    </button>
+                  <div className="text-center p-6">
+                    <Loader2 className="w-8 h-8 text-red-500 mx-auto mb-2 animate-bounce" />
+                    <span className="text-xs text-red-500 font-semibold">Failed to establish secure preview connection.</span>
                   </div>
                 )}
               </div>

@@ -20,17 +20,17 @@ export default function Sidebar({ onClose }) {
   ];
 
   return (
-    <aside className="w-72 h-screen bg-brand-cream-dark border-r border-brand-sand/80 flex flex-col justify-between p-6 overflow-y-auto">
+    <aside className="w-72 h-screen sticky top-0 bg-brand-cream-dark border-r border-brand-sand/80 flex flex-col justify-between p-6 overflow-y-auto z-30 shrink-0">
       {/* Top Header */}
       <div>
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-3">
-            <div className="bg-brand-olive text-brand-cream p-2 rounded-xl">
+            <div className="bg-brand-olive text-brand-cream p-2.5 rounded-xl shadow-sm">
               <FolderLock className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-serif text-lg font-bold tracking-tight text-brand-charcoal block">StudentVault</span>
-              <span className="text-[10px] text-brand-olive-dark font-sans tracking-wide uppercase font-semibold">Career Locker</span>
+              <span className="font-serif text-xl font-bold tracking-tight text-brand-charcoal block">Vaultify</span>
+              <span className="text-[10px] text-brand-olive-dark font-sans tracking-widest uppercase font-semibold">Digital Locker</span>
             </div>
           </div>
           {/* Close button for Mobile drawers */}
@@ -54,10 +54,10 @@ export default function Sidebar({ onClose }) {
                 to={item.path}
                 onClick={onClose} // close mobile drawer
                 className={`
-                  flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all group
+                  flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all group duration-200 transform
                   ${isActive 
-                    ? 'bg-brand-olive text-white shadow-sm' 
-                    : 'text-gray-600 hover:bg-brand-sand/40 hover:text-brand-charcoal'
+                    ? 'bg-brand-olive text-white shadow-md shadow-brand-olive/20 scale-[1.02]' 
+                    : 'text-gray-600 hover:bg-brand-sand/50 hover:translate-x-1.5 hover:text-brand-charcoal'
                   }
                 `}
               >
@@ -73,8 +73,8 @@ export default function Sidebar({ onClose }) {
       <div className="mt-8 pt-6 border-t border-brand-sand">
         <StorageCard />
         <div className="mt-4 flex items-center space-x-2.5 px-2 text-xs text-gray-500">
-          <GraduationCap className="w-4 h-4 text-brand-olive" />
-          <span className="truncate">Student Account Verified</span>
+          <GraduationCap className="w-4 h-4 text-brand-olive animate-pulse" />
+          <span className="truncate">Personal Account Secured</span>
         </div>
       </div>
     </aside>

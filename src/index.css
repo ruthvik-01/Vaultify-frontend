@@ -72,3 +72,151 @@
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(227, 225, 220, 0.5);
 }
+
+/* ──────────────────────────────────────────────────────────────────────────
+   VAULTIFY CUSTOMIZATION SYSTEM variables and overrides
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* Dynamic Theme Colors */
+:root[data-theme-color="blue"] {
+  --color-brand-olive: #2563EB;
+  --color-brand-olive-dark: #1D4ED8;
+  --color-brand-olive-light: #3B82F6;
+  --color-brand-sage: #93C5FD;
+  --color-brand-sage-light: #DBEAFE;
+}
+:root[data-theme-color="purple"] {
+  --color-brand-olive: #7C3AED;
+  --color-brand-olive-dark: #6D28D9;
+  --color-brand-olive-light: #8B5CF6;
+  --color-brand-sage: #C7D2FE;
+  --color-brand-sage-light: #E0E7FF;
+}
+:root[data-theme-color="emerald"] {
+  --color-brand-olive: #059669;
+  --color-brand-olive-dark: #047857;
+  --color-brand-olive-light: #10B981;
+  --color-brand-sage: #A7F3D0;
+  --color-brand-sage-light: #D1FAE5;
+}
+:root[data-theme-color="amber"] {
+  --color-brand-olive: #D97706;
+  --color-brand-olive-dark: #B45309;
+  --color-brand-olive-light: #F59E0B;
+  --color-brand-sage: #FDE68A;
+  --color-brand-sage-light: #FEF3C7;
+}
+
+/* Dynamic Accent Colors */
+:root[data-accent-color="blue"] {
+  --color-brand-olive: #2563EB;
+  --color-brand-olive-dark: #1D4ED8;
+}
+:root[data-accent-color="rose"] {
+  --color-brand-olive: #E11D48;
+  --color-brand-olive-dark: #BE123C;
+}
+:root[data-accent-color="emerald"] {
+  --color-brand-olive: #059669;
+  --color-brand-olive-dark: #047857;
+}
+
+/* Dynamic Sidebar Colors */
+:root[data-sidebar-color="sage"] aside {
+  background-color: #37463b !important;
+  color: #faf9f6 !important;
+  border-right-color: rgba(255, 255, 255, 0.1) !important;
+}
+:root[data-sidebar-color="sage"] aside span, 
+:root[data-sidebar-color="sage"] aside h3,
+:root[data-sidebar-color="sage"] aside span.truncate,
+:root[data-sidebar-color="sage"] aside h4 {
+  color: #faf9f6 !important;
+}
+:root[data-sidebar-color="sage"] aside a:not(.bg-brand-olive) {
+  color: #d5ddd1 !important;
+}
+:root[data-sidebar-color="sage"] aside a:not(.bg-brand-olive):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+:root[data-sidebar-color="charcoal"] aside {
+  background-color: #1f2320 !important;
+  color: #faf9f6 !important;
+  border-right-color: rgba(255, 255, 255, 0.1) !important;
+}
+:root[data-sidebar-color="charcoal"] aside span, 
+:root[data-sidebar-color="charcoal"] aside h3,
+:root[data-sidebar-color="charcoal"] aside span.truncate,
+:root[data-sidebar-color="charcoal"] aside h4 {
+  color: #faf9f6 !important;
+}
+:root[data-sidebar-color="charcoal"] aside a:not(.bg-brand-olive) {
+  color: #e3e1dc !important;
+}
+:root[data-sidebar-color="charcoal"] aside a:not(.bg-brand-olive):hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+:root[data-sidebar-color="light"] aside {
+  background-color: #ffffff !important;
+  border-right-color: #e3e1dc !important;
+}
+
+/* Dynamic Font Sizes */
+:root[data-font-size="sm"] {
+  font-size: 14px;
+}
+:root[data-font-size="base"] {
+  font-size: 16px;
+}
+:root[data-font-size="lg"] {
+  font-size: 18px;
+}
+
+/* Custom Dark Mode implementations */
+.dark body {
+  background-color: #121412 !important;
+  color: #e3e1dc !important;
+}
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #ffffff !important;
+}
+.dark .bg-white {
+  background-color: #181c19 !important;
+  border-color: #2b322e !important;
+}
+.dark .border-brand-sand, 
+.dark .border-brand-sand\/80, 
+.dark .border-brand-sand\/60, 
+.dark .border-brand-sand\/40, 
+.dark .border-brand-sand\/50, 
+.dark .border-brand-sand\/70 {
+  border-color: #2b322e !important;
+}
+.dark .bg-brand-cream {
+  background-color: #1c221e !important;
+}
+.dark .bg-brand-cream-dark {
+  background-color: #151916 !important;
+}
+.dark .text-brand-charcoal, .dark text-brand-charcoal {
+  color: #faf9f6 !important;
+}
+.dark .text-gray-500 {
+  color: #a3b19b !important;
+}
+.dark .text-gray-600 {
+  color: #cbd5e1 !important;
+}
+.dark input, .dark textarea, .dark select {
+  background-color: #1c221e !important;
+  border-color: #2b322e !important;
+  color: #ffffff !important;
+}
+.dark tr:hover {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+

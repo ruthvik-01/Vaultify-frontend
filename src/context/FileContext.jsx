@@ -28,7 +28,44 @@ export const FileProvider = ({ children }) => {
     major: '',
     phone: '',
     bio: '',
+    storage_plan: 'free',
+    theme_color: 'sage',
+    dark_mode: false,
+    sidebar_color: 'default',
+    accent_color: 'olive',
+    font_size: 'base',
+    created_at: '',
   });
+
+  const applySettingsToDOM = (settings) => {
+    const root = document.documentElement;
+    if (settings.dark_mode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    root.setAttribute('data-theme-color', settings.theme_color || 'sage');
+    root.setAttribute('data-sidebar-color', settings.sidebar_color || 'default');
+    root.setAttribute('data-accent-color', settings.accent_color || 'olive');
+    root.setAttribute('data-font-size', settings.font_size || 'base');
+    
+    localStorage.setItem('vaultify_settings', JSON.stringify({
+      theme_color: settings.theme_color,
+      dark_mode: !!settings.dark_mode,
+      sidebar_color: settings.sidebar_color,
+      accent_color: settings.accent_color,
+      font_size: settings.font_size
+    }));
+  };
+
+  useEffect(() => {
+    const cached = localStorage.getItem('vaultify_settings');
+    if (cached) {
+      try {
+        applySettingsToDOM(JSON.parse(cached));
+      } catch (_) {}
+    }
+  }, []);
 
   const [notifications, setNotifications] = useState({
     emailOnShare: true,
@@ -79,7 +116,8 @@ export const FileProvider = ({ children }) => {
           f.type === 'video' ||
           f.type === 'png' ||
           f.type === 'jpg' ||
-          f.type === 'jpeg'
+          f.type === 'jpeg' ||
+          f.type === 'webp'
         )
           breakdown.Media += f.size || 0;
         else if (
@@ -89,21 +127,25 @@ export const FileProvider = ({ children }) => {
         else breakdown.Others += f.size || 0;
       });
 
+    const capacity = user.storage_plan === 'pro'
+      ? 1000 * 1024 * 1024 * 1024 // 1 TB
+      : 100 * 1024 * 1024 * 1024; // 100 GB
+
     setStorageStats({
-      totalCapacity: 10 * 1024 * 1024 * 1024,
+      totalCapacity: capacity,
       used,
       breakdown,
     });
-  }, [files]);
+  }, [files, user.storage_plan]);
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   const fetchUserProfile = async () => {
     try {
       const res = await api.getProfile();
-      // Backend now returns: { status, data: { id, name, email, studentId, ... } }
-      const userData = res.data;
+      // Backend returns: { status, data: { user: { id, name, email, ... } } }
+      const userData = res.data?.user || res.data;
       if (userData) {
-        setUser({
+        const loadedUser = {
           id: userData.id,
           name: userData.name || '',
           email: userData.email || '',
@@ -113,12 +155,20 @@ export const FileProvider = ({ children }) => {
           phone: userData.phone || '',
           bio: userData.bio || '',
           profile_image: userData.profile_image || null,
+          storage_plan: userData.storage_plan || 'free',
+          theme_color: userData.theme_color || 'sage',
+          dark_mode: userData.dark_mode === 1 || userData.dark_mode === true,
+          sidebar_color: userData.sidebar_color || 'default',
+          accent_color: userData.accent_color || 'olive',
+          font_size: userData.font_size || 'base',
           avatar:
             userData.profile_image ||
             `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(userData.name || 'SV')}`,
-        });
+          created_at: userData.created_at || new Date().toISOString()
+        };
+        setUser(loadedUser);
+        applySettingsToDOM(loadedUser);
       }
-
     } catch (err) {
       console.error('Failed to fetch profile:', err.message);
       if (
@@ -150,6 +200,7 @@ export const FileProvider = ({ children }) => {
     downloadCount: file.download_count || 0,
     tags: file.tags || [],
     s3_key: file.s3_key,
+    mimeType: file.file_type || 'application/octet-stream'
   });
 
   // ─── Files ────────────────────────────────────────────────────────────────
@@ -335,12 +386,23 @@ export const FileProvider = ({ children }) => {
   const downloadFile = async (id, name) => {
     try {
       const res = await api.downloadFile(id);
-      if (res.data && res.data.url) {
-        window.open(res.data.url, '_blank');
+      const url = res.download_url || (res.data && res.data.download_url);
+      if (url) {
+        window.open(url, '_blank');
         addActivity('downloaded', name, 'System');
       }
     } catch (err) {
       console.error('Download failed:', err.message);
+    }
+  };
+
+  const getPreviewUrl = async (id) => {
+    try {
+      const res = await api.getPreviewUrl(id);
+      return res.download_url || (res.data && res.data.download_url) || null;
+    } catch (err) {
+      console.error('Failed to obtain preview link:', err.message);
+      return null;
     }
   };
 
@@ -427,8 +489,19 @@ export const FileProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     try {
       const res = await api.updateProfile(profileData);
-      if (res.data) {
-        setUser((prev) => ({ ...prev, ...res.data }));
+      const updatedUser = res.data?.user || res.data;
+      if (updatedUser) {
+        setUser((prev) => {
+          const nextUser = { 
+            ...prev, 
+            ...updatedUser,
+            avatar: updatedUser.profile_image || prev.avatar,
+            dark_mode: updatedUser.dark_mode === 1 || updatedUser.dark_mode === true,
+            created_at: updatedUser.created_at || prev.created_at
+          };
+          applySettingsToDOM(nextUser);
+          return nextUser;
+        });
       }
     } catch (err) {
       console.error('Update profile failed:', err.message);
@@ -461,6 +534,7 @@ export const FileProvider = ({ children }) => {
         toggleStar,
         renameFile,
         downloadFile,
+        getPreviewUrl,
         updateProfile,
         updateNotifications,
         isAuthenticated,

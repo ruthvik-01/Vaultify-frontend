@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
   User, Bell, Palette, CreditCard, Save, ShieldCheck, 
-  Sparkles, CheckCircle2, Monitor, GraduationCap 
+  Sparkles, CheckCircle2, Monitor, GraduationCap, Moon, Sun, Type
 } from 'lucide-react';
 
 export default function Settings() {
@@ -12,7 +12,6 @@ export default function Settings() {
   // Account Form states
   const [name, setName] = useState(user.name);
   const [email, setEmail] = useState(user.email);
-  const [studentId, setStudentId] = useState(user.studentId);
   const [university, setUniversity] = useState(user.university);
   
   // Notification states
@@ -21,19 +20,35 @@ export default function Settings() {
   const [placementAlerts, setPlacementAlerts] = useState(notifications.placementAlerts);
   const [weeklyReport, setWeeklyReport] = useState(notifications.weeklyReport);
 
-  // Preference states
-  const [defaultView, setDefaultView] = useState('grid');
-  const [themeMode, setThemeMode] = useState('beige');
+  // Preference / Styling states (initialized from active user settings)
+  const [themeColor, setThemeColor] = useState(user.theme_color || 'sage');
+  const [darkMode, setDarkMode] = useState(!!user.dark_mode);
+  const [sidebarColor, setSidebarColor] = useState(user.sidebar_color || 'default');
+  const [accentColor, setAccentColor] = useState(user.accent_color || 'olive');
+  const [fontSize, setFontSize] = useState(user.font_size || 'base');
+
+  useEffect(() => {
+    setName(user.name);
+    setEmail(user.email);
+    setUniversity(user.university);
+    setThemeColor(user.theme_color || 'sage');
+    setDarkMode(!!user.dark_mode);
+    setSidebarColor(user.sidebar_color || 'default');
+    setAccentColor(user.accent_color || 'olive');
+    setFontSize(user.font_size || 'base');
+  }, [user]);
 
   const handleAccountSave = (e) => {
     e.preventDefault();
     updateProfile({
       name,
       email,
-      studentId,
       university
+    }).then(() => {
+      alert('Account credentials saved successfully!');
+    }).catch(err => {
+      alert('Failed to save credentials: ' + err.message);
     });
-    alert('Account details updated successfully!');
   };
 
   const handleNotificationSave = () => {
@@ -43,11 +58,35 @@ export default function Settings() {
       placementAlerts,
       weeklyReport
     });
-    alert('Notification settings updated!');
+    alert('Notification rules updated successfully!');
+  };
+
+  const handlePreferencesSave = () => {
+    updateProfile({
+      theme_color: themeColor,
+      dark_mode: darkMode ? 1 : 0,
+      sidebar_color: sidebarColor,
+      accent_color: accentColor,
+      font_size: fontSize
+    }).then(() => {
+      alert('Custom styling preferences saved and applied successfully!');
+    }).catch(err => {
+      alert('Failed to save preferences: ' + err.message);
+    });
+  };
+
+  const handleUpgradePlan = (planName) => {
+    updateProfile({
+      storage_plan: planName === 'pro' ? 'pro' : 'free'
+    }).then(() => {
+      alert(`Successfully configured account storage allocation plan to ${planName.toUpperCase()}!`);
+    }).catch(err => {
+      alert('Plan update failed: ' + err.message);
+    });
   };
 
   return (
-    <div className="bg-white border border-brand-sand rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row min-h-[500px]">
+    <div className="bg-white border border-brand-sand rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row min-h-[550px]">
       
       {/* Settings Navigation Column */}
       <div className="w-full md:w-64 bg-brand-cream border-r border-brand-sand/70 p-4 space-y-1 shrink-0">
@@ -110,7 +149,7 @@ export default function Settings() {
           <div className="space-y-6 max-w-lg">
             <div>
               <h3 className="font-serif text-lg font-bold text-brand-charcoal">Account Credentials</h3>
-              <p className="text-xs text-gray-500 mt-1">Configure your personal credentials and academic registry references.</p>
+              <p className="text-xs text-gray-500 mt-1">Configure your personal credentials and locker registries.</p>
             </div>
 
             <form onSubmit={handleAccountSave} className="space-y-4">
@@ -127,36 +166,22 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
-                    Student ID
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={studentId}
-                    onChange={(e) => setStudentId(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
-                    Institutional Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
+                  Institutional Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                />
               </div>
 
               <div>
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
-                  University / College
+                  Organization / University
                 </label>
                 <input
                   type="text"
@@ -183,14 +208,14 @@ export default function Settings() {
           <div className="space-y-6 max-w-lg">
             <div>
               <h3 className="font-serif text-lg font-bold text-brand-charcoal">Notification Preferences</h3>
-              <p className="text-xs text-gray-500 mt-1">Select what actions send mock email notifications to your inbox.</p>
+              <p className="text-xs text-gray-500 mt-1">Select what actions send email notifications to your inbox.</p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-brand-cream rounded-xl border border-brand-sand/65">
+              <div className="flex items-center justify-between p-3.5 bg-brand-cream rounded-xl border border-brand-sand/65">
                 <div>
                   <span className="text-xs font-bold text-brand-charcoal block">Email on Share Actions</span>
-                  <span className="text-[10px] text-gray-400">Receive alert when you grant recruiters permission to check credentials.</span>
+                  <span className="text-[10px] text-gray-400">Receive alert when you grant recipients permission to check credentials.</span>
                 </div>
                 <input
                   type="checkbox"
@@ -200,10 +225,10 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-brand-cream rounded-xl border border-brand-sand/65">
+              <div className="flex items-center justify-between p-3.5 bg-brand-cream rounded-xl border border-brand-sand/65">
                 <div>
                   <span className="text-xs font-bold text-brand-charcoal block">Email on Downloads</span>
-                  <span className="text-[10px] text-gray-400">Get notified immediately when your shared resume is downloaded.</span>
+                  <span className="text-[10px] text-gray-400">Get notified immediately when your shared locker links are downloaded.</span>
                 </div>
                 <input
                   type="checkbox"
@@ -213,15 +238,15 @@ export default function Settings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-brand-cream rounded-xl border border-brand-sand/65">
+              <div className="flex items-center justify-between p-3.5 bg-brand-cream rounded-xl border border-brand-sand/65">
                 <div>
-                  <span className="text-xs font-bold text-brand-charcoal block">Placement Office Alerts</span>
-                  <span className="text-[10px] text-gray-400">Receive notifications on capstone criteria and mock interviews scheduling.</span>
+                  <span className="text-xs font-bold text-brand-charcoal block">Weekly Logs summary</span>
+                  <span className="text-[10px] text-gray-400">Receive an activity report summarizing access frequencies.</span>
                 </div>
                 <input
                   type="checkbox"
-                  checked={placementAlerts}
-                  onChange={(e) => setPlacementAlerts(e.target.checked)}
+                  checked={weeklyReport}
+                  onChange={(e) => setWeeklyReport(e.target.checked)}
                   className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand"
                 />
               </div>
@@ -240,71 +265,164 @@ export default function Settings() {
 
         {/* Sub-tab: Preferences */}
         {activeSubTab === 'preferences' && (
-          <div className="space-y-6 max-w-lg">
+          <div className="space-y-6 max-w-xl">
             <div>
               <h3 className="font-serif text-lg font-bold text-brand-charcoal">Display & Styling</h3>
-              <p className="text-xs text-gray-500 mt-1">Customize your StudentVault look and feel preferences.</p>
+              <p className="text-xs text-gray-500 mt-1">Customize your Vaultify workspace looks, themes, and font configurations.</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
+              
+              {/* Theme Color Selector */}
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-2">
-                  Default Locker Layout
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
+                  Theme Color Palette
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: 'sage', name: 'Sage Green', color: 'bg-[#4A5D4E]' },
+                    { id: 'blue', name: 'Vault Blue', color: 'bg-blue-600' },
+                    { id: 'purple', name: 'Royal Purple', color: 'bg-purple-600' },
+                    { id: 'emerald', name: 'Emerald', color: 'bg-emerald-600' },
+                    { id: 'amber', name: 'Amber Gold', color: 'bg-amber-600' }
+                  ].map((colorOpt) => (
+                    <button
+                      key={colorOpt.id}
+                      onClick={() => setThemeColor(colorOpt.id)}
+                      className={`flex items-center space-x-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        themeColor === colorOpt.id
+                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
+                      }`}
+                    >
+                      <span className={`w-3 h-3 rounded-full ${colorOpt.color}`} />
+                      <span>{colorOpt.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dark Mode toggle */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
+                  Interface Dark/Light Mode
+                </label>
+                <div className="grid grid-cols-2 gap-3 max-w-sm">
                   <button
-                    onClick={() => setDefaultView('grid')}
-                    className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
-                      defaultView === 'grid'
+                    onClick={() => setDarkMode(false)}
+                    className={`flex items-center justify-center space-x-2 p-3 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      !darkMode
                         ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
                         : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
                     }`}
                   >
-                    Card Grid View
+                    <Sun className="w-4 h-4 text-amber-500" />
+                    <span>Light Mode</span>
                   </button>
                   <button
-                    onClick={() => setDefaultView('list')}
-                    className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
-                      defaultView === 'list'
+                    onClick={() => setDarkMode(true)}
+                    className={`flex items-center justify-center space-x-2 p-3 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      darkMode
                         ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
                         : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
                     }`}
                   >
-                    Table List View
+                    <Moon className="w-4 h-4 text-indigo-400" />
+                    <span>Dark Mode</span>
                   </button>
                 </div>
               </div>
 
+              {/* Sidebar color choice */}
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-2">
-                  Locker Style Palette
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
+                  Sidebar Accent Palette
                 </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setThemeMode('beige')}
-                    className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
-                      themeMode === 'beige'
-                        ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
-                        : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
-                    }`}
-                  >
-                    Organic Sage & Cream
-                  </button>
-                  <button
-                    onClick={() => {
-                      setThemeMode('charcoal');
-                      alert('Theme changes apply custom root classes. Slate/Dark Mode represents an expansion feature!');
-                    }}
-                    className={`p-3 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
-                      themeMode === 'charcoal'
-                        ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
-                        : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
-                    }`}
-                  >
-                    High-Contrast Slate
-                  </button>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'default', name: 'Classic Cream' },
+                    { id: 'sage', name: 'Forest Green' },
+                    { id: 'charcoal', name: 'Dark Slate' },
+                    { id: 'light', name: 'Pure White' }
+                  ].map((sidebarOpt) => (
+                    <button
+                      key={sidebarOpt.id}
+                      onClick={() => setSidebarColor(sidebarOpt.id)}
+                      className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                        sidebarColor === sidebarOpt.id
+                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
+                      }`}
+                    >
+                      {sidebarOpt.name}
+                    </button>
+                  ))}
                 </div>
               </div>
+
+              {/* Accent Color Selector */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
+                  Highlight Accent Color
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { id: 'olive', name: 'Olive Green' },
+                    { id: 'blue', name: 'Ocean Blue' },
+                    { id: 'rose', name: 'Rose Red' },
+                    { id: 'emerald', name: 'Deep Emerald' }
+                  ].map((accentOpt) => (
+                    <button
+                      key={accentOpt.id}
+                      onClick={() => setAccentColor(accentOpt.id)}
+                      className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer ${
+                        accentColor === accentOpt.id
+                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
+                      }`}
+                    >
+                      {accentOpt.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font Size Selector */}
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 block mb-2">
+                  Font Size Preference
+                </label>
+                <div className="grid grid-cols-3 gap-3 max-w-sm">
+                  {[
+                    { id: 'sm', name: 'Compact' },
+                    { id: 'base', name: 'Normal' },
+                    { id: 'lg', name: 'Enlarged' }
+                  ].map((fontOpt) => (
+                    <button
+                      key={fontOpt.id}
+                      onClick={() => setFontSize(fontOpt.id)}
+                      className={`p-2.5 border rounded-xl text-xs font-bold text-center transition-all cursor-pointer flex items-center justify-center space-x-1.5 ${
+                        fontSize === fontOpt.id
+                          ? 'border-brand-olive bg-brand-sage-light/20 text-brand-olive-dark'
+                          : 'border-brand-sand text-gray-500 hover:bg-brand-cream'
+                      }`}
+                    >
+                      <Type className="w-3.5 h-3.5 text-gray-400" />
+                      <span>{fontOpt.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handlePreferencesSave}
+                className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save preferences</span>
+              </button>
+
             </div>
           </div>
         )}
@@ -320,19 +438,30 @@ export default function Settings() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Current allocation stats */}
               <div className="border border-brand-sand rounded-2xl p-5 bg-brand-cream/40 space-y-4">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Current Plan</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Current Allocation</span>
                 <div className="flex justify-between items-center">
-                  <span className="font-serif text-xl font-bold text-brand-charcoal">Free Scholar Locker</span>
-                  <span className="bg-brand-sage-light/30 text-brand-olive px-2.5 py-0.5 rounded text-[10px] font-bold border border-brand-sage-light/20">
-                    Active Free Tier
+                  <span className="font-serif text-xl font-bold text-brand-charcoal">
+                    {user.storage_plan === 'pro' ? 'Pro Scholar Vault' : 'Free Scholar Vault'}
+                  </span>
+                  <span className="bg-brand-sage-light/35 text-brand-olive px-2.5 py-0.5 rounded text-[10px] font-bold border border-brand-sage-light/20">
+                    Active Plan
                   </span>
                 </div>
                 
-                <div className="text-xs text-gray-500 space-y-1">
-                  <p>• Allowed Quota Limit: 10 GB SSD space</p>
+                <div className="text-xs text-gray-500 space-y-1.5">
+                  <p>• Allowed Space Quota: {user.storage_plan === 'pro' ? '1 TB' : '100 GB'} SSD space</p>
                   <p>• Verification Badges: Included</p>
-                  <p>• Document sharing permission control</p>
+                  <p>• Access Control Settings: Allowed</p>
                 </div>
+
+                {user.storage_plan === 'pro' && (
+                  <button
+                    onClick={() => handleUpgradePlan('free')}
+                    className="w-full mt-2 text-[10px] bg-brand-cream border border-brand-sand hover:bg-brand-sand text-brand-charcoal font-semibold py-1.5 rounded-lg text-center transition-all cursor-pointer"
+                  >
+                    Downgrade back to Free Tier (100 GB)
+                  </button>
+                )}
               </div>
 
               {/* Upgrade option preview */}
@@ -345,16 +474,23 @@ export default function Settings() {
                   <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
                 </div>
                 <div>
-                  <h4 className="font-serif text-lg font-bold text-brand-charcoal">Expand to 100 GB Locker</h4>
-                  <p className="text-[10px] text-gray-500 mt-0.5">Enable direct download analytics and custom placement links.</p>
+                  <h4 className="font-serif text-lg font-bold text-brand-charcoal">Expand to 1 TB Secure Locker</h4>
+                  <p className="text-[10px] text-gray-500 mt-0.5 font-sans">Enable detailed download analytics and unlimited shared credential nodes.</p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => alert('Stripe Checkout checkout.studentvault.co launched in demo mode.')}
-                  className="w-full bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center justify-center space-x-1"
-                >
-                  <span>Request Upgrade ($2.99/mo)</span>
-                </button>
+                
+                {user.storage_plan === 'pro' ? (
+                  <div className="w-full text-center text-xs py-2 text-brand-olive font-semibold bg-brand-sage-light/25 border border-brand-sage-light/30 rounded-xl">
+                    You are already using this plan!
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleUpgradePlan('pro')}
+                    className="w-full bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center justify-center space-x-1"
+                  >
+                    <span>Activate 1 TB Plan ($2.99/mo)</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

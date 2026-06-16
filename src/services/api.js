@@ -41,6 +41,29 @@ export const api = {
     return handleResponse(res);
   },
 
+  verifyEmail: async (token) => {
+    const res = await fetch(`${API_URL}/auth/verify-email?token=${encodeURIComponent(token)}`);
+    return handleResponse(res);
+  },
+
+  forgotPassword: async (email) => {
+    const res = await fetch(`${API_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    return handleResponse(res);
+  },
+
+  resetPassword: async (token, password) => {
+    const res = await fetch(`${API_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ token, password }),
+    });
+    return handleResponse(res);
+  },
+
   getProfile: async () => {
     const res = await fetch(`${API_URL}/auth/profile`, {
       headers: getHeaders(),
@@ -138,6 +161,13 @@ export const api = {
 
   downloadFile: async (id) => {
     const res = await fetch(`${API_URL}/files/download/${id}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  getPreviewUrl: async (id) => {
+    const res = await fetch(`${API_URL}/files/download/${id}?disposition=inline`, {
       headers: getHeaders(),
     });
     return handleResponse(res);

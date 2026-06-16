@@ -2,19 +2,26 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { api } from '../services/api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setErrorMsg('');
+    try {
+      await api.forgotPassword(email);
       setSubmitted(true);
-    }, 800);
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to request password recovery. Please check the email entered.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -28,6 +35,11 @@ export default function ForgotPassword() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errorMsg && (
+              <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-600 font-sans">
+                {errorMsg}
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
                 Student Email Address

@@ -13,9 +13,9 @@ export default function Navbar({ onMenuToggle }) {
   const getPageTitle = (pathname) => {
     switch (pathname) {
       case '/dashboard':
-        return 'Locker Dashboard';
+        return 'Vaultify Dashboard';
       case '/my-files':
-        return 'My Files Locker';
+        return 'My Digital Locker';
       case '/upload':
         return 'Upload Hub';
       case '/shared':
@@ -23,11 +23,11 @@ export default function Navbar({ onMenuToggle }) {
       case '/trash':
         return 'Trash Archive';
       case '/profile':
-        return 'Student Portfolio';
+        return 'Personal Profile';
       case '/settings':
         return 'Locker Settings';
       default:
-        return 'StudentVault';
+        return 'Vaultify';
     }
   };
 
