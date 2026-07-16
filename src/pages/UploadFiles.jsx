@@ -226,7 +226,7 @@ export default function UploadFiles() {
                 </div>
                 <h3 className="font-serif text-lg font-bold text-brand-charcoal">Drag and drop file to upload</h3>
                 <p className="text-xs text-gray-400 mt-1.5 max-w-sm">
-                  Select your academic or placement assets: resumes, zip project codes, assignments, or PDF verified certificates.
+                  Select your academic or placement assets: documents, images, videos, zip project codes, or certificates.
                 </p>
                 <button
                   type="button"
