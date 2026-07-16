@@ -500,9 +500,9 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const googleLogin = async (googleData) => {
+  const googleLogin = async (firebaseIdToken) => {
     try {
-      const res = await api.googleLogin(googleData);
+      const res = await api.googleLogin(firebaseIdToken);
       if (res.token) {
         localStorage.setItem('vaultify_token', res.token);
         setIsAuthenticated(true);

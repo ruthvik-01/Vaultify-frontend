@@ -41,11 +41,11 @@ export const api = {
     return handleResponse(res);
   },
 
-  googleLogin: async (googleData) => {
+  googleLogin: async (firebaseIdToken) => {
     const res = await fetch(`${API_URL}/auth/google`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify(googleData),
+      body: JSON.stringify({ idToken: firebaseIdToken }),
     });
     return handleResponse(res);
   },
