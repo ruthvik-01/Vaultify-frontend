@@ -196,7 +196,7 @@ export default function UploadModal({ isOpen, onClose }) {
                 </div>
                 <h4 className="text-xs font-bold text-brand-charcoal">Drag and drop file here, or browse</h4>
                 <p className="text-[10px] text-gray-400 mt-1 max-w-[240px]">
-                  Supports PDF, DOCX, ZIP, JPEG, PNG, and TXT up to 10 MB
+                  Supports documents, images, videos, and zip files up to 10 MB
                 </p>
               </div>
             </div>

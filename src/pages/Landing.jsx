@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  FolderLock, Shield, Award, FolderGit, Search, Share2, 
-  ArrowRight, FileText, CheckCircle2, Star, Sparkles, HardDrive, 
-  HelpCircle, Globe, ChevronRight, Zap, GraduationCap, Plus
+import {
+  FolderLock, Shield, Award, FolderGit, Search, Share2,
+  ArrowRight, FileText, CheckCircle2, Star, Sparkles, HardDrive,
+  HelpCircle, ChevronRight, Plus, Video, Mail
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -14,15 +14,24 @@ const BrandIcon = ({ className }) => (
   </div>
 );
 
+const Linkedin = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+    <rect x="2" y="9" width="4" height="12"></rect>
+    <circle cx="4" cy="4" r="2"></circle>
+  </svg>
+);
+
+const Github = ({ className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"></path>
+    <path d="M9 18c-4.51 2-5-2-7-2"></path>
+  </svg>
+);
+
 export default function Landing() {
-  
-  // Custom mock brand icons
-  const universities = [
-    { name: 'State Tech Institute', icon: GraduationCap },
-    { name: 'National Science Univ', icon: Globe },
-    { name: 'City Academic College', icon: Shield },
-    { name: 'Global Tech Board', icon: Zap }
-  ];
+
+
 
   const features = [
     {
@@ -49,22 +58,23 @@ export default function Landing() {
       icon: FolderGit,
       color: 'bg-indigo-50 text-indigo-700 border-indigo-100',
     },
-    {
-      title: 'Global Omnibar Search',
-      desc: 'Find any note, resume version, or placement handbook instantly with a single keystroke shortcut (Ctrl+K).',
-      icon: Search,
-      color: 'bg-sky-50 text-sky-700 border-sky-100',
-    },
+
     {
       title: 'Secret Share Links',
       desc: 'Generate temporary share links for placement drives. Revoke email permissions instantly from your dashboard.',
       icon: Share2,
       color: 'bg-purple-50 text-purple-700 border-purple-100',
+    },
+    {
+      title: 'Video Upload & Secure Sharing',
+      desc: 'Upload videos securely, generate protected share links, and allow authorized users to access them instantly.',
+      icon: Video,
+      color: 'bg-teal-50 text-teal-700 border-teal-100',
     }
   ];
 
   const steps = [
-    { step: '01', title: 'Upload Carrier Files', desc: 'Drag-and-drop resumes, zip files, certificates, or study notes.' },
+    { step: '01', title: 'Upload Carrier Files', desc: 'Drag-and-drop documents, images, videos, zip files, or certificates.' },
     { step: '02', title: 'Organize in Drawers', desc: 'Categorize files and tag them by course, placement drive, or skill.' },
     { step: '03', title: 'Create Verify Links', desc: 'Add credentials verification IDs and generate secure sharing links.' },
     { step: '04', title: 'Get Placed', desc: 'Share your unified student showcase with placement offices and recruiters.' }
@@ -76,30 +86,13 @@ export default function Landing() {
     { title: 'Placement Ready', desc: 'Stand out from standard applicants with a clean public student portfolio verifying your credentials.' }
   ];
 
-  const metrics = [
-    { val: '1.2M+', label: 'Files Safely Stored' },
-    { val: '45k+', label: 'Projects Showcased' },
-    { val: '88k+', label: 'Certificates Verified' }
-  ];
 
-  const testimonials = [
-    {
-      quote: "Vaultify completely transformed how I handled my senior placement. Being able to share a single link containing my certified AWS badge, resume, and React source code was a game-changer.",
-      author: "Rahul Mehta",
-      role: "CS Graduate, State Tech",
-      dest: "Software Engineer at Google"
-    },
-    {
-      quote: "No more messy Google Drive links with broken permissions. Vaultify lets our graduates manage credential sharing with recruiters securely and professionally.",
-      author: "Dr. Clara Thorne",
-      role: "Director of Placement Cells",
-      dest: "National Science University"
-    }
-  ];
+
+
 
   return (
     <div className="bg-brand-cream min-h-screen relative font-sansSelection">
-      
+
       {/* 1. Navigation Bar */}
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-brand-sand/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -112,20 +105,19 @@ export default function Landing() {
           <nav className="hidden md:flex space-x-8 text-xs font-semibold text-gray-500">
             <a href="#" className="hover:text-brand-olive transition-all">Home</a>
             <a href="#about" className="hover:text-brand-olive transition-all">About</a>
-            <a href="#features" className="hover:text-brand-olive transition-all">Features</a>
-            <a href="#pricing" className="hover:text-brand-olive transition-all">Pricing</a>
             <a href="#footer" className="hover:text-brand-olive transition-all">Contact</a>
+            <a href="#features" className="hover:text-brand-olive transition-all">Features</a>
           </nav>
 
           <div className="flex items-center space-x-4">
-            <Link 
-              to="/login" 
+            <Link
+              to="/login"
               className="text-xs font-semibold text-gray-600 hover:text-brand-charcoal transition-all"
             >
               Sign In
             </Link>
-            <Link 
-              to="/register" 
+            <Link
+              to="/register"
               className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all"
             >
               Get Started Free
@@ -136,7 +128,7 @@ export default function Landing() {
 
       {/* 2. Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 md:pt-20 pb-16 text-center space-y-8">
-        <motion.div 
+        <motion.div
           className="max-w-3xl mx-auto space-y-5"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,21 +145,21 @@ export default function Landing() {
           </p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4 pt-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
-          <Link 
-            to="/register" 
+          <Link
+            to="/register"
             className="w-full sm:w-auto bg-brand-olive hover:bg-brand-olive-dark text-white px-6 py-3 rounded-xl text-xs font-semibold shadow-md transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
           >
             <span>Start Your Free Locker</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <Link 
-            to="/login" 
+          <Link
+            to="/login"
             className="w-full sm:w-auto bg-white border border-brand-sand hover:bg-brand-cream text-brand-charcoal px-6 py-3 rounded-xl text-xs font-semibold shadow-sm transition-all"
           >
             Explore Dashboard Demo
@@ -228,7 +220,7 @@ export default function Landing() {
             <div className="md:col-span-2 space-y-4">
               <span className="text-[9px] uppercase font-bold text-gray-400 block">Featured Placement Credentials</span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                
+
                 {/* Mock Card 1 */}
                 <div className="bg-white border border-brand-sand rounded-xl p-3.5 flex items-center space-x-3 relative shadow-sm">
                   <div className="p-2 bg-emerald-50 text-emerald-700 rounded-lg">
@@ -266,6 +258,18 @@ export default function Landing() {
                 </div>
 
                 {/* Mock Card 4 */}
+                <div className="bg-white border border-brand-sand rounded-xl p-3.5 flex items-center space-x-3 relative shadow-sm">
+                  <div className="p-2 bg-teal-50 text-teal-700 rounded-lg">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-[10px] font-bold text-brand-charcoal block truncate">Project_Demo.mp4</span>
+                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Videos • Showcase</span>
+                  </div>
+                  <span className="absolute top-2 right-2"><Star className="w-3.5 h-3.5 text-amber-500 fill-current" /></span>
+                </div>
+
+                {/* Mock Card 5 */}
                 <div className="bg-brand-cream border border-brand-sand border-dashed rounded-xl p-3.5 flex items-center justify-center space-x-2 text-[10px] text-gray-400 hover:border-brand-olive transition-all cursor-pointer">
                   <Plus className="w-4 h-4 text-brand-olive" />
                   <span className="font-bold">Add Starred Show</span>
@@ -277,25 +281,7 @@ export default function Landing() {
         </motion.div>
       </section>
 
-      {/* 3. Trusted By Section */}
-      <section className="bg-white border-y border-brand-sand/75 py-10 text-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-5">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400">
-            Trusted by placement cells, colleges, and hiring managers
-          </span>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center justify-center pt-2 max-w-4xl mx-auto">
-            {universities.map((uni, idx) => {
-              const Icon = uni.icon;
-              return (
-                <div key={idx} className="flex items-center justify-center space-x-2 text-gray-400 hover:text-brand-charcoal transition-all">
-                  <Icon className="w-5 h-5 text-brand-sage" />
-                  <span className="font-serif text-sm font-bold truncate">{uni.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+
 
       {/* 4. Features Bento Grid Section */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12">
@@ -312,8 +298,8 @@ export default function Landing() {
           {features.map((feat, idx) => {
             const Icon = feat.icon;
             return (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-56"
               >
                 <div className={`p-3 rounded-xl border w-11 h-11 flex items-center justify-center ${feat.color}`}>
@@ -377,51 +363,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* 7. Student Success Metrics */}
-      <section className="bg-brand-olive-dark text-brand-cream border-y border-brand-sand py-16 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-brand-olive/5 pointer-events-none" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
-          {metrics.map((met, idx) => (
-            <div key={idx} className="space-y-2">
-              <span className="font-serif text-4xl sm:text-5xl font-bold text-brand-tan block">{met.val}</span>
-              <span className="text-[10px] sm:text-xs tracking-wider uppercase font-semibold text-brand-sage-light block">
-                {met.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* 8. Testimonials Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-charcoal">
-            Stories from successful scholars.
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 font-sans">
-            Hear from students who built lockers and verified placement profiles.
-          </p>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          {testimonials.map((test, idx) => (
-            <div key={idx} className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col justify-between h-56">
-              <p className="text-xs sm:text-sm text-gray-500 italic leading-relaxed font-serif">
-                "{test.quote}"
-              </p>
-              <div className="flex justify-between items-end mt-4 pt-3 border-t border-brand-sand/65 text-xs">
-                <div>
-                  <h4 className="font-bold text-brand-charcoal">{test.author}</h4>
-                  <span className="text-[10px] text-gray-400 block mt-0.5">{test.role}</span>
-                </div>
-                <span className="bg-brand-sage-light/20 text-brand-olive-dark px-2.5 py-1 rounded-lg font-semibold text-[9px] uppercase border border-brand-sage-light/25">
-                  {test.dest}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* About Section & Team Credits */}
       <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 border-t border-brand-sand/60">
@@ -439,10 +383,10 @@ export default function Landing() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 max-w-5xl mx-auto">
           {/* Vangada Raju */}
-          <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-all">
-            <img 
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Vangada%20Raju" 
-              alt="Vangada Raju" 
+          <a href="https://www.vangadaraju.tech/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block">
+            <img
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Vangada%20Raju"
+              alt="Vangada Raju"
               className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
             />
             <div>
@@ -452,13 +396,13 @@ export default function Landing() {
             <p className="text-xs text-gray-500 leading-relaxed font-sans">
               Crafts responsive, premium UI components, styling design systems, and glassmorphic micro-animations.
             </p>
-          </div>
+          </a>
 
           {/* Lokeshreddy Devireddy */}
-          <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-all">
-            <img 
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Lokeshreddy%20Devireddy" 
-              alt="Lokeshreddy Devireddy" 
+          <a href="https://lokeshreddy.me/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block">
+            <img
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Lokeshreddy%20Devireddy"
+              alt="Lokeshreddy Devireddy"
               className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
             />
             <div>
@@ -468,13 +412,13 @@ export default function Landing() {
             <p className="text-xs text-gray-500 leading-relaxed font-sans">
               Specialize in client-side state synchronization, complex user settings configurations, and routing architectures.
             </p>
-          </div>
+          </a>
 
           {/* Pitchika Ruthvik */}
-          <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md transition-all sm:col-span-2 lg:col-span-1 mx-auto max-w-sm lg:max-w-none w-full">
-            <img 
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Pitchika%20Ruthvik" 
-              alt="Pitchika Ruthvik" 
+          <a href="https://www.ruthvik.tech/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block sm:col-span-2 lg:col-span-1 mx-auto max-w-sm lg:max-w-none w-full">
+            <img
+              src="https://api.dicebear.com/7.x/initials/svg?seed=Pitchika%20Ruthvik"
+              alt="Pitchika Ruthvik"
               className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
             />
             <div>
@@ -484,130 +428,15 @@ export default function Landing() {
             <p className="text-xs text-gray-500 leading-relaxed font-sans">
               Architects secure MySQL databases, token authorization layers, AWS S3 storage APIs, and verified mailing relays.
             </p>
-          </div>
+          </a>
         </div>
       </section>
 
-      {/* 9. Pricing Section */}
-      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-[10px] uppercase tracking-widest text-brand-olive bg-brand-sage-light/25 border border-brand-sage-light/40 px-3.5 py-1.5 rounded-full font-bold inline-block">
-            Vaultify Quotas
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-charcoal">
-            Secure storage plans for everyone
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 font-sans">
-            Choose the secure cloud quota that matches your cataloging and sharing requirements.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto pt-4">
-          {/* Free Plan Card */}
-          <div className="bg-white border border-brand-sand rounded-3xl p-8 shadow-sm flex flex-col justify-between hover:shadow-md transition-all relative overflow-hidden">
-            <div className="space-y-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-serif text-xl font-bold text-brand-charcoal">Free Locker Plan</h3>
-                  <p className="text-[10px] text-gray-400 mt-0.5">Essential digital archiving</p>
-                </div>
-                <span className="bg-brand-cream-dark text-gray-600 text-[10px] font-bold px-2.5 py-1 rounded-lg">
-                  Standard
-                </span>
-              </div>
-              <div className="flex items-baseline">
-                <span className="font-serif text-4xl font-bold text-brand-charcoal">$0</span>
-                <span className="text-xs text-gray-400 ml-1">/ month</span>
-              </div>
-              
-              <ul className="space-y-3 pt-4 border-t border-brand-sand/65 text-xs text-gray-600">
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span><strong>100 GB</strong> Secure SSD Cloud space</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Academic Memo & personal document drawers</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Standard search & folder management</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Generate up to 5 secure shared links</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="mt-8 pt-4">
-              <Link 
-                to="/register" 
-                className="w-full bg-brand-cream hover:bg-brand-sand/50 text-brand-charcoal px-4 py-3 rounded-xl text-xs font-semibold shadow-sm transition-all block text-center cursor-pointer border border-brand-sand"
-              >
-                Get Started Free
-              </Link>
-            </div>
-          </div>
-
-          {/* Pro Plan Card */}
-          <div className="bg-white border-2 border-brand-olive rounded-3xl p-8 shadow-md flex flex-col justify-between hover:shadow-lg transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-brand-olive text-white text-[9px] uppercase tracking-wider font-bold px-4 py-1.5 rounded-bl-2xl">
-              Most Popular
-            </div>
-            
-            <div className="space-y-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-serif text-xl font-bold text-brand-charcoal">Pro Vault Plan</h3>
-                  <p className="text-[10px] text-brand-olive font-semibold mt-0.5">High-capacity digital vault</p>
-                </div>
-              </div>
-              <div className="flex items-baseline">
-                <span className="font-serif text-4xl font-bold text-brand-charcoal">$2.99</span>
-                <span className="text-xs text-gray-400 ml-1">/ month</span>
-              </div>
-              
-              <ul className="space-y-3 pt-4 border-t border-brand-sand/65 text-xs text-gray-600">
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span><strong>1 TB (1,000 GB)</strong> Premium SSD space</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Unlimited document and file sizes</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Unlimited share nodes & direct download keys</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Detailed access and download log analytics</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <CheckCircle2 className="w-4 h-4 text-brand-olive shrink-0" />
-                  <span>Priority verification badge lookup index</span>
-                </li>
-              </ul>
-            </div>
-
-            <div className="mt-8 pt-4">
-              <Link 
-                to="/register" 
-                className="w-full bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-3 rounded-xl text-xs font-semibold shadow-md transition-all block text-center cursor-pointer"
-              >
-                Upgrade to Pro Vault
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 10. Footer Section */}
-      <footer id="footer" className="bg-white border-t border-brand-sand py-12 text-xs text-gray-500 font-sans">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
-          <div className="space-y-3">
+      <footer id="footer" className="bg-gradient-to-b from-white to-brand-cream/30 border-t border-brand-sand py-12 text-xs text-gray-500 font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 flex flex-col md:flex-row justify-between gap-10">
+          <div className="space-y-3 shrink-0">
             <div className="flex items-center space-x-2">
               <BrandIcon className="w-7 h-7" />
               <span className="font-serif text-base font-bold text-brand-charcoal">Vaultify</span>
@@ -617,44 +446,62 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="space-y-2">
-            <h4 className="font-serif font-bold text-brand-charcoal text-xs uppercase tracking-wider">Product Vault</h4>
-            <ul className="space-y-1.5 text-gray-400">
-              <li><Link to="/register" className="hover:text-brand-olive">Storage Lockers</Link></li>
-              <li><Link to="/login" className="hover:text-brand-olive">Resume Revs</Link></li>
-              <li><Link to="/my-files" className="hover:text-brand-olive">Project Sync</Link></li>
-              <li><Link to="/settings" className="hover:text-brand-olive">Plan Quotas</Link></li>
-            </ul>
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-grow max-w-3xl">
+            {/* Card 1 */}
+            <div className="space-y-2 bg-brand-cream/40 rounded-xl p-3 -m-1">
+              <h4 className="font-bold text-brand-charcoal text-base">Vangada Raju</h4>
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Mail className="w-4 h-4" />
+                <a href="mailto:vrajuu4646@gmail.com" className="hover:text-brand-olive text-xs truncate">vrajuu4646@gmail.com</a>
+              </div>
+              <div className="flex space-x-3 pt-1">
+                <a href="https://www.linkedin.com/in/vangada-raju/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a href="https://github.com/rajuvangada" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <h4 className="font-serif font-bold text-brand-charcoal text-xs uppercase tracking-wider">Academic Support</h4>
-            <ul className="space-y-1.5 text-gray-400">
-              <li><a href="#" className="hover:text-brand-olive">Verification Guides</a></li>
-              <li><a href="#" className="hover:text-brand-olive">Placement Cells API</a></li>
-              <li><a href="#" className="hover:text-brand-olive">Student Directory</a></li>
-              <li><a href="#" className="hover:text-brand-olive">Help Center</a></li>
-            </ul>
-          </div>
+            {/* Card 2 */}
+            <div className="space-y-2 bg-brand-cream/40 rounded-xl p-3 -m-1">
+              <h4 className="font-bold text-brand-charcoal text-base">Lokeshreddy Devireddy</h4>
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Mail className="w-4 h-4" />
+                <a href="mailto:mailtolokeshdevireddy@gmail.com" className="hover:text-brand-olive text-xs truncate">mailtolokeshdevireddy@gmail.com</a>
+              </div>
+              <div className="flex space-x-3 pt-1">
+                <a href="https://www.linkedin.com/in/lokeshreddydevireddy/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a href="https://github.com/lokeshreddydevireddy" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
 
-          <div className="space-y-2">
-            <h4 className="font-serif font-bold text-brand-charcoal text-xs uppercase tracking-wider">Locker Policies</h4>
-            <ul className="space-y-1.5 text-gray-400">
-              <li><a href="#" className="hover:text-brand-olive">Data Security</a></li>
-              <li><a href="#" className="hover:text-brand-olive">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-brand-olive">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-brand-olive">Contact Support</a></li>
-            </ul>
+            {/* Card 3 */}
+            <div className="space-y-2 bg-brand-cream/40 rounded-xl p-3 -m-1">
+              <h4 className="font-bold text-brand-charcoal text-base">Pitchika Ruthvik</h4>
+              <div className="flex items-center space-x-2 text-gray-400">
+                <Mail className="w-4 h-4" />
+                <a href="mailto:ruthvikp186@gmail.com" className="hover:text-brand-olive text-xs truncate">ruthvikp186@gmail.com</a>
+              </div>
+              <div className="flex space-x-3 pt-1">
+                <a href="https://www.linkedin.com/in/p-ruthvik/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
+                  <Linkedin className="w-4 h-4" />
+                </a>
+                <a href="https://github.com/ruthvik-01" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
+                  <Github className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 border-t border-brand-sand/60 flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 text-[11px] text-gray-400">
-          <p>© {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
-          <div className="flex space-x-4">
-            <a href="#" className="hover:underline">LinkedIn</a>
-            <a href="#" className="hover:underline">GitHub</a>
-            <a href="#" className="hover:underline">X.com</a>
-          </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 border-t border-brand-sand/60 flex justify-center items-center text-xs text-gray-400">
+          <p className="font-medium">© {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
         </div>
       </footer>
 

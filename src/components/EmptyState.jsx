@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 export default function EmptyState({ 
   title = "No files found", 
-  description = "Get started by uploading your first carrier document to this vault folder.",
+  description = "Get started by uploading your first document, image, or video to this vault folder.",
   actionText = "", 
   onActionClick = null,
   icon: CustomIcon = null
