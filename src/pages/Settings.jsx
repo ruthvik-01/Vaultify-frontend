@@ -104,18 +104,6 @@ export default function Settings() {
         </button>
 
         <button
-          onClick={() => setActiveSubTab('notifications')}
-          className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeSubTab === 'notifications'
-              ? 'bg-brand-olive text-white'
-              : 'text-gray-600 hover:bg-brand-sand/50 hover:text-brand-charcoal'
-          }`}
-        >
-          <Bell className="w-4 h-4" />
-          <span>Notifications</span>
-        </button>
-
-        <button
           onClick={() => setActiveSubTab('preferences')}
           className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
             activeSubTab === 'preferences'
@@ -187,62 +175,6 @@ export default function Settings() {
                 <span>Save Credentials</span>
               </button>
             </form>
-          </div>
-        )}
-
-        {/* Sub-tab: Notification settings */}
-        {activeSubTab === 'notifications' && (
-          <div className="space-y-6 max-w-lg">
-            <div>
-              <h3 className="font-serif text-lg font-bold text-brand-charcoal">Notification Preferences</h3>
-              <p className="text-xs text-gray-500 mt-1">Select what actions send email notifications to your inbox.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3.5 bg-brand-cream rounded-xl border border-brand-sand/65">
-                <div>
-                  <span className="text-xs font-bold text-brand-charcoal block">Email on Share Actions</span>
-                  <span className="text-[10px] text-gray-400">Receive alert when you grant recipients permission to check credentials.</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={emailOnShare}
-                  onChange={(e) => updateNotificationPreference('emailOnShare', e.target.checked)}
-                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 bg-brand-cream rounded-xl border border-brand-sand/65">
-                <div>
-                  <span className="text-xs font-bold text-brand-charcoal block">Email on Downloads</span>
-                  <span className="text-[10px] text-gray-400">Get notified immediately when your shared locker links are downloaded.</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={emailOnDownload}
-                  onChange={(e) => updateNotificationPreference('emailOnDownload', e.target.checked)}
-                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 bg-brand-cream rounded-xl border border-brand-sand/65">
-                <div>
-                  <span className="text-xs font-bold text-brand-charcoal block">Weekly Logs summary</span>
-                  <span className="text-[10px] text-gray-400">Receive an activity report summarizing access frequencies.</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={weeklyReport}
-                  onChange={(e) => updateNotificationPreference('weeklyReport', e.target.checked)}
-                  className="w-4.5 h-4.5 rounded text-brand-olive focus:ring-brand-olive border-brand-sand cursor-pointer"
-                />
-              </div>
-
-              <div className="text-[10px] text-gray-400 font-medium italic flex items-center pt-2">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse" />
-                <span>Preferences auto-save instantly</span>
-              </div>
-            </div>
           </div>
         )}
 
