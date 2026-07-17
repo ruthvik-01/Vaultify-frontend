@@ -21,16 +21,19 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
 
-  // Fetch presigned thumbnail URL for image files on mount
+  // Fetch presigned thumbnail URL for previewable files on mount
   useEffect(() => {
     const ext = file.name.split('.').pop().toLowerCase();
     const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
-    if (isImage && viewMode === 'grid' && !isTrashView) {
+    const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext) || (file.mimeType && file.mimeType.startsWith('video/'));
+    const isPdf = ext === 'pdf' || (file.mimeType && file.mimeType === 'application/pdf');
+
+    if ((isImage || isVideo || isPdf) && viewMode === 'grid' && !isTrashView) {
       getPreviewUrl(file.id).then((url) => {
         if (url) setThumbnailUrl(url);
       });
     }
-  }, [file.id]);
+  }, [file.id, viewMode]);
 
   const handleOpenPreview = async () => {
     setShowPreviewPanel(true);
@@ -295,6 +298,8 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
           {(() => {
             const ext = file.name.split('.').pop().toLowerCase();
             const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
+            const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext) || (file.mimeType && file.mimeType.startsWith('video/'));
+            const isPdf = ext === 'pdf' || (file.mimeType && file.mimeType === 'application/pdf');
             
             if (isImage && thumbnailUrl) {
               return (
@@ -310,21 +315,32 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                 />
               );
             }
-            if (isImage && !thumbnailUrl) {
+            if (isVideo && thumbnailUrl) {
+              return (
+                <video
+                  src={thumbnailUrl}
+                  className="w-full h-full object-cover"
+                  muted
+                  preload="metadata"
+                  playsInline
+                />
+              );
+            }
+            if (isPdf && thumbnailUrl) {
+              return (
+                <iframe
+                  src={thumbnailUrl + "#toolbar=0&navpanes=0&scrollbar=0"}
+                  className="w-full h-full border-0 pointer-events-none scale-[0.9] origin-center"
+                  scrolling="no"
+                  title={file.name}
+                />
+              );
+            }
+            if ((isImage || isVideo || isPdf) && !thumbnailUrl) {
               return (
                 <div className="flex flex-col items-center space-y-1">
                   <Loader2 className="w-6 h-6 text-brand-olive animate-spin" />
                   <span className="text-[9px] text-gray-400">Loading preview...</span>
-                </div>
-              );
-            }
-            if (ext === 'pdf') {
-              return (
-                <div className="flex flex-col items-center space-y-1">
-                  <div className="p-3 bg-red-50 text-red-500 rounded-2xl border border-red-100 shadow-sm">
-                    <FileText className="w-8 h-8" />
-                  </div>
-                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-widest bg-red-50 border border-red-100/50 px-2 py-0.5 rounded-md">PDF Document</span>
                 </div>
               );
             }

@@ -88,13 +88,7 @@ export default function Videos() {
     // Videos already loaded from context - no extra fetch needed
   }, []);
 
-  // Sync user's preference
-  useEffect(() => {
-    if (user.theme_color) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setViewMode(user.theme_color);
-    }
-  }, [user.theme_color]);
+
 
   // Item actions
   const handlePlayVideo = async (video) => {

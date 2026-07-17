@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Play, MoreVertical, Edit2, Move, Download, Share2, Trash2, Video, Clock, HardDrive, Calendar, User, Folder,
-  FileText, Award, FolderGit, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Eye
+  FileText, Award, FolderGit, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Eye, Loader2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '../../utils/formatDate';
+import { useFiles } from '../../context/FileContext';
 
 const formatSize = (bytes) => {
   if (bytes === 0) return '0 B';
@@ -24,8 +25,11 @@ export default function VideoCard({
   onShare,
   onDelete,
 }) {
+  const { getPreviewUrl } = useFiles();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [loadingThumbnail, setLoadingThumbnail] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -36,6 +40,23 @@ export default function VideoCard({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const extName = (video.name || video.filename || '').split('.').pop().toLowerCase();
+    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(extName) || (video.mimeType && video.mimeType.startsWith('image/'));
+    const isVideoFile = ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(extName) || (video.mimeType && video.mimeType.startsWith('video/'));
+    const isPdfFile = extName === 'pdf';
+
+    if (isImage || isVideoFile || isPdfFile) {
+      setLoadingThumbnail(true);
+      getPreviewUrl(video.id)
+        .then((url) => {
+          if (url) setThumbnailUrl(url);
+        })
+        .catch((err) => console.error('Failed to get preview URL for video card:', err))
+        .finally(() => setLoadingThumbnail(false));
+    }
+  }, [video.id]);
 
   const videoFolder = folders.find((f) => f.id === video.videoFolderId);
   const folderName = videoFolder ? videoFolder.name : 'Root';
@@ -74,8 +95,49 @@ export default function VideoCard({
           </div>
         </div>
         
-        {/* Render appropriate file icon */}
-        {getFileIcon()}
+        {/* Render appropriate file icon or live preview */}
+        {loadingThumbnail ? (
+          <div className="flex flex-col items-center space-y-1 select-none">
+            <Loader2 className="w-5 h-5 text-brand-olive animate-spin" />
+            <span className="text-[8px] text-gray-400">Loading preview...</span>
+          </div>
+        ) : thumbnailUrl ? (
+          (() => {
+            if (isImage) {
+              return (
+                <img 
+                  src={thumbnailUrl} 
+                  alt={video.name} 
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              );
+            }
+            if (isVideo) {
+              return (
+                <video
+                  src={thumbnailUrl}
+                  className="w-full h-full object-cover"
+                  muted
+                  preload="metadata"
+                  playsInline
+                />
+              );
+            }
+            if (isPdf) {
+              return (
+                <iframe
+                  src={thumbnailUrl + "#toolbar=0&navpanes=0&scrollbar=0"}
+                  className="w-full h-full border-0 pointer-events-none scale-[0.9] origin-center"
+                  scrolling="no"
+                  title={video.name}
+                />
+              );
+            }
+            return getFileIcon();
+          })()
+        ) : (
+          getFileIcon()
+        )}
         
         {/* Video length tag overlay */}
         {isVideo && video.duration > 0 && (
