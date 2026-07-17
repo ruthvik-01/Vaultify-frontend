@@ -282,33 +282,60 @@ export const FileProvider = ({ children }) => {
         allMapped = [...allMapped, ...videosList];
       }
 
-      setFiles(allMapped);
+      // Load local trash and local restored from localStorage
+      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
+      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
+
+      const trashIds = localTrash.map(f => f.id);
+      const restoredIds = localRestored.map(f => f.id);
+
+      // Filter out any duplicates that might come from backend
+      const activeBackendFiles = allMapped.filter(f => !trashIds.includes(f.id) && !restoredIds.includes(f.id));
+
+      const mergedFiles = [...activeBackendFiles, ...localTrash, ...localRestored];
+      const localShares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
+      const sharedFileIds = localShares.map(s => s.fileId);
+      let updatedShares = false;
+
+      const filesWithShares = mergedFiles.map(f => {
+        const isVideo = f.category === 'Media' || f.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(f.name.split('.').pop().toLowerCase());
+        if (sharedFileIds.includes(f.id) || (isVideo && f.isShared)) {
+          if (isVideo && f.isShared && !sharedFileIds.includes(f.id)) {
+            const token = f.shareToken;
+            const link = `${window.location.origin}/share/${token}`;
+            localShares.push({
+              id: f.id + '_' + Date.now(),
+              fileId: f.id,
+              shareRecordId: token || null,
+              name: f.name,
+              category: 'Media',
+              type: 'video',
+              mimeType: f.mimeType || 'video/mp4',
+              size: f.size || 0,
+              shareLink: link,
+              permission: 'read',
+              createdAt: f.created_at || new Date().toISOString(),
+              status: 'Active'
+            });
+            updatedShares = true;
+          }
+          return { ...f, sharedWith: ['recruiter@company.com'] };
+        }
+        return f;
+      });
+
+      if (updatedShares) {
+        localStorage.setItem('vaultify_local_shares', JSON.stringify(localShares));
+      }
+
+      setFiles(filesWithShares);
     } catch (err) {
       console.error('Failed to fetch files:', err.message);
     }
   };
 
   const fetchTrashFiles = async () => {
-    try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/trash`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
-          },
-        }
-      );
-      const data = await res.json();
-      if (data.data) {
-        const trashFiles = data.data.map((f) => ({ ...mapBackendFile(f), inTrash: true }));
-        setFiles((prev) => {
-          const nonTrash = prev.filter((f) => !f.inTrash);
-          return [...nonTrash, ...trashFiles];
-        });
-      }
-    } catch (err) {
-      console.error('Failed to fetch trash:', err.message);
-    }
+    // Managed locally via localStorage and merged in fetchAllFiles
   };
 
   const addActivity = (action, fileName, category = 'System') => {
@@ -404,17 +431,44 @@ export const FileProvider = ({ children }) => {
   };
 
   // Soft-delete: marks file as trashed in local state (file stays on server)
-  const moveToTrash = (id) => {
-    const file = files.find((f) => f.id === id);
-    if (file) {
+  const moveToTrash = async (id) => {
+    try {
+      const file = files.find((f) => f.id === id);
+      if (!file) return;
+
+      // Call backend delete API
+      const isVideo = file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase());
+      if (isVideo) {
+        await videoService.deleteVideo(id);
+      } else {
+        await api.deleteFile(id);
+      }
+
+      // Add to localTrash in localStorage
+      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
+      const updatedFile = { ...file, inTrash: true };
+      if (!localTrash.some(t => t.id === id)) {
+        localTrash.push(updatedFile);
+        localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash));
+      }
+
+      // Remove from localRestored if it was there
+      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
+      const filteredRestored = localRestored.filter(t => t.id !== id);
+      localStorage.setItem('vaultify_local_restored_files', JSON.stringify(filteredRestored));
+
+      // Update files state immediately
+      setFiles(prev => {
+        const remaining = prev.filter(f => f.id !== id);
+        return [...remaining, updatedFile];
+      });
+
       addActivity('trashed', file.name, file.category);
       showNotification(`"${file.name}" moved to trash`, 'success');
+    } catch (err) {
+      console.error('Delete failed:', err.message);
+      showNotification('Failed to delete file', 'error');
     }
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === id ? { ...f, inTrash: true } : f
-      )
-    );
   };
 
   // Keep the old name as alias for backward compat (some components still call deleteFile)
@@ -424,28 +478,57 @@ export const FileProvider = ({ children }) => {
   const restoreFile = (id) => {
     const file = files.find((f) => f.id === id);
     if (file) {
+      // Remove from localTrash
+      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
+      const filteredTrash = localTrash.filter(t => t.id !== id);
+      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(filteredTrash));
+
+      // Add to localRestored
+      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
+      const updatedFile = { ...file, inTrash: false };
+      if (!localRestored.some(r => r.id === id)) {
+        localRestored.push(updatedFile);
+        localStorage.setItem('vaultify_local_restored_files', JSON.stringify(localRestored));
+      }
+
+      // Update files state
+      setFiles(prev => {
+        const remaining = prev.filter(f => f.id !== id);
+        return [...remaining, updatedFile];
+      });
+
       addActivity('restored', file.name, file.category);
       showNotification(`"${file.name}" restored from trash`, 'success');
     }
-    setFiles((prev) =>
-      prev.map((f) =>
-        f.id === id ? { ...f, inTrash: false } : f
-      )
-    );
   };
 
   // Permanent delete: actually removes file from backend (S3 + DB)
   const permanentlyDeleteFile = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
-      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
       
-      if (isVideo) {
-        await videoService.deleteVideo(id);
-      } else {
-        await api.deleteFile(id);
+      // Try calling backend delete API just in case it wasn't deleted during soft-delete
+      try {
+        const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+        if (isVideo) {
+          await videoService.deleteVideo(id);
+        } else {
+          await api.deleteFile(id);
+        }
+      } catch (apiErr) {
+        // Silently ignore if already deleted on server
       }
 
+      // Remove from localTrash and localRestored in localStorage
+      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
+      const filteredTrash = localTrash.filter(t => t.id !== id);
+      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(filteredTrash));
+
+      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
+      const filteredRestored = localRestored.filter(t => t.id !== id);
+      localStorage.setItem('vaultify_local_restored_files', JSON.stringify(filteredRestored));
+
+      // Remove from files state
       setFiles((prev) => prev.filter((f) => f.id !== id));
       if (file) {
         addActivity('purged', file.name, file.category);
@@ -557,6 +640,9 @@ export const FileProvider = ({ children }) => {
       const file = files.find((f) => f.id === id);
       const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
       
+      let link;
+      let shareRecordId = null;
+
       if (isVideo) {
         const token = localStorage.getItem('vaultify_token');
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -574,10 +660,9 @@ export const FileProvider = ({ children }) => {
         if (data && data.shareUrl) {
           const parts = data.shareUrl.split('/');
           const shareToken = parts[parts.length - 1];
-          addActivity('shared', file.name, 'Media');
-          return `${window.location.origin}/share/${shareToken}`;
+          link = `${window.location.origin}/share/${shareToken}`;
+          shareRecordId = shareToken;
         }
-        throw new Error('Link generation failed.');
       } else {
         const res = await fetch(
           `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/share`,
@@ -592,16 +677,90 @@ export const FileProvider = ({ children }) => {
         );
         const data = await res.json();
         if (data.data) {
-          addActivity('shared', file?.name || 'file', 'System');
-          return data.data.share_link;
+          link = data.data.share_link;
+          shareRecordId = data.data.id;
         }
+      }
+
+      if (link) {
+        // Save share locally to vaultify_local_shares in localStorage
+        const shares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
+        const existingIdx = shares.findIndex(s => s.fileId === id);
+        const shareRecord = {
+          id: id + '_' + Date.now(),
+          fileId: id,
+          shareRecordId: shareRecordId || null,
+          name: file.name,
+          category: file.category || (isVideo ? 'Media' : 'Notes'),
+          type: file.type,
+          mimeType: file.mimeType,
+          size: file.size,
+          shareLink: link,
+          permission: permission,
+          createdAt: new Date().toISOString(),
+          status: 'Active'
+        };
+        if (existingIdx >= 0) {
+          shares[existingIdx] = shareRecord;
+        } else {
+          shares.push(shareRecord);
+        }
+        localStorage.setItem('vaultify_local_shares', JSON.stringify(shares));
+
+        // Update files array locally to reflect shared status
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, sharedWith: [...(f.sharedWith || []), 'recruiter@company.com'] } : f));
+
+        addActivity('shared', file.name, file.category);
+        return link;
       }
     } catch (err) {
       console.error('Share failed:', err.message);
     }
   };
 
-  const removeShare = () => {};
+  const removeShare = async (fileId, email = '') => {
+    try {
+      const file = files.find(f => f.id === fileId);
+      if (!file) return;
+
+      const isVideo = file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase());
+
+      const shares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
+      const record = shares.find(s => s.fileId === fileId);
+
+      if (isVideo) {
+        const token = localStorage.getItem('vaultify_token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        await fetch(`${API_URL}/videos/${fileId}/unshare`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).catch(() => {});
+      } else if (record && record.shareRecordId) {
+        // Call backend DELETE /api/share/:id
+        const token = localStorage.getItem('vaultify_token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        await fetch(`${API_URL}/share/${record.shareRecordId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).catch(() => {});
+      }
+
+      // Remove from vaultify_local_shares
+      const filtered = shares.filter(s => s.fileId !== fileId);
+      localStorage.setItem('vaultify_local_shares', JSON.stringify(filtered));
+
+      // Update files state
+      setFiles(prev => prev.map(f => f.id === fileId ? { ...f, sharedWith: [] } : f));
+      addActivity('unshared', file.name, file.category);
+      showNotification('Sharing revoked successfully', 'success');
+    } catch (err) {
+      console.error('Revoke share failed:', err.message);
+    }
+  };
 
   // ─── Folders ──────────────────────────────────────────────────────────────
   const fetchAllFolders = async () => {

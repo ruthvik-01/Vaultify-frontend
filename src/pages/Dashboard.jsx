@@ -397,45 +397,7 @@ export default function Dashboard() {
         {/* RIGHT COLUMN: Sidebar stats & feeds (1/3 width on desktop) */}
         <div className="space-y-6">
           
-          {/* Verified Certificates Badge Slider */}
-          <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-serif text-base font-bold text-brand-charcoal flex items-center">
-                <Award className="w-4 h-4 text-amber-600 mr-1.5" />
-                <span>Verified Badges</span>
-              </h3>
-              <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[9px] font-bold">
-                {certificateFiles.length} Verified
-              </span>
-            </div>
 
-            <div className="space-y-3">
-              {certificateFiles.map(cert => (
-                <div key={cert.id} className="border border-brand-sand rounded-2xl p-4 bg-brand-cream/40 flex items-center space-x-3.5 hover:bg-brand-cream transition-all">
-                  <div className="p-2.5 bg-amber-50 text-amber-600 rounded-xl border border-amber-100 shrink-0">
-                    <Award className="w-6 h-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-brand-charcoal truncate" title={cert.name}>
-                      {cert.name.replace(/_/g, ' ').replace('.pdf', '')}
-                    </h4>
-                    <p className="text-[10px] text-gray-500 truncate mt-0.5">{cert.certificateIssuer}</p>
-                    <span className="text-[9px] font-mono text-brand-olive bg-brand-sage-light/20 px-1.5 py-0.5 rounded inline-block mt-1">
-                      ID: {cert.credentialId}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button 
-              onClick={() => navigate('/my-files?category=Certificates')}
-              className="w-full text-center text-xs font-bold text-brand-olive py-1 hover:underline flex items-center justify-center space-x-1"
-            >
-              <span>Verify credentials</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
 
           {/* Activity Feed Widget */}
           <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm space-y-4">

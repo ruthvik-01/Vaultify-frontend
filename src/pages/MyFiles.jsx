@@ -146,17 +146,7 @@ export default function MyFiles() {
         ))}
       </div>
 
-      {/* Render directories grid only when 'All' is selected */}
-      {activeCategory === 'All' && (
-        <div className="space-y-3">
-          <h3 className="font-serif text-lg font-bold text-brand-charcoal">Carrier Directories</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {categories.map((cat) => (
-              <FolderCard key={cat} category={cat} />
-            ))}
-          </div>
-        </div>
-      )}
+
 
       {/* Search Bar & File Type Filter Tags */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-brand-sand rounded-3xl p-5 shadow-sm">

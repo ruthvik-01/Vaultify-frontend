@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Play, MoreVertical, Edit2, Move, Download, Share2, Trash2, Video, Clock, HardDrive, Calendar, User, Folder 
 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const formatSize = (bytes) => {
   if (bytes === 0) return '0 B';
@@ -95,16 +96,21 @@ export default function VideoCard({
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-1 w-40 bg-white border border-brand-sand rounded-xl shadow-lg z-20 py-1.5 text-xs text-left">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 mt-2 w-48 bg-white border border-brand-sand/80 rounded-2xl shadow-xl z-30 py-1.5 text-xs text-left"
+                >
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
                       onPlay(video);
                     }}
-                    className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+                    className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Play className="w-3.5 h-3.5 text-gray-400 fill-gray-400" />
+                    <Play className="w-4 h-4 text-brand-olive fill-brand-olive/10" />
                     <span>View / Play</span>
                   </button>
                   <button
@@ -113,9 +119,9 @@ export default function VideoCard({
                       setMenuOpen(false);
                       onRename(video);
                     }}
-                    className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+                    className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Edit2 className="w-3.5 h-3.5 text-gray-400" />
+                    <Edit2 className="w-4 h-4 text-gray-400" />
                     <span>Rename</span>
                   </button>
                   <button
@@ -124,9 +130,9 @@ export default function VideoCard({
                       setMenuOpen(false);
                       onMove(video);
                     }}
-                    className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+                    className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Move className="w-3.5 h-3.5 text-gray-400" />
+                    <Move className="w-4 h-4 text-gray-400" />
                     <span>Move</span>
                   </button>
                   <button
@@ -135,9 +141,9 @@ export default function VideoCard({
                       setMenuOpen(false);
                       onDownload(video);
                     }}
-                    className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+                    className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Download className="w-3.5 h-3.5 text-gray-400" />
+                    <Download className="w-4 h-4 text-gray-400" />
                     <span>Download</span>
                   </button>
                   <button
@@ -146,24 +152,24 @@ export default function VideoCard({
                       setMenuOpen(false);
                       onShare(video);
                     }}
-                    className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+                    className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Share2 className="w-3.5 h-3.5 text-gray-400" />
+                    <Share2 className="w-4 h-4 text-gray-400" />
                     <span>Share</span>
                   </button>
-                  <hr className="border-brand-sand/60 my-1" />
+                  <div className="border-t border-brand-sand/60 my-1" />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
                       onDelete(video.id);
                     }}
-                    className="w-full px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2 cursor-pointer"
+                    className="w-full px-4 py-2.5 hover:bg-red-50 text-red-600 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <Trash2 className="w-4 h-4 text-red-500" />
                     <span>Delete</span>
                   </button>
-                </div>
+                </motion.div>
               )}
             </div>
           </div>

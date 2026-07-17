@@ -25,12 +25,12 @@ export default function StorageCard({ isCompact = false }) {
       <>
         <div 
           onClick={() => setShowUpgradeModal(true)}
-          title={`Vault Space: ${formatSize(storageStats.used)} of ${formatSize(storageStats.totalCapacity)} (${percent.toFixed(1)}% used)`}
+          title={`Unlimited Storage: ${formatSize(storageStats.used)} used (∞ Unlimited)`}
           className="flex flex-col items-center justify-center p-2 bg-white border border-brand-sand rounded-xl shadow-sm cursor-pointer hover:bg-brand-cream transition-all duration-200"
         >
           <HardDrive className="w-4 h-4 text-brand-olive animate-pulse" />
           <span className="text-[9px] font-bold text-brand-charcoal mt-1">
-            {percent.toFixed(0)}%
+            ∞
           </span>
         </div>
 
@@ -111,23 +111,23 @@ export default function StorageCard({ isCompact = false }) {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-2">
             <HardDrive className="w-5 h-5 text-brand-olive" />
-            <h3 className="font-serif font-bold text-brand-charcoal text-base">Vault Space</h3>
+            <h3 className="font-serif font-bold text-brand-charcoal text-base">Unlimited Storage</h3>
           </div>
           <span className="text-xs font-semibold text-brand-olive bg-brand-sage-light/30 px-2 py-0.5 rounded-full">
-            {percent.toFixed(1)}% Used
+            ∞ Unlimited
           </span>
         </div>
 
         <div className="w-full bg-brand-cream-dark h-2 rounded-full overflow-hidden mb-4 flex">
           <div 
-            style={{ width: `${percent}%` }} 
+            style={{ width: '0%' }} 
             className="bg-brand-olive h-full rounded-full transition-all duration-500 ease-out" 
           />
         </div>
 
         <div className="flex justify-between text-xs text-gray-500 mb-5 font-mono">
           <span>{formatSize(storageStats.used)} used</span>
-          <span>{formatSize(storageStats.totalCapacity)} limit</span>
+          <span>∞ Unlimited limit</span>
         </div>
 
         <div className="space-y-3 pt-2 border-t border-brand-sand/60">

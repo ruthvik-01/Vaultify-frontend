@@ -3,7 +3,8 @@ import { useFiles } from '../context/FileContext';
 import { 
   FileText, Award, FolderGit, FileCode, Video, File, 
   MoreVertical, Star, Share2, Trash2, ArrowUpRight, 
-  Download, Eye, UserPlus, ShieldAlert, Check, X, RefreshCw, Loader2
+  Download, Eye, UserPlus, ShieldAlert, Check, X, RefreshCw, Loader2,
+  Music, Image as ImageIcon, FileSpreadsheet, Presentation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -80,7 +81,46 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
     if (file.category === 'Projects') {
       return <FolderGit className="w-8 h-8 text-brand-olive" />;
     }
+
+    const ext = file.name.split('.').pop().toLowerCase();
     
+    // Images
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'))) {
+      return <ImageIcon className="w-8 h-8 text-emerald-500" />;
+    }
+    
+    // Videos
+    if (['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'].includes(ext) || (file.mimeType && file.mimeType.startsWith('video/'))) {
+      return <Video className="w-8 h-8 text-cyan-500" />;
+    }
+    
+    // Audio
+    if (['mp3', 'wav', 'aac', 'ogg', 'm4a', 'flac'].includes(ext) || (file.mimeType && file.mimeType.startsWith('audio/'))) {
+      return <Music className="w-8 h-8 text-purple-500" />;
+    }
+    
+    // Documents
+    if (ext === 'pdf' || (file.mimeType && file.mimeType === 'application/pdf')) {
+      return <FileText className="w-8 h-8 text-rose-500" />;
+    }
+    if (['doc', 'docx', 'odt'].includes(ext) || (file.mimeType && file.mimeType.includes('document'))) {
+      return <File className="w-8 h-8 text-blue-500" />;
+    }
+    if (['xls', 'xlsx', 'ods', 'csv'].includes(ext) || (file.mimeType && (file.mimeType.includes('sheet') || file.mimeType.includes('csv')))) {
+      return <FileSpreadsheet className="w-8 h-8 text-green-600" />;
+    }
+    if (['ppt', 'pptx', 'odp'].includes(ext) || (file.mimeType && file.mimeType.includes('presentation'))) {
+      return <Presentation className="w-8 h-8 text-orange-500" />;
+    }
+    if (['txt', 'rtf', 'log'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'))) {
+      return <FileText className="w-8 h-8 text-gray-600" />;
+    }
+    
+    // Archives
+    if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+      return <FileCode className="w-8 h-8 text-indigo-500" />;
+    }
+
     switch (file.type) {
       case 'pdf':
         return <FileText className="w-8 h-8 text-rose-500" />;
@@ -170,14 +210,19 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
               {showMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => { setShowMenu(false); setShowSharePanel(false); }} />
-                  <div className="absolute right-0 mt-1 w-48 bg-white border border-brand-sand rounded-xl shadow-lg z-50 py-1.5 text-left">
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: -8 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 mt-2 w-48 bg-white border border-brand-sand/80 rounded-2xl shadow-xl z-50 py-1.5 text-left divide-y divide-brand-sand/40 font-sans"
+                  >
                     {isTrashView ? (
-                      <>
+                      <div className="py-1">
                         <button
                           onClick={() => { restoreFile(file.id); setShowMenu(false); }}
-                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-brand-olive hover:bg-brand-cream"
+                          className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-brand-olive hover:bg-brand-cream transition-colors cursor-pointer"
                         >
-                          <RefreshCw className="w-3.5 h-3.5" />
+                          <RefreshCw className="w-4 h-4 text-brand-olive" />
                           <span>Restore File</span>
                         </button>
                         <button
@@ -187,46 +232,49 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                             }
                             setShowMenu(false);
                           }}
-                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
+                          className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4 text-red-500" />
                           <span>Delete Forever</span>
                         </button>
-                      </>
+                      </div>
                     ) : (
                       <>
-                        <button
-                          onClick={() => { handleOpenPreview(); setShowMenu(false); }}
-                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Quick Preview</span>
-                        </button>
-                        <button
-                          onClick={() => setShowSharePanel(!showSharePanel)}
-                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
-                        >
-                          <Share2 className="w-3.5 h-3.5" />
-                          <span>Share / Permissions</span>
-                        </button>
-                        <button
-                          onClick={handleDownload}
-                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-brand-cream"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download</span>
-                        </button>
-                        <div className="border-t border-brand-sand my-1" />
-                        <button
-                          onClick={() => { deleteFile(file.id); setShowMenu(false); }}
-                          className="w-full flex items-center space-x-2 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                          <span>Move to Trash</span>
-                        </button>
+                        <div className="py-1">
+                          <button
+                            onClick={() => { handleOpenPreview(); setShowMenu(false); }}
+                            className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-brand-cream transition-colors cursor-pointer"
+                          >
+                            <Eye className="w-4 h-4 text-gray-400" />
+                            <span>Quick Preview</span>
+                          </button>
+                          <button
+                            onClick={() => { setShowSharePanel(!showSharePanel); setShowMenu(false); }}
+                            className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-brand-cream transition-colors cursor-pointer"
+                          >
+                            <Share2 className="w-4 h-4 text-gray-400" />
+                            <span>Share / Permissions</span>
+                          </button>
+                          <button
+                            onClick={() => { handleDownload(); setShowMenu(false); }}
+                            className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-brand-cream transition-colors cursor-pointer"
+                          >
+                            <Download className="w-4 h-4 text-gray-400" />
+                            <span>Download</span>
+                          </button>
+                        </div>
+                        <div className="py-1">
+                          <button
+                            onClick={() => { deleteFile(file.id); setShowMenu(false); }}
+                            className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                            <span>Move to Trash</span>
+                          </button>
+                        </div>
                       </>
                     )}
-                  </div>
+                  </motion.div>
                 </>
               )}
             </div>
@@ -535,6 +583,9 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     const isPdf = ext === 'pdf' || (file.mimeType && file.mimeType === 'application/pdf');
                     const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'));
                     const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'].includes(ext) || (file.mimeType && file.mimeType.startsWith('video/'));
+                    const isAudio = ['mp3', 'wav', 'aac', 'ogg', 'm4a', 'flac'].includes(ext) || (file.mimeType && file.mimeType.startsWith('audio/'));
+                    const isExcel = ['xls', 'xlsx', 'ods', 'csv'].includes(ext) || (file.mimeType && (file.mimeType.includes('sheet') || file.mimeType.includes('csv')));
+                    const isPowerPoint = ['ppt', 'pptx', 'odp'].includes(ext) || (file.mimeType && file.mimeType.includes('presentation'));
 
                     if (isImage) {
                       return (
@@ -560,6 +611,58 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                           </video>
                         </div>
                       );
+                    } else if (isAudio) {
+                      return (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-brand-cream rounded-xl">
+                          <Music className="w-16 h-16 text-purple-500 mb-4 animate-bounce" />
+                          <audio
+                            src={previewUrl}
+                            controls
+                            className="w-full max-w-md focus:outline-none"
+                          >
+                            Your browser does not support the audio player.
+                          </audio>
+                          <span className="text-xs text-gray-500 mt-2 font-mono">{file.name}</span>
+                        </div>
+                      );
+                    } else if (isExcel) {
+                      return (
+                        <div className="text-center max-w-md p-6">
+                          <FileSpreadsheet className="w-16 h-16 text-green-600 mx-auto mb-3" />
+                          <h4 className="font-semibold text-brand-charcoal text-sm mb-1">{file.name}</h4>
+                          <p className="text-xs text-gray-500 leading-relaxed mb-4 font-sans">
+                            Spreadsheet preview is not directly viewable online. Please download to edit or view.
+                          </p>
+                          <a
+                            href={previewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center space-x-2 transition-all shadow-sm"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Download Spreadsheet</span>
+                          </a>
+                        </div>
+                      );
+                    } else if (isPowerPoint) {
+                      return (
+                        <div className="text-center max-w-md p-6">
+                          <Presentation className="w-16 h-16 text-orange-500 mx-auto mb-3" />
+                          <h4 className="font-semibold text-brand-charcoal text-sm mb-1">{file.name}</h4>
+                          <p className="text-xs text-gray-500 leading-relaxed mb-4 font-sans">
+                            Presentation preview is not directly viewable online. Please download to view.
+                          </p>
+                          <a
+                            href={previewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center space-x-2 transition-all shadow-sm"
+                          >
+                            <Download className="w-4 h-4" />
+                            <span>Download Presentation</span>
+                          </a>
+                        </div>
+                      );
                     } else if (isPdf) {
                       return (
                         <iframe 
@@ -571,7 +674,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     } else if (isText) {
                       return (
                         <pre className="w-full h-[55vh] p-4 bg-brand-charcoal text-emerald-400 font-mono text-[11px] rounded-xl overflow-auto whitespace-pre-wrap text-left border border-brand-charcoal">
-                          {textContent}
+                           {textContent}
                         </pre>
                       );
                     } else {

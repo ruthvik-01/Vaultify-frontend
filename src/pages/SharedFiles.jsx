@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
   Users, Link2, Eye, Download, X, Share2, Calendar, FileText, 
-  Award, FolderGit, FileCode, Video, File, Globe, Lock, Loader2
+  Award, FolderGit, FileCode, Video, File, Globe, Lock, Loader2,
+  Folder, Music, FileSpreadsheet, Presentation, ShieldAlert, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import EmptyState from '../components/EmptyState';
@@ -17,48 +18,55 @@ export default function SharedFiles() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [textContent, setTextContent] = useState('');
 
-  // Files shared BY the user
-  const sharedByMe = files.filter(f => !f.inTrash && f.sharedWith && f.sharedWith.length > 0);
+  // Local state for loaded shares
+  const [sharedByMe, setSharedByMe] = useState([]);
+  const [sharedWithMe, setSharedWithMe] = useState([]); // Empty - Do NOT generate mock data
 
-  // Files shared WITH the user (mocked data)
-  const [sharedWithMe, setSharedWithMe] = useState([
-    {
-      id: 'sw1',
-      name: 'Placement_Drive_Schedule_2026_V3.pdf',
-      owner: 'careers.state@university.edu',
-      ownerName: 'Placement Office State Tech',
-      size: 1048576, // 1.0 MB
-      dateShared: '2026-06-12T09:00:00Z',
-      category: 'Placement Documents',
-      type: 'pdf',
-      mimeType: 'application/pdf'
-    },
-    {
-      id: 'sw2',
-      name: 'CSE_Senior_Capstone_Project_Rubric.pdf',
-      owner: 'head.cse@university.edu',
-      ownerName: 'Dr. Aris Thorne',
-      size: 471859, // 460 KB
-      dateShared: '2026-06-08T11:30:00Z',
-      category: 'Assignments',
-      type: 'pdf',
-      mimeType: 'application/pdf'
-    },
-    {
-      id: 'sw3',
-      name: 'System_Design_Cheatsheet.txt',
-      owner: 'senior.peer@google.com',
-      ownerName: 'Rahul Mehta (Alumni)',
-      size: 12400, // 12 KB
-      dateShared: '2026-05-30T16:00:00Z',
-      category: 'Notes',
-      type: 'txt',
-      mimeType: 'text/plain'
+  const loadSharedByMe = () => {
+    // 1. Files & Videos from localStorage
+    const localShares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
+    
+    // 2. Folders from localStorage
+    const sharedFolders = JSON.parse(localStorage.getItem('vaultify_video_shared_folders') || '{}');
+    const foldersArray = Object.keys(sharedFolders).map(token => ({
+      id: token,
+      fileId: token,
+      name: sharedFolders[token].name,
+      category: 'Folder',
+      type: 'folder',
+      shareLink: `${window.location.origin}/share/folder/${token}`,
+      createdAt: sharedFolders[token].created_at || new Date().toISOString(),
+      permission: 'read',
+      status: 'Active',
+      isFolder: true
+    }));
+
+    setSharedByMe([...localShares, ...foldersArray]);
+  };
+
+  useEffect(() => {
+    loadSharedByMe();
+  }, [files]);
+
+  const handleRevokeShare = async (item) => {
+    if (confirm(`Revoke all shared access for "${item.name}"?`)) {
+      if (item.isFolder) {
+        // Delete folder share
+        const sharedFolders = JSON.parse(localStorage.getItem('vaultify_video_shared_folders') || '{}');
+        delete sharedFolders[item.id];
+        localStorage.setItem('vaultify_video_shared_folders', JSON.stringify(sharedFolders));
+        showNotification(`Access revoked for folder "${item.name}"`, 'success');
+        loadSharedByMe();
+      } else {
+        // Revoke standard file/video share
+        await removeShare(item.fileId);
+        loadSharedByMe();
+      }
     }
-  ]);
+  };
 
   const formatSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -74,14 +82,31 @@ export default function SharedFiles() {
   };
 
   const getFileIcon = (file) => {
+    if (file.isFolder || file.type === 'folder') return <Folder className="w-8 h-8 text-brand-olive" />;
     if (file.category === 'Certificates') return <Award className="w-8 h-8 text-amber-600" />;
     if (file.category === 'Projects') return <FolderGit className="w-8 h-8 text-brand-olive" />;
     
+    const ext = file.name.split('.').pop().toLowerCase();
+    
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+      return <File className="w-8 h-8 text-emerald-500" />;
+    }
+    if (['mp3', 'wav', 'aac', 'ogg'].includes(ext)) {
+      return <Music className="w-8 h-8 text-purple-500" />;
+    }
+    if (['xls', 'xlsx'].includes(ext)) {
+      return <FileSpreadsheet className="w-8 h-8 text-green-600" />;
+    }
+    if (['ppt', 'pptx'].includes(ext)) {
+      return <Presentation className="w-8 h-8 text-orange-500" />;
+    }
+
     switch (file.type) {
       case 'pdf':
         return <FileText className="w-8 h-8 text-rose-500" />;
       case 'zip':
       case 'rar':
+      case '7z':
         return <FileCode className="w-8 h-8 text-indigo-500" />;
       case 'doc':
       case 'docx':
@@ -94,9 +119,9 @@ export default function SharedFiles() {
     }
   };
 
-  const handleCopyLink = (fileId) => {
-    navigator.clipboard.writeText(`https://vaultify.co/shared-preview/${fileId}`);
-    showNotification('Secure share link copied to clipboard!', 'success');
+  const handleCopyLink = (shareLink) => {
+    navigator.clipboard.writeText(shareLink);
+    showNotification('Share link copied to clipboard!', 'success');
   };
 
   const handleOpenPreview = async (file) => {
@@ -106,25 +131,22 @@ export default function SharedFiles() {
     setTextContent('');
     
     try {
-      let url;
-      // Check if it's a mocked sharedWithMe file or real file
-      if (file.id.startsWith('sw')) {
-        url = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download-simulated/mock-shared?filename=${encodeURIComponent(file.name)}&disposition=inline`;
+      if (file.isFolder) {
+        setPreviewUrl(file.shareLink);
       } else {
-        url = await getPreviewUrl(file.id);
-      }
-      
-      setPreviewUrl(url);
+        const url = await getPreviewUrl(file.fileId);
+        setPreviewUrl(url);
 
-      const ext = file.name.split('.').pop().toLowerCase();
-      const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'));
-      if (isText && url) {
-        const textRes = await fetch(url);
-        if (textRes.ok) {
-          const txt = await textRes.text();
-          setTextContent(txt);
-        } else {
-          setTextContent(`Failed to load text content.`);
+        const ext = file.name.split('.').pop().toLowerCase();
+        const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'));
+        if (isText && url) {
+          const textRes = await fetch(url);
+          if (textRes.ok) {
+            const txt = await textRes.text();
+            setTextContent(txt);
+          } else {
+            setTextContent(`Failed to load text content.`);
+          }
         }
       }
     } catch (err) {
@@ -135,15 +157,10 @@ export default function SharedFiles() {
   };
 
   const handleDownload = (file) => {
-    const downloadUrl = file.id.startsWith('sw')
-      ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download-simulated/mock-shared?filename=${encodeURIComponent(file.name)}&disposition=attachment`
-      : null;
-
-    if (downloadUrl) {
-      window.open(downloadUrl, '_blank');
+    if (file.isFolder) {
+      window.open(file.shareLink, '_blank');
     } else {
-      // Direct S3 download via API
-      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?disposition=attachment`, '_blank');
+      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.fileId}?disposition=attachment`, '_blank');
     }
   };
 
@@ -179,60 +196,59 @@ export default function SharedFiles() {
         <div className="space-y-4">
           {sharedByMe.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sharedByMe.map((file) => (
+              {sharedByMe.map((item) => (
                 <motion.div
-                  key={file.id}
+                  key={item.id}
                   layout
                   className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
                 >
                   <div className="flex items-start justify-between">
                     <div className="p-2.5 bg-brand-cream rounded-2xl border border-brand-sand/40">
-                      {getFileIcon(file)}
+                      {getFileIcon(item)}
                     </div>
                     
-                    <button
-                      onClick={() => handleCopyLink(file.id)}
-                      className="p-2 hover:bg-brand-cream rounded-xl border border-brand-sand/50 text-brand-charcoal transition-all text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
-                    >
-                      <Link2 className="w-3.5 h-3.5 text-brand-olive" />
-                      <span>Copy URL</span>
-                    </button>
+                    <div className="flex space-x-1">
+                      <button
+                        onClick={() => handleCopyLink(item.shareLink)}
+                        className="p-2 hover:bg-brand-cream rounded-xl border border-brand-sand/50 text-brand-charcoal transition-all text-xs font-bold flex items-center space-x-1.5 cursor-pointer"
+                        title="Copy Share Link"
+                      >
+                        <Link2 className="w-3.5 h-3.5 text-brand-olive" />
+                        <span>Copy URL</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleRevokeShare(item)}
+                        className="p-2 hover:bg-red-50 text-red-500 rounded-xl border border-transparent hover:border-red-100 transition-all cursor-pointer"
+                        title="Revoke Share Access"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div>
-                    <h4 className="font-serif text-sm font-bold text-brand-charcoal truncate" title={file.name}>
-                      {file.name}
+                    <h4 className="font-serif text-sm font-bold text-brand-charcoal truncate" title={item.name}>
+                      {item.name}
                     </h4>
                     <div className="flex items-center space-x-2 text-[10px] text-gray-400 mt-1">
-                      <span>Size: {formatSize(file.size)}</span>
-                      <span>•</span>
+                      {!item.isFolder && <span>Size: {formatSize(item.size)}</span>}
+                      {!item.isFolder && <span>•</span>}
                       <span className="text-brand-olive bg-brand-sage-light/25 px-2 py-0.5 rounded-full font-semibold">
-                        {file.category}
+                        {item.category}
                       </span>
                     </div>
                   </div>
 
-                  {/* Recipients List */}
-                  <div className="pt-3 border-t border-brand-sand/50">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
-                      Permitted Access ({file.sharedWith.length})
-                    </span>
-                    <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
-                      {file.sharedWith.map((email, idx) => (
-                        <span key={idx} className="bg-brand-cream border border-brand-sand/60 text-[9px] font-semibold px-2 py-1 rounded-xl flex items-center space-x-1.5 text-gray-600">
-                          <span className="truncate max-w-[140px]">{email}</span>
-                          <button
-                            onClick={() => {
-                              removeShare(file.id, email);
-                              showNotification(`Access revoked for ${email}`, 'success');
-                            }}
-                            className="text-red-500 hover:text-red-700 font-bold text-xs"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
+                  {/* Share details */}
+                  <div className="pt-3 border-t border-brand-sand/50 flex justify-between items-center text-[10px] text-gray-400">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-3 h-3 text-brand-olive" />
+                      <span>{formatDate(item.createdAt)}</span>
                     </div>
+                    <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 border border-emerald-100 rounded-full font-bold">
+                      {item.status}
+                    </span>
                   </div>
                 </motion.div>
               ))}
@@ -253,63 +269,14 @@ export default function SharedFiles() {
 
       {/* Grid: Shared WITH me */}
       {activeTab === 'with-me' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sharedWithMe.map((file) => (
-            <motion.div
-              key={file.id}
-              className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
-            >
-              <div className="flex items-start justify-between">
-                <div className="p-2.5 bg-brand-cream rounded-2xl border border-brand-sand/40">
-                  {getFileIcon(file)}
-                </div>
-                
-                <span className="text-[10px] text-gray-400 font-medium flex items-center space-x-1 bg-brand-cream px-2 py-1 border border-brand-sand/40 rounded-xl">
-                  <Calendar className="w-3 h-3 text-brand-olive" />
-                  <span>{formatDate(file.dateShared)}</span>
-                </span>
-              </div>
-
-              <div>
-                <h4 className="font-serif text-sm font-bold text-brand-charcoal truncate" title={file.name}>
-                  {file.name}
-                </h4>
-                <div className="flex justify-between items-center text-[10px] text-gray-400 mt-1">
-                  <span>Size: {formatSize(file.size)}</span>
-                  <span className="text-brand-olive bg-brand-sage-light/25 px-2 py-0.5 rounded-full font-semibold">
-                    {file.category}
-                  </span>
-                </div>
-              </div>
-
-              {/* Owner details */}
-              <div className="pt-3 border-t border-brand-sand/50 flex flex-col">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-                  Shared By
-                </span>
-                <span className="font-bold text-xs text-brand-charcoal">{file.ownerName}</span>
-                <span className="text-[10px] text-gray-500 font-mono mt-0.5 truncate">{file.owner}</span>
-              </div>
-
-              {/* Actions */}
-              <div className="pt-2 flex space-x-2">
-                <button
-                  onClick={() => handleOpenPreview(file)}
-                  className="flex-1 bg-brand-cream hover:bg-brand-sand/40 border border-brand-sand text-brand-charcoal font-semibold py-2 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Preview</span>
-                </button>
-                <button
-                  onClick={() => handleDownload(file)}
-                  className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white font-semibold py-2 rounded-xl text-xs transition-all flex items-center justify-center space-x-1.5 shadow-sm cursor-pointer"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download</span>
-                </button>
-              </div>
-            </motion.div>
-          ))}
+        <div className="py-12 bg-white border border-brand-sand rounded-3xl p-8 shadow-sm">
+          <EmptyState 
+            title="No files shared with you"
+            description="When other users share their assets or folders with you, they will appear in this tab."
+            actionText="Go to Locker Files"
+            onActionClick={() => window.location.href = '/my-files'}
+            icon={Users}
+          />
         </div>
       )}
 
@@ -344,7 +311,7 @@ export default function SharedFiles() {
                 <div>
                   <h3 className="font-serif text-lg font-bold text-brand-charcoal block line-clamp-1">{previewFile.name}</h3>
                   <p className="text-xs text-gray-500 font-sans">
-                    Category: <span className="font-semibold text-brand-olive">{previewFile.category}</span> • Size: {formatSize(previewFile.size)}
+                    Category: <span className="font-semibold text-brand-olive">{previewFile.category}</span>
                   </p>
                 </div>
               </div>
@@ -358,10 +325,28 @@ export default function SharedFiles() {
                   </div>
                 ) : previewUrl ? (
                   (() => {
+                    if (previewFile.isFolder) {
+                      return (
+                        <div className="text-center p-6">
+                          <Folder className="w-16 h-16 text-brand-olive/60 mx-auto mb-3" />
+                          <h4 className="font-semibold text-brand-charcoal text-sm mb-1">{previewFile.name}</h4>
+                          <a
+                            href={previewUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold inline-flex items-center space-x-2 transition-all shadow-sm"
+                          >
+                            <Eye className="w-4 h-4" />
+                            <span>View Shared Folder</span>
+                          </a>
+                        </div>
+                      );
+                    }
+
                     const ext = previewFile.name.split('.').pop().toLowerCase();
-                    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (previewFile.mimeType && previewFile.mimeType.startsWith('image/'));
-                    const isPdf = ext === 'pdf' || (previewFile.mimeType && previewFile.mimeType === 'application/pdf');
-                    const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (previewFile.mimeType && previewFile.mimeType.startsWith('text/'));
+                    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+                    const isPdf = ext === 'pdf';
+                    const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext);
 
                     if (isImage) {
                       return (
