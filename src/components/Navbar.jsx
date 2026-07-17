@@ -67,15 +67,6 @@ export default function Navbar({ onMenuToggle }) {
 
         {/* Action button triggers & Profile User Menu */}
         <div className="flex items-center space-x-4">
-          {/* Quick upload trigger */}
-          <button
-            onClick={() => setIsUploadOpen(true)}
-            className="bg-brand-olive hover:bg-brand-olive-dark text-white px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Upload File</span>
-          </button>
-
           {/* User Menu avatar dropdown */}
           <UserMenu />
         </div>

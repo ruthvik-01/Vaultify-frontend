@@ -210,36 +210,6 @@ export default function Dashboard() {
         
         {/* LEFT COLUMN: Main locker sections (2/3 width on desktop) */}
         <div className="lg:col-span-2 space-y-6">
-          
-          {/* Quick Upload drop widget */}
-          <div 
-            onDragEnter={handleDrag}
-            onDragOver={handleDrag}
-            onDragLeave={handleDrag}
-            onDrop={handleDrop}
-            className={`
-              border border-brand-sand rounded-3xl p-5 bg-white shadow-sm transition-all text-center flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0
-              ${dragActive ? 'border-brand-olive bg-brand-sage-light/20 scale-[0.99]' : ''}
-            `}
-          >
-            <div className="flex items-center space-x-4 text-left">
-              <div className="bg-brand-cream-dark p-3 rounded-2xl text-brand-olive">
-                <Upload className="w-6 h-6 stroke-[1.5]" />
-              </div>
-              <div>
-                <h3 className="font-serif font-bold text-brand-charcoal text-base">Quick Locker Drop</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Drag files anywhere here to instantly archive in your locker</p>
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => navigate('/upload')}
-              className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center justify-center space-x-1.5 transition-all shadow-sm cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Configure Upload</span>
-            </button>
-          </div>
 
           {/* Recent Files Section */}
           <div className="space-y-3">

@@ -22,6 +22,7 @@ export const folderService = {
       id: f._id,
       name: f.name,
       parentId: f.parentFolder,
+      type: 'folder',
       created_at: f.createdAt
     }));
   },
@@ -41,6 +42,7 @@ export const folderService = {
       id: f._id,
       name: f.name,
       parentId: f.parentFolder,
+      type: 'folder',
       created_at: f.createdAt
     };
   },
@@ -60,6 +62,7 @@ export const folderService = {
       id: f._id,
       name: f.name,
       parentId: f.parentFolder,
+      type: 'folder',
       created_at: f.createdAt
     };
   },
@@ -90,6 +93,7 @@ export const folderService = {
       id: f._id,
       name: f.name,
       parentId: f.parentFolder,
+      type: 'folder',
       created_at: f.createdAt
     };
   }
