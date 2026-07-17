@@ -49,7 +49,10 @@ const uploadPart = (taskId, url, chunk, partNumber, onPartProgress) => {
       reject(new Error('aborted'));
     };
 
-    xhr.send(chunk);
+    // Wrap chunk in a new Blob with an empty type string to prevent the browser 
+    // from automatically adding a Content-Type header which invalidates S3 signatures.
+    const cleanChunk = new Blob([chunk], { type: '' });
+    xhr.send(cleanChunk);
   });
 };
 
