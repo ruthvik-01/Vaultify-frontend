@@ -77,7 +77,7 @@ export default function PublicShare() {
     try {
       const fileId = file.id || file._id;
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${API_URL}/share/${token}/files/${fileId}`);
+      const res = await fetch(`${API_URL}/share/${token}/files/${fileId}?disposition=inline`);
       if (!res.ok) {
         throw new Error('Failed to load file preview.');
       }
@@ -139,22 +139,26 @@ export default function PublicShare() {
   const ownerName = item.ownerName || 'Owner';
   const isFolder = item.type === 'folder';
 
-  const isVideo = fileType.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(fileName.split('.').pop().toLowerCase());
+  const ext = fileName.split('.').pop().toLowerCase();
+  const isVideo = fileType.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(ext);
+  const isImage = fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext);
+  const isPdf = fileType === 'application/pdf' || ext === 'pdf';
+  const isText = fileType.startsWith('text/') || ['txt', 'log', 'json', 'js', 'html', 'css'].includes(ext);
 
   const getFileIcon = (name, mimeType) => {
-    const ext = (name || '').split('.').pop().toLowerCase();
-    const isVideoFile = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(ext) || (mimeType && mimeType.startsWith('video/'));
-    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (mimeType && mimeType.startsWith('image/'));
-    const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(ext) || (mimeType && mimeType.startsWith('audio/'));
-    const isPdf = ext === 'pdf';
-    const isCode = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java', 'cpp', 'c', 'go'].includes(ext);
-    const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
-    const isPresentation = ['ppt', 'pptx'].includes(ext);
+    const fileExt = (name || '').split('.').pop().toLowerCase();
+    const isVideoFile = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(fileExt) || (mimeType && mimeType.startsWith('video/'));
+    const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(fileExt) || (mimeType && mimeType.startsWith('image/'));
+    const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(fileExt) || (mimeType && mimeType.startsWith('audio/'));
+    const isPdfFile = fileExt === 'pdf';
+    const isCode = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java', 'cpp', 'c', 'go'].includes(fileExt);
+    const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(fileExt);
+    const isPresentation = ['ppt', 'pptx'].includes(fileExt);
 
     if (isVideoFile) return <Video className="w-4 h-4 text-brand-sage shrink-0" />;
-    if (isImage) return <ImageIcon className="w-4 h-4 text-blue-500 shrink-0" />;
+    if (isImg) return <ImageIcon className="w-4 h-4 text-blue-500 shrink-0" />;
     if (isAudio) return <Music className="w-4 h-4 text-purple-500 shrink-0" />;
-    if (isPdf) return <FileText className="w-4 h-4 text-rose-500 shrink-0" />;
+    if (isPdfFile) return <FileText className="w-4 h-4 text-rose-500 shrink-0" />;
     if (isCode) return <FileCode className="w-4 h-4 text-amber-500 shrink-0" />;
     if (isSpreadsheet) return <FileSpreadsheet className="w-4 h-4 text-emerald-500 shrink-0" />;
     if (isPresentation) return <Presentation className="w-4 h-4 text-orange-500 shrink-0" />;
@@ -190,7 +194,7 @@ export default function PublicShare() {
         {/* Shared file details */}
         {!isFolder ? (
           <div className="flex flex-col">
-            {/* Video Preview Frame */}
+            {/* Preview Frame */}
             {isVideo && downloadUrl ? (
               <div className="bg-black aspect-video flex items-center justify-center relative w-full border-b border-brand-sand">
                 <video
@@ -201,6 +205,22 @@ export default function PublicShare() {
                 >
                   Your browser does not support the video tag.
                 </video>
+              </div>
+            ) : isImage && downloadUrl ? (
+              <div className="bg-white aspect-video flex items-center justify-center relative w-full border-b border-brand-sand p-4">
+                <img
+                  src={downloadUrl}
+                  alt={fileName}
+                  className="max-w-full max-h-[45vh] object-contain rounded-xl shadow-md border border-brand-sand/50"
+                />
+              </div>
+            ) : (isPdf || isText) && downloadUrl ? (
+              <div className="bg-white aspect-video flex items-center justify-center relative w-full border-b border-brand-sand">
+                <iframe
+                  src={downloadUrl}
+                  className="w-full h-[45vh] border-0"
+                  title={fileName}
+                />
               </div>
             ) : (
               <div className="bg-brand-cream-dark aspect-video flex flex-col items-center justify-center w-full border-b border-brand-sand">

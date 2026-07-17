@@ -45,7 +45,7 @@ export const shareService = {
 
   // Resolve a public token to retrieve shared details (no auth required)
   getSharedItem: async (token) => {
-    const res = await fetch(`${API_URL}/share/${token}`);
+    const res = await fetch(`${API_URL}/share/${token}?disposition=inline`);
     if (!res.ok) {
       throw new Error('Shared link is invalid or has expired.');
     }
