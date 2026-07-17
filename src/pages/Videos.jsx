@@ -26,6 +26,7 @@ export default function Videos() {
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
 
   // Dialogs / Modals toggles
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -209,13 +210,25 @@ export default function Videos() {
   const activeFolders = folders.filter((f) => f.parentId === currentFolderId);
   const activeVideos = videos.filter((v) => v.videoFolderId === currentFolderId && !v.inTrash);
 
+  const getFileCategoryType = (name) => {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    if (['pdf', 'doc', 'docx', 'txt', 'rtf', 'log', 'odt'].includes(ext)) return 'document';
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'bmp'].includes(ext)) return 'image';
+    if (['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes(ext)) return 'video';
+    if (['mp3', 'wav', 'aac', 'ogg', 'm4a', 'flac'].includes(ext)) return 'audio';
+    return 'other';
+  };
+
   const filteredFolders = activeFolders.filter((f) =>
     f.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const filteredVideos = activeVideos.filter((v) =>
-    v.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredVideos = activeVideos.filter((v) => {
+    const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (activeFilter === 'all') return true;
+    return getFileCategoryType(v.name) === activeFilter;
+  });
 
   const trail = getBreadcrumbs();
 
@@ -262,6 +275,30 @@ export default function Videos() {
         onUploadFileClick={() => setIsUploadOpen(true)}
         onUploadFolderClick={() => setIsUploadOpen(true)}
       />
+
+      {/* File Type Filter Tabs */}
+      <div className="flex items-center space-x-2 border-b border-brand-sand/30 pb-3 select-none overflow-x-auto scrollbar-none">
+        {[
+          { id: 'all', label: 'All Files' },
+          { id: 'document', label: 'Documents' },
+          { id: 'image', label: 'Images' },
+          { id: 'video', label: 'Videos' },
+          { id: 'audio', label: 'Audio' },
+          { id: 'other', label: 'Others' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveFilter(tab.id)}
+            className={`px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
+              activeFilter === tab.id
+                ? 'bg-brand-olive text-white shadow-sm'
+                : 'bg-brand-cream hover:bg-brand-sand/55 text-brand-charcoal border border-brand-sand/40'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Media Content Grid/List */}
       {loading ? (
