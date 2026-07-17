@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { shareService } from '../services/shareService';
 import { 
-  Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar 
+  Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar,
+  FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Video 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '../utils/formatDate';
@@ -112,6 +113,26 @@ export default function PublicShare() {
   const isFolder = item.type === 'folder';
 
   const isVideo = fileType.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(fileName.split('.').pop().toLowerCase());
+
+  const getFileIcon = (name, mimeType) => {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    const isVideoFile = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(ext) || (mimeType && mimeType.startsWith('video/'));
+    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (mimeType && mimeType.startsWith('image/'));
+    const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(ext) || (mimeType && mimeType.startsWith('audio/'));
+    const isPdf = ext === 'pdf';
+    const isCode = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java', 'cpp', 'c', 'go'].includes(ext);
+    const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+    const isPresentation = ['ppt', 'pptx'].includes(ext);
+
+    if (isVideoFile) return <Video className="w-4 h-4 text-brand-sage shrink-0" />;
+    if (isImage) return <ImageIcon className="w-4 h-4 text-blue-500 shrink-0" />;
+    if (isAudio) return <Music className="w-4 h-4 text-purple-500 shrink-0" />;
+    if (isPdf) return <FileText className="w-4 h-4 text-rose-500 shrink-0" />;
+    if (isCode) return <FileCode className="w-4 h-4 text-amber-500 shrink-0" />;
+    if (isSpreadsheet) return <FileSpreadsheet className="w-4 h-4 text-emerald-500 shrink-0" />;
+    if (isPresentation) return <Presentation className="w-4 h-4 text-orange-500 shrink-0" />;
+    return <File className="w-4 h-4 text-gray-400 shrink-0" />;
+  };
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center p-4 md:p-8 font-sans select-none text-left">
@@ -233,8 +254,8 @@ export default function PublicShare() {
                       className="p-4 flex items-center justify-between hover:bg-brand-cream/70 transition-colors"
                     >
                       <div className="flex items-center space-x-3 min-w-0">
-                        <div className="bg-white p-2.5 rounded-xl border border-brand-sand text-brand-olive shrink-0">
-                          <Film className="w-4 h-4" />
+                        <div className="bg-white p-2.5 rounded-xl border border-brand-sand text-brand-olive shrink-0 animate-fade-in">
+                          {getFileIcon(file.name || file.filename || file.file_name, file.mimeType || file.file_type)}
                         </div>
                         <div className="truncate">
                           <span className="text-xs font-semibold text-brand-charcoal block truncate">{file.name || file.filename || file.file_name}</span>

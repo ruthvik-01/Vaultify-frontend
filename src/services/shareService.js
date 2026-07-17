@@ -25,13 +25,13 @@ export const shareService = {
   // Share a video folder (uses the real backend /share API)
   shareFolder: async (folderId) => {
     const token = localStorage.getItem('vaultify_token');
-    const res = await fetch(`${API_URL}/share`, {
+    const res = await fetch(`${API_URL}/videos/share`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ folder_id: folderId, permission: 'read', expiry_hours: 24 })
+      body: JSON.stringify({ folderId })
     });
     if (!res.ok) {
       throw new Error('Failed to generate share link.');

@@ -205,101 +205,40 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Grid Dashboard Sectors */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Activity Log */}
+      <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm space-y-4">
+        <h3 className="font-serif text-base font-bold text-brand-charcoal">Activity Log</h3>
         
-        {/* LEFT COLUMN: Main locker sections (2/3 width on desktop) */}
-        <div className="lg:col-span-2 space-y-6">
-
-          {/* Recent Files Section */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <h3 className="font-serif text-xl font-bold text-brand-charcoal">Recent Documents</h3>
-              <button 
-                onClick={() => navigate('/my-files')}
-                className="text-xs font-bold text-brand-olive hover:underline flex items-center space-x-0.5"
-              >
-                <span>View All Files</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            
-            {recentFiles.length > 0 ? (
-              user.theme_color === 'list' ? (
-                <div className="bg-white border border-brand-sand rounded-2xl overflow-hidden shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-brand-sand/70 text-left">
-                      <thead className="bg-brand-cream">
-                        <tr>
-                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">File Name</th>
-                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Category</th>
-                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Size</th>
-                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Date Added</th>
-                          <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-brand-sand/55">
-                        {recentFiles.map(file => (
-                          <FileCard key={file.id} file={file} viewMode="list" />
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+        {activities.length > 0 ? (
+          <div className="relative border-l border-brand-sand pl-4 ml-2.5 space-y-5 py-2">
+            {activities.slice(0, 8).map(act => (
+              <div key={act.id} className="relative">
+                <span className="absolute -left-[22.5px] top-1 w-3.5 h-3.5 rounded-full bg-brand-cream border border-brand-olive flex items-center justify-center">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" />
+                </span>
+                
+                <div>
+                  <p className="text-xs text-brand-charcoal">
+                    <span className="capitalize font-semibold text-brand-olive-dark">
+                      {act.action === 'clear_trash' ? 'cleared trash' : act.action}
+                    </span>{' '}
+                    <span className="font-semibold">{act.fileName}</span>
+                  </p>
+                  <span className="text-[9px] text-gray-400 font-sans block mt-1 flex items-center space-x-1">
+                    <Calendar className="w-3 h-3 text-gray-300" />
+                    <span>{timeAgo(act.timestamp)}</span>
+                  </span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {recentFiles.map(file => (
-                    <FileCard key={file.id} file={file} viewMode="grid" />
-                  ))}
-                </div>
-              )
-            ) : (
-              <div className="bg-white border border-brand-sand p-8 rounded-3xl text-center text-xs text-gray-500">
-                Locker is currently empty. Drop some files above to get started.
               </div>
-            )}
+            ))}
           </div>
-
+        ) : (
+          <div className="text-center text-xs text-gray-400 py-6">
+            No activity yet. Upload a file to get started.
           </div>
-
-        {/* RIGHT COLUMN: Activity feed (1/3 width on desktop) */}
-        <div className="space-y-6">
-          {/* Activity Feed Widget */}
-          <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm space-y-4">
-            <h3 className="font-serif text-base font-bold text-brand-charcoal">Activity Log</h3>
-            
-            {activities.length > 0 ? (
-              <div className="relative border-l border-brand-sand pl-4 ml-2.5 space-y-5 py-2">
-                {activities.slice(0, 5).map(act => (
-                  <div key={act.id} className="relative">
-                    <span className="absolute -left-[22.5px] top-1 w-3.5 h-3.5 rounded-full bg-brand-cream border border-brand-olive flex items-center justify-center">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" />
-                    </span>
-                    
-                    <div>
-                      <p className="text-xs text-brand-charcoal">
-                        <span className="capitalize font-semibold text-brand-olive-dark">
-                          {act.action === 'clear_trash' ? 'cleared trash' : act.action}
-                        </span>{' '}
-                        <span className="font-semibold">{act.fileName}</span>
-                      </p>
-                      <span className="text-[9px] text-gray-400 font-sans block mt-1 flex items-center space-x-1">
-                        <Calendar className="w-3 h-3 text-gray-300" />
-                        <span>{timeAgo(act.timestamp)}</span>
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-xs text-gray-400 py-6">
-                No activity yet. Upload a file to get started.
-              </div>
-            )}
-          </div>
-        </div>
-
+        )}
       </div>
+
     </div>
   );
 }
