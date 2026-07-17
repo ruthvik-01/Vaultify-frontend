@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { shareService } from '../services/shareService';
 import { 
   Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar,
-  FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Video 
+  FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Video, Eye, X, Play 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '../utils/formatDate';
@@ -61,6 +61,33 @@ export default function PublicShare() {
     } catch (err) {
       console.error(err);
       alert('Could not download file: ' + err.message);
+    }
+  };
+
+  const [previewFile, setPreviewFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState('');
+
+  const handlePreviewFile = async (file) => {
+    setPreviewFile(file);
+    setPreviewLoading(true);
+    setPreviewUrl(null);
+    setPreviewError('');
+    try {
+      const fileId = file.id || file._id;
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const res = await fetch(`${API_URL}/share/${token}/files/${fileId}`);
+      if (!res.ok) {
+        throw new Error('Failed to load file preview.');
+      }
+      const json = await res.json();
+      const downloadUrl = json.data.download_url;
+      setPreviewUrl(downloadUrl);
+    } catch (err) {
+      setPreviewError(err.message || 'Could not load preview.');
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -263,13 +290,22 @@ export default function PublicShare() {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => handleDownloadFile(file.id || file._id, file.name || file.filename || file.file_name)}
-                        className="flex items-center space-x-1.5 px-4 py-2 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                        <span>Download</span>
-                      </button>
+                      <div className="flex items-center space-x-2 shrink-0">
+                        <button
+                          onClick={() => handlePreviewFile(file)}
+                          className="flex items-center space-x-1.5 px-3 py-2 bg-brand-cream hover:bg-brand-sand/55 text-brand-charcoal border border-brand-sand rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-brand-olive" />
+                          <span>Preview</span>
+                        </button>
+                        <button
+                          onClick={() => handleDownloadFile(file.id || file._id, file.name || file.filename || file.file_name)}
+                          className="flex items-center space-x-1.5 px-3 py-2 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -287,6 +323,96 @@ export default function PublicShare() {
           Powered by Vaultify Cloud Services • Secure Carrier Link
         </div>
       </motion.div>
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-brand-charcoal/90 backdrop-blur-sm animate-fade-in text-left">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-4xl border border-brand-sand/55 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-brand-sand flex items-center justify-between bg-brand-cream select-none">
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <Eye className="w-5 h-5 text-brand-olive shrink-0" />
+                <h2 className="font-serif font-bold text-sm text-brand-charcoal truncate">
+                  {previewFile.name || previewFile.filename || previewFile.file_name}
+                </h2>
+              </div>
+              <button
+                onClick={() => { setPreviewFile(null); setPreviewUrl(null); }}
+                className="p-1.5 rounded-lg hover:bg-brand-sand/60 text-gray-500 hover:text-brand-charcoal transition-colors cursor-pointer focus:outline-none"
+                aria-label="Close preview"
+              >
+                <X className="w-4.5 h-4.5" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-grow bg-white relative flex items-center justify-center overflow-hidden min-h-[40vh]">
+              {previewLoading ? (
+                <div className="flex flex-col items-center justify-center p-8">
+                  <Loader2 className="w-10 h-10 text-brand-olive animate-spin mb-4" />
+                  <span className="text-xs font-semibold text-gray-500">Decrypting & Loading Preview...</span>
+                </div>
+              ) : previewError ? (
+                <div className="p-8 text-center text-xs text-red-600 bg-red-50 rounded-2xl border border-red-200">
+                  {previewError}
+                </div>
+              ) : (
+                (() => {
+                  const name = previewFile.name || previewFile.filename || previewFile.file_name || '';
+                  const fileType = previewFile.mimeType || previewFile.file_type || '';
+                  const ext = name.split('.').pop().toLowerCase();
+                  const isVideo = fileType.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(ext);
+                  const isImage = fileType.startsWith('image/') || ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext);
+                  const isPdf = fileType === 'application/pdf' || ext === 'pdf';
+                  const isText = fileType.startsWith('text/') || ['txt', 'log', 'json', 'js', 'html', 'css'].includes(ext);
+
+                  if (isVideo && previewUrl) {
+                    return (
+                      <video src={previewUrl} controls autoPlay className="w-full h-full max-h-[70vh] object-contain focus:outline-none" />
+                    );
+                  }
+                  if (isImage && previewUrl) {
+                    return (
+                      <div className="p-4">
+                        <img src={previewUrl} alt={name} className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md border border-brand-sand/50" />
+                      </div>
+                    );
+                  }
+                  if ((isPdf || isText) && previewUrl) {
+                    return (
+                      <iframe src={previewUrl} className="w-full h-[70vh] border-0" title={name} />
+                    );
+                  }
+                  return (
+                    <div className="w-full min-h-[40vh] flex flex-col items-center justify-center p-8 text-center bg-brand-cream/30">
+                      <div className="bg-brand-cream-dark p-6 rounded-full mb-4 shadow-inner text-brand-olive border border-brand-sand">
+                        <FileText className="w-14 h-14 stroke-[1.1]" />
+                      </div>
+                      <h3 className="font-serif font-bold text-base text-brand-charcoal mb-2">{name}</h3>
+                      <p className="text-xs text-gray-500 max-w-sm mb-6">
+                        Previews are not supported for this file type ({ext.toUpperCase()}). Please download to view.
+                      </p>
+                      <a
+                        href={previewUrl}
+                        download={name}
+                        className="flex items-center space-x-2 px-6 py-3 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-md shadow-brand-olive/10"
+                      >
+                        <Download className="w-4.5 h-4.5" />
+                        <span>Download to View</span>
+                      </a>
+                    </div>
+                  );
+                })()
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-3 bg-brand-cream border-t border-brand-sand text-[10px] text-gray-400 font-semibold tracking-wider uppercase select-none text-right">
+              Vaultify Shared View • Encrypted Session
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
