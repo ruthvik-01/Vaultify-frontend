@@ -27,6 +27,7 @@ export default function UploadModal({ isOpen, onClose }) {
 
   // Allowed file extensions matching backend's fileValidation.js whitelist
   const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'zip', 'txt'];
+  const allowedVideoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'];
   const allowedMimeTypes = [
     'application/pdf', 'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -38,14 +39,16 @@ export default function UploadModal({ isOpen, onClose }) {
 
   const validateFile = (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
-    if (!allowedExtensions.includes(ext) && !allowedMimeTypes.includes(file.type)) {
+    const isVideo = allowedVideoExtensions.includes(ext) || (file.type && file.type.startsWith('video/'));
+
+    if (!isVideo && !allowedExtensions.includes(ext) && !allowedMimeTypes.includes(file.type)) {
       showNotification(
         `Unsupported file type (.${ext}). Allowed: PDF, DOC/DOCX, JPEG, PNG, ZIP, and TXT.`,
         'error'
       );
       return false;
     }
-    if (file.size > maxFileSize) {
+    if (!isVideo && file.size > maxFileSize) {
       showNotification(
         `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: 10 MB.`,
         'error'

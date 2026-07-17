@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useFiles } from '../context/FileContext';
 import DashboardLayout from '../layouts/DashboardLayout';
@@ -11,11 +10,13 @@ import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
 import VerifyEmail from '../pages/VerifyEmail';
 import ResetPassword from '../pages/ResetPassword';
+import PublicShare from '../pages/PublicShare';
 
 // Inner Dashboard Pages
 import Dashboard from '../pages/Dashboard';
 import MyFiles from '../pages/MyFiles';
 import UploadFiles from '../pages/UploadFiles';
+import Videos from '../pages/Videos';
 import SharedFiles from '../pages/SharedFiles';
 import Trash from '../pages/Trash';
 import Profile from '../pages/Profile';
@@ -33,6 +34,9 @@ export default function AppRoutes() {
       {/* Public SaaS Landing Page */}
       <Route path="/" element={<Landing />} />
 
+      {/* Public Share Access Route */}
+      <Route path="/share/:token" element={<PublicShare />} />
+
       {/* Public/Guest Authentication Routes */}
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
@@ -48,6 +52,7 @@ export default function AppRoutes() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-files" element={<MyFiles />} />
           <Route path="/upload" element={<UploadFiles />} />
+          <Route path="/videos" element={<Videos />} />
           <Route path="/shared" element={<SharedFiles />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/profile" element={<Profile />} />

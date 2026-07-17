@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   FolderLock, LayoutDashboard, FolderClosed, UploadCloud, 
-  Users, Trash2, User, Settings, X, GraduationCap 
+  Users, Trash2, User, Settings, X, GraduationCap, Video 
 } from 'lucide-react';
 import { useFiles } from '../context/FileContext';
 import StorageCard from './StorageCard';
@@ -17,6 +17,7 @@ export default function Sidebar({ onClose }) {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'My Files', path: '/my-files', icon: FolderClosed },
     { name: 'Upload Files', path: '/upload', icon: UploadCloud },
+    { name: 'Videos', path: '/videos', icon: Video },
     { name: 'Shared Files', path: '/shared', icon: Users },
     { name: 'Trash Bin', path: '/trash', icon: Trash2 },
     { name: 'My Profile', path: '/profile', icon: User },
