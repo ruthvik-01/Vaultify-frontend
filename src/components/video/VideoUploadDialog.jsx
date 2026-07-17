@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, X, FolderUp, Film } from 'lucide-react';
+import { UploadCloud, X, FolderUp, FileText } from 'lucide-react';
 
 export default function VideoUploadDialog({ isOpen, onClose, onUpload }) {
   const [dragActive, setDragActive] = useState(false);
@@ -58,9 +58,9 @@ export default function VideoUploadDialog({ isOpen, onClose, onUpload }) {
         {/* Header */}
         <div className="px-6 py-4 border-b border-brand-sand flex items-center justify-between bg-brand-cream">
           <div className="flex items-center space-x-2.5">
-            <Film className="w-5 h-5 text-brand-olive" />
+            <FileText className="w-5 h-5 text-brand-olive" />
             <h2 className="font-serif font-bold text-sm text-brand-charcoal">
-              Upload Video Assets
+              Upload Files
             </h2>
           </div>
           <button
@@ -90,7 +90,7 @@ export default function VideoUploadDialog({ isOpen, onClose, onUpload }) {
               dragActive ? 'text-brand-olive scale-110' : 'text-brand-sage'
             }`} />
             <p className="text-xs font-semibold text-brand-charcoal mb-1">
-              Drag & Drop your video files here
+              Drag & Drop your files here
             </p>
             <p className="text-[10px] text-gray-400 font-medium">
               or click to browse local files
@@ -104,7 +104,6 @@ export default function VideoUploadDialog({ isOpen, onClose, onUpload }) {
               ref={fileInputRef}
               onChange={handleFileChange}
               multiple
-              accept="video/*"
               className="hidden"
             />
             <input
@@ -119,15 +118,15 @@ export default function VideoUploadDialog({ isOpen, onClose, onUpload }) {
 
             <button
               onClick={triggerFileSelect}
-              className="flex items-center justify-center space-x-2 py-3 bg-brand-cream hover:bg-brand-sand/50 border border-brand-sand rounded-xl text-xs font-semibold text-brand-charcoal cursor-pointer transition-colors"
+              className="flex items-center justify-center space-x-2 py-3 bg-brand-cream hover:bg-brand-sand/55 border border-brand-sand rounded-xl text-xs font-semibold text-brand-charcoal cursor-pointer transition-colors"
             >
-              <Film className="w-4 h-4 text-brand-olive" />
-              <span>Select Videos</span>
+              <FileText className="w-4 h-4 text-brand-olive" />
+              <span>Select Files</span>
             </button>
 
             <button
               onClick={triggerFolderSelect}
-              className="flex items-center justify-center space-x-2 py-3 bg-brand-cream hover:bg-brand-sand/50 border border-brand-sand rounded-xl text-xs font-semibold text-brand-charcoal cursor-pointer transition-colors"
+              className="flex items-center justify-center space-x-2 py-3 bg-brand-cream hover:bg-brand-sand/55 border border-brand-sand rounded-xl text-xs font-semibold text-brand-charcoal cursor-pointer transition-colors"
             >
               <FolderUp className="w-4 h-4 text-brand-olive" />
               <span>Select Folder</span>
@@ -137,7 +136,7 @@ export default function VideoUploadDialog({ isOpen, onClose, onUpload }) {
 
         {/* Info panel */}
         <div className="px-6 py-4 bg-brand-cream border-t border-brand-sand/65 text-[10px] text-gray-500 font-sans font-medium flex items-center justify-between">
-          <span>Supported: MP4, MOV, MKV, AVI, etc.</span>
+          <span>Supported: All formats</span>
           <span>No file size limits</span>
         </div>
       </div>

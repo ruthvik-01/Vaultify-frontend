@@ -21,7 +21,7 @@ export default function VideoToolbar({
         </span>
         <input
           type="text"
-          placeholder="Search videos and folders..."
+          placeholder="Search files and folders..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="w-full pl-10 pr-4 py-2.5 bg-brand-cream border border-brand-sand rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-olive text-brand-charcoal"
@@ -53,7 +53,7 @@ export default function VideoToolbar({
           className="flex items-center space-x-1.5 px-3 py-2 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors"
         >
           <Upload className="w-4 h-4" />
-          <span>Upload Videos</span>
+          <span>Upload Files</span>
         </button>
 
         {/* Upload Folder */}

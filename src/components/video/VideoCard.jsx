@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Play, MoreVertical, Edit2, Move, Download, Share2, Trash2, Video, Clock, HardDrive, Calendar, User, Folder 
+  Play, MoreVertical, Edit2, Move, Download, Share2, Trash2, Video, Clock, HardDrive, Calendar, User, Folder,
+  FileText, Award, FolderGit, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Eye
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '../../utils/formatDate';
@@ -39,6 +40,27 @@ export default function VideoCard({
   const videoFolder = folders.find((f) => f.id === video.videoFolderId);
   const folderName = videoFolder ? videoFolder.name : 'Root';
 
+  const name = video.name || video.filename || '';
+  const ext = name.split('.').pop().toLowerCase();
+  const isVideo = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(ext) || (video.mimeType && video.mimeType.startsWith('video/'));
+  const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (video.mimeType && video.mimeType.startsWith('image/'));
+  const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(ext) || (video.mimeType && video.mimeType.startsWith('audio/'));
+  const isPdf = ext === 'pdf';
+  const isCode = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java', 'cpp', 'c', 'go'].includes(ext);
+  const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+  const isPresentation = ['ppt', 'pptx'].includes(ext);
+
+  const getFileIcon = () => {
+    if (isVideo) return <Video className="w-12 h-12 text-brand-sage/40 stroke-[1.5]" />;
+    if (isImage) return <ImageIcon className="w-12 h-12 text-blue-500/40 stroke-[1.5]" />;
+    if (isAudio) return <Music className="w-12 h-12 text-purple-500/40 stroke-[1.5]" />;
+    if (isPdf) return <FileText className="w-12 h-12 text-rose-500/40 stroke-[1.5]" />;
+    if (isCode) return <FileCode className="w-12 h-12 text-amber-500/40 stroke-[1.5]" />;
+    if (isSpreadsheet) return <FileSpreadsheet className="w-12 h-12 text-emerald-500/40 stroke-[1.5]" />;
+    if (isPresentation) return <Presentation className="w-12 h-12 text-orange-500/40 stroke-[1.5]" />;
+    return <File className="w-12 h-12 text-gray-400/40 stroke-[1.5]" />;
+  };
+
   return (
     <div className="bg-white border border-brand-sand/70 rounded-2xl shadow-sm hover:shadow-md hover:border-brand-sage/60 transition-all duration-200 text-left relative flex flex-col h-full">
       {/* Thumbnail Placeholder */}
@@ -48,24 +70,24 @@ export default function VideoCard({
       >
         <div className="absolute inset-0 bg-brand-charcoal/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
           <div className="bg-white/90 text-brand-olive p-3 rounded-full shadow-lg scale-90 group-hover:scale-100 transition-transform duration-200">
-            <Play className="w-6 h-6 fill-brand-olive" />
+            {isVideo ? <Play className="w-6 h-6 fill-brand-olive" /> : <Eye className="w-6 h-6 text-brand-olive" />}
           </div>
         </div>
         
-        {/* Decorative video screen background */}
-        <Video className="w-12 h-12 text-brand-sage/40 stroke-[1.5]" />
+        {/* Render appropriate file icon */}
+        {getFileIcon()}
         
         {/* Video length tag overlay */}
-        {video.duration > 0 && (
+        {isVideo && video.duration > 0 && (
         <span className="absolute bottom-2.5 right-2.5 bg-brand-charcoal/80 text-white font-mono text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center space-x-1 shadow-sm">
           <Clock className="w-2.5 h-2.5" />
           <span>{Math.floor(video.duration / 60).toString().padStart(2, '0')}:{Math.floor(video.duration % 60).toString().padStart(2, '0')}</span>
         </span>
         )}
 
-        {/* Video Type Badge */}
+        {/* File Type Badge */}
         <span className="absolute top-2.5 left-2.5 bg-brand-cream/90 border border-brand-sand/80 text-brand-olive-dark font-sans text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-          {video.type || 'mp4'}
+          {ext}
         </span>
       </div>
 
@@ -73,7 +95,7 @@ export default function VideoCard({
       <div className="p-4 flex-grow flex flex-col justify-between">
         <div>
           <div className="flex items-start justify-between mb-1.5">
-            <h3 className="font-serif font-bold text-xs text-brand-charcoal line-clamp-1 flex-grow pr-2">
+            <h3 className="font-serif font-bold text-xs text-brand-charcoal line-clamp-1 flex-grow pr-2" title={video.name}>
               {video.name}
             </h3>
 
@@ -85,7 +107,7 @@ export default function VideoCard({
                   setMenuOpen(!menuOpen);
                 }}
                 className="p-1 rounded-lg hover:bg-brand-cream text-gray-400 hover:text-brand-charcoal transition-colors cursor-pointer"
-                aria-label="Video actions"
+                aria-label="File actions"
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -106,8 +128,17 @@ export default function VideoCard({
                     }}
                     className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    <Play className="w-4 h-4 text-brand-olive fill-brand-olive/10" />
-                    <span>View / Play</span>
+                    {isVideo ? (
+                      <>
+                        <Play className="w-4 h-4 text-brand-olive fill-brand-olive/10" />
+                        <span>View / Play</span>
+                      </>
+                    ) : (
+                      <>
+                        <Eye className="w-4 h-4 text-brand-olive" />
+                        <span>Open File</span>
+                      </>
+                    )}
                   </button>
                   <button
                     onClick={(e) => {

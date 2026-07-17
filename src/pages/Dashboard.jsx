@@ -15,22 +15,11 @@ export default function Dashboard() {
   // Get active files
   const activeFiles = useMemo(() => files.filter(f => !f.inTrash), [files]);
 
-  // Get top 4 recent files (excluding folders/videos if necessary, but files are general)
+  // Get top 6 recent files
   const recentFiles = useMemo(() =>
     [...activeFiles]
       .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded))
-      .slice(0, 4),
-    [activeFiles]
-  );
-
-  // Get top 2 recent videos
-  const recentVideos = useMemo(() =>
-    activeFiles.filter(f =>
-      f.category === 'Media' ||
-      (f.mimeType && f.mimeType.startsWith('video/')) ||
-      ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes((f.name || '').split('.').pop().toLowerCase())
-    ).sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded))
-    .slice(0, 2),
+      .slice(0, 6),
     [activeFiles]
   );
 
@@ -301,33 +290,7 @@ export default function Dashboard() {
             )}
           </div>
 
-          {/* Recent Videos Section */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <h3 className="font-serif text-xl font-bold text-brand-charcoal">Recent Videos</h3>
-              <button 
-                onClick={() => navigate('/videos')}
-                className="text-xs font-bold text-brand-olive hover:underline flex items-center space-x-0.5"
-              >
-                <span>View All Videos</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            
-            {recentVideos.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {recentVideos.map(video => (
-                  <FileCard key={video.id} file={video} viewMode="grid" />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-white border border-brand-sand p-8 rounded-3xl text-center text-xs text-gray-500">
-                No videos uploaded yet. Go to Videos section to upload.
-              </div>
-            )}
           </div>
-
-        </div>
 
         {/* RIGHT COLUMN: Activity feed (1/3 width on desktop) */}
         <div className="space-y-6">

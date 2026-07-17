@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Folder, Video, Play, MoreVertical, Edit2, Move, Download, Share2, Trash2 
+  Folder, Video, Play, MoreVertical, Edit2, Move, Download, Share2, Trash2,
+  FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, HardDrive, Eye
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatDate';
 
@@ -11,8 +12,6 @@ const formatSize = (bytes) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
-
-
 
 // Row menu component to isolate click-outside listening
 function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onShare, onDelete }) {
@@ -28,6 +27,9 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
     document.addEventListener('mousedown', clickOutside);
     return () => document.removeEventListener('mousedown', clickOutside);
   }, []);
+
+  const ext = (item.name || item.filename || '').split('.').pop().toLowerCase();
+  const isVideo = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(ext) || (item.mimeType && item.mimeType.startsWith('video/'));
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -50,10 +52,19 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
                 setOpen(false);
                 onPlay(item);
               }}
-              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
             >
-              <Play className="w-3.5 h-3.5 text-gray-400 fill-gray-400" />
-              <span>View / Play</span>
+              {isVideo ? (
+                <>
+                  <Play className="w-3.5 h-3.5 text-gray-400 fill-gray-400" />
+                  <span>View / Play</span>
+                </>
+              ) : (
+                <>
+                  <Eye className="w-3.5 h-3.5 text-gray-400" />
+                  <span>Open File</span>
+                </>
+              )}
             </button>
           )}
           <button
@@ -62,7 +73,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
               setOpen(false);
               onRename(item);
             }}
-            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
           >
             <Edit2 className="w-3.5 h-3.5 text-gray-400" />
             <span>Rename</span>
@@ -73,7 +84,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
               setOpen(false);
               onMove(item);
             }}
-            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
           >
             <Move className="w-3.5 h-3.5 text-gray-400" />
             <span>Move</span>
@@ -85,7 +96,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
                 setOpen(false);
                 onDownload(item);
               }}
-              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
             >
               <Download className="w-3.5 h-3.5 text-gray-400" />
               <span>Download</span>
@@ -97,7 +108,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
               setOpen(false);
               onShare(item);
             }}
-            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer"
+            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
           >
             <Share2 className="w-3.5 h-3.5 text-gray-400" />
             <span>Share</span>
@@ -109,7 +120,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
               setOpen(false);
               onDelete(item.id);
             }}
-            className="w-full px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2 cursor-pointer"
+            className="w-full px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2 cursor-pointer font-semibold"
           >
             <Trash2 className="w-3.5 h-3.5 text-red-400" />
             <span>Delete</span>
@@ -138,17 +149,37 @@ export default function VideoList({
   const hasFolders = folders.length > 0;
   const hasVideos = videos.length > 0;
 
+  const getFileIcon = (name, mimeType) => {
+    const ext = (name || '').split('.').pop().toLowerCase();
+    const isVideo = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(ext) || (mimeType && mimeType.startsWith('video/'));
+    const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (mimeType && mimeType.startsWith('image/'));
+    const isAudio = ['mp3', 'wav', 'ogg', 'm4a'].includes(ext) || (mimeType && mimeType.startsWith('audio/'));
+    const isPdf = ext === 'pdf';
+    const isCode = ['js', 'jsx', 'ts', 'tsx', 'html', 'css', 'json', 'py', 'java', 'cpp', 'c', 'go'].includes(ext);
+    const isSpreadsheet = ['xls', 'xlsx', 'csv'].includes(ext);
+    const isPresentation = ['ppt', 'pptx'].includes(ext);
+
+    if (isVideo) return <Video className="w-4 h-4 text-brand-sage shrink-0" />;
+    if (isImage) return <ImageIcon className="w-4 h-4 text-blue-500 shrink-0" />;
+    if (isAudio) return <Music className="w-4 h-4 text-purple-500 shrink-0" />;
+    if (isPdf) return <FileText className="w-4 h-4 text-rose-500 shrink-0" />;
+    if (isCode) return <FileCode className="w-4 h-4 text-amber-500 shrink-0" />;
+    if (isSpreadsheet) return <FileSpreadsheet className="w-4 h-4 text-emerald-500 shrink-0" />;
+    if (isPresentation) return <Presentation className="w-4 h-4 text-orange-500 shrink-0" />;
+    return <File className="w-4 h-4 text-gray-400 shrink-0" />;
+  };
+
   if (!hasFolders && !hasVideos) {
     return (
       <div className="bg-white border border-brand-sand rounded-2xl p-12 text-center shadow-sm flex flex-col items-center justify-center min-h-[300px]">
         <div className="bg-brand-cream-dark text-brand-olive p-4 rounded-full mb-4 shadow-inner">
-          <Video className="w-10 h-10 stroke-[1.2]" />
+          <HardDrive className="w-10 h-10 stroke-[1.2]" />
         </div>
         <h3 className="font-serif font-bold text-lg text-brand-charcoal mb-1">
           No items found
         </h3>
         <p className="text-xs text-gray-500 max-w-sm">
-          Get started by creating a folder or uploading your first video to this section.
+          Get started by creating a folder or uploading your first file to this section.
         </p>
       </div>
     );
@@ -199,10 +230,11 @@ export default function VideoList({
               </tr>
             ))}
 
-            {/* Videos */}
+            {/* Videos/Files */}
             {videos.map((video) => {
               const videoFolder = folders.find((f) => f.id === video.videoFolderId);
               const folderName = videoFolder ? videoFolder.name : 'Root';
+              const ext = (video.name || '').split('.').pop().toLowerCase();
 
               return (
                 <tr 
@@ -211,10 +243,10 @@ export default function VideoList({
                   className="hover:bg-brand-cream-dark/55 transition-colors cursor-pointer select-none group"
                 >
                   <td className="px-6 py-4 font-serif font-bold text-brand-charcoal flex items-center space-x-3 truncate">
-                    <Video className="w-4 h-4 text-brand-sage shrink-0" />
+                    {getFileIcon(video.name, video.mimeType)}
                     <span className="truncate">{video.name}</span>
                   </td>
-                  <td className="px-6 py-4 text-gray-500 uppercase">{video.type}</td>
+                  <td className="px-6 py-4 text-gray-500 uppercase">{ext || video.type}</td>
                   <td className="px-6 py-4 text-gray-500">{formatSize(video.size)}</td>
                   <td className="px-6 py-4 text-gray-500">{video.status === 'Uploading' ? 'Uploading...' : formatDate(video.dateAdded)}</td>
                   <td className="px-6 py-4 text-gray-500 truncate max-w-[120px]">{folderName}</td>

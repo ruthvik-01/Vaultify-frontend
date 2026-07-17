@@ -17,7 +17,6 @@ export default function Sidebar({ onClose }) {
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'My Files', path: '/my-files', icon: FolderClosed },
     { name: 'Upload Files', path: '/upload', icon: UploadCloud },
-    { name: 'Videos', path: '/videos', icon: Video },
     { name: 'Trash Bin', path: '/trash', icon: Trash2 },
     { name: 'My Profile', path: '/profile', icon: User },
     { name: 'Settings', path: '/settings', icon: Settings },

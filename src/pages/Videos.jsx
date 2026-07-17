@@ -13,7 +13,7 @@ import VideoUploadDialog from '../components/video/VideoUploadDialog';
 import ShareVideoModal from '../components/video/ShareVideoModal';
 import FolderTree from '../components/video/FolderTree';
 
-import { Film, RefreshCw } from 'lucide-react';
+import { FolderClosed, RefreshCw } from 'lucide-react';
 
 export default function Videos() {
   const { 
@@ -55,13 +55,9 @@ export default function Videos() {
     refreshFolders,
   } = useVideoFolders();
 
-  // Derive video list from shared context (avoids duplicate API call)
+  // Derive all active files list from shared context
   const videos = useMemo(
-    () => files.filter(f =>
-      f.category === 'Media' ||
-      (f.mimeType && f.mimeType.startsWith('video/')) ||
-      ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes((f.name || '').split('.').pop().toLowerCase())
-    ),
+    () => files.filter(f => !f.inTrash),
     [files]
   );
 
@@ -122,7 +118,7 @@ export default function Videos() {
   };
 
   const handleVideoDelete = async (id) => {
-    if (window.confirm('Are you sure you want to permanently delete this video?')) {
+    if (window.confirm('Are you sure you want to permanently delete this file?')) {
       try {
         await videoService.deleteVideo(id, true);
         await fetchAllFiles();
@@ -229,14 +225,14 @@ export default function Videos() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 select-none">
         <div className="flex items-center space-x-3">
           <div className="bg-brand-olive text-white p-3 rounded-2xl shadow-md shadow-brand-olive/10">
-            <Film className="w-6 h-6 animate-pulse" />
+            <FolderClosed className="w-6 h-6 animate-pulse" />
           </div>
           <div>
             <h1 className="font-serif text-xl font-bold tracking-tight text-brand-charcoal">
-              Video Management
+              My Files
             </h1>
             <p className="text-[10px] text-brand-olive-dark font-sans tracking-widest uppercase font-semibold">
-              SaaS Media Vault
+              Document Locker
             </p>
           </div>
         </div>
@@ -272,7 +268,7 @@ export default function Videos() {
         <div className="bg-white border border-brand-sand rounded-2xl p-16 text-center shadow-sm flex flex-col items-center justify-center min-h-[300px] select-none">
           <RefreshCw className="w-8 h-8 text-brand-olive animate-spin mb-4" />
           <h3 className="font-serif font-bold text-sm text-brand-charcoal">
-            Syncing Vault Media...
+            Syncing Locker...
           </h3>
         </div>
       ) : viewMode === 'grid' ? (

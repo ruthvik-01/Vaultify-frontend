@@ -14,7 +14,6 @@ import PublicShare from '../pages/PublicShare';
 
 // Inner Dashboard Pages
 import Dashboard from '../pages/Dashboard';
-import MyFiles from '../pages/MyFiles';
 import UploadFiles from '../pages/UploadFiles';
 import Videos from '../pages/Videos';
 import Trash from '../pages/Trash';
@@ -49,9 +48,8 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/my-files" element={<MyFiles />} />
+          <Route path="/my-files" element={<Videos />} />
           <Route path="/upload" element={<UploadFiles />} />
-          <Route path="/videos" element={<Videos />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
