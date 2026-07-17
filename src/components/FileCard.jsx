@@ -4,13 +4,13 @@ import {
   FileText, Award, FolderGit, FileCode, Video, File, 
   MoreVertical, Star, Share2, Trash2, ArrowUpRight, 
   Download, Eye, UserPlus, ShieldAlert, Check, X, RefreshCw, Loader2,
-  Music, Image as ImageIcon, FileSpreadsheet, Presentation
+  Music, Image as ImageIcon, FileSpreadsheet, Presentation, FolderClosed
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatDate } from '../utils/formatDate';
 
 export default function FileCard({ file, viewMode = 'grid', isTrashView = false }) {
-  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl, showNotification } = useFiles();
+  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl, showNotification, folders, moveFile } = useFiles();
   const [showMenu, setShowMenu] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
@@ -18,6 +18,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [textContent, setTextContent] = useState('');
+  const [showMoveModal, setShowMoveModal] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
 
   // Fetch presigned thumbnail URL for image files on mount
@@ -245,6 +246,13 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                             <span>Share / Permissions</span>
                           </button>
                           <button
+                            onClick={() => { setShowMoveModal(true); setShowMenu(false); }}
+                            className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-brand-cream transition-colors cursor-pointer"
+                          >
+                            <FolderClosed className="w-4 h-4 text-gray-400" />
+                            <span>Move to Folder</span>
+                          </button>
+                          <button
                             onClick={() => { handleDownload(); setShowMenu(false); }}
                             className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-gray-700 hover:bg-brand-cream transition-colors cursor-pointer"
                           >
@@ -398,6 +406,13 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     title="Download"
                   >
                     <Download className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setShowMoveModal(true)}
+                    className="p-1.5 rounded-lg hover:bg-brand-cream border border-transparent hover:border-brand-sand hover:text-brand-charcoal transition-all cursor-pointer"
+                    title="Move to Folder"
+                  >
+                    <FolderClosed className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setShowSharePanel(true)}
@@ -711,6 +726,79 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                   className="bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal px-4 py-2 rounded-xl font-semibold transition-all"
                 >
                   Close Preview
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Move File Modal */}
+      <AnimatePresence>
+        {showMoveModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowMoveModal(false)}
+              className="absolute inset-0 bg-brand-charcoal"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white border border-brand-sand rounded-3xl p-6 shadow-xl w-full max-w-sm relative z-10 text-left font-sans"
+            >
+              <div className="flex justify-between items-center pb-3 border-b border-brand-sand mb-4">
+                <h3 className="font-serif text-sm font-bold text-brand-charcoal">Move File</h3>
+                <button
+                  onClick={() => setShowMoveModal(false)}
+                  className="p-1.5 text-gray-400 hover:text-brand-charcoal hover:bg-brand-cream rounded-full transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-60 overflow-y-auto mb-5 pr-1 scrollbar-thin">
+                {/* Locker Root option */}
+                <button
+                  onClick={async () => {
+                    await moveFile(file.id, null);
+                    setShowMoveModal(false);
+                  }}
+                  className={`w-full flex items-center space-x-3 p-2.5 rounded-xl text-left text-xs font-semibold hover:bg-brand-cream transition-colors cursor-pointer ${
+                    file.folder_id === null ? 'bg-brand-olive/10 text-brand-olive border border-brand-olive/30' : 'text-gray-700'
+                  }`}
+                >
+                  <FolderClosed className="w-4 h-4 shrink-0 text-brand-olive" />
+                  <span>Locker Root</span>
+                </button>
+
+                {/* Subfolders list */}
+                {folders.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={async () => {
+                      await moveFile(file.id, f.id);
+                      setShowMoveModal(false);
+                    }}
+                    className={`w-full flex items-center space-x-3 p-2.5 rounded-xl text-left text-xs font-semibold hover:bg-brand-cream transition-colors cursor-pointer ${
+                      file.folder_id === f.id ? 'bg-brand-olive/10 text-brand-olive border border-brand-olive/30' : 'text-gray-700'
+                    }`}
+                  >
+                    <FolderClosed className="w-4 h-4 shrink-0 text-brand-olive" />
+                    <span className="truncate">{f.folder_name}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowMoveModal(false)}
+                  className="flex-1 bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal text-xs font-semibold py-2.5 rounded-xl cursor-pointer"
+                >
+                  Cancel
                 </button>
               </div>
             </motion.div>

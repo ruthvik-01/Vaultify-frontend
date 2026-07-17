@@ -542,6 +542,22 @@ export const FileProvider = ({ children }) => {
     showNotification('Trash emptied successfully', 'success');
   };
 
+  const moveFile = async (id, folderId) => {
+    try {
+      const res = await api.moveFile(id, folderId);
+      const updatedFile = res.data?.file || res.data;
+      if (updatedFile) {
+        const mapped = mapBackendFile(updatedFile);
+        setFiles(prev => prev.map(f => f.id === id ? mapped : f));
+        showNotification('File moved successfully', 'success');
+      }
+    } catch (err) {
+      console.error('Failed to move file:', err.message);
+      showNotification('Failed to move file', 'error');
+      throw err;
+    }
+  };
+
   const toggleStar = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
@@ -993,6 +1009,7 @@ export const FileProvider = ({ children }) => {
         retryVideoUpload,
         isUploadProgressOpen,
         setIsUploadProgressOpen,
+        moveFile,
       }}
     >
       {children}
