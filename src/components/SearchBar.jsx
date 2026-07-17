@@ -7,10 +7,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 export default function SearchBar() {
   const { files } = useFiles();
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Debounce query input by 300ms to reduce per-keystroke filtering
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   // Listen for Ctrl+K/Cmd+K to focus search input
   useEffect(() => {
@@ -35,15 +42,15 @@ export default function SearchBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter files that are NOT in trash
-  const filteredFiles = query.trim() === '' 
+  // Filter files that are NOT in trash, using debounced query
+  const filteredFiles = debouncedQuery.trim() === '' 
     ? [] 
     : files
         .filter(f => !f.inTrash)
         .filter(f => 
-          f.name.toLowerCase().includes(query.toLowerCase()) ||
-          (f.tags && f.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))) ||
-          f.category.toLowerCase().includes(query.toLowerCase())
+          f.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+          (f.tags && f.tags.some(tag => tag.toLowerCase().includes(debouncedQuery.toLowerCase()))) ||
+          f.category.toLowerCase().includes(debouncedQuery.toLowerCase())
         )
         .slice(0, 5); // limit to top 5 results
 
@@ -95,7 +102,7 @@ export default function SearchBar() {
 
       {/* Autocomplete Results Panel */}
       <AnimatePresence>
-        {isOpen && query.trim() !== '' && (
+        {isOpen && debouncedQuery.trim() !== '' && (
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -139,7 +146,7 @@ export default function SearchBar() {
               </div>
             ) : (
               <div className="p-6 text-center text-xs text-gray-500">
-                No matching files found for "<span className="font-semibold">{query}</span>"
+                No matching files found for "<span className="font-semibold">{debouncedQuery}</span>"
               </div>
             )}
           </motion.div>

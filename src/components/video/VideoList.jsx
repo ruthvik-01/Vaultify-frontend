@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Folder, Video, Play, MoreVertical, Edit2, Move, Download, Share2, Trash2 
 } from 'lucide-react';
+import { formatDate } from '../../utils/formatDate';
 
 const formatSize = (bytes) => {
   if (bytes === 0) return '0 B';
@@ -11,11 +12,7 @@ const formatSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 };
 
-const formatDate = (dateStr) => {
-  if (!dateStr) return 'Just now';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
+
 
 // Row menu component to isolate click-outside listening
 function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onShare, onDelete }) {
@@ -219,7 +216,7 @@ export default function VideoList({
                   </td>
                   <td className="px-6 py-4 text-gray-500 uppercase">{video.type}</td>
                   <td className="px-6 py-4 text-gray-500">{formatSize(video.size)}</td>
-                  <td className="px-6 py-4 text-gray-500">{formatDate(video.dateAdded)}</td>
+                  <td className="px-6 py-4 text-gray-500">{video.status === 'Uploading' ? 'Uploading...' : formatDate(video.dateAdded)}</td>
                   <td className="px-6 py-4 text-gray-500 truncate max-w-[120px]">{folderName}</td>
                   <td className="px-6 py-4 text-gray-500">{video.owner?.name || 'Me'}</td>
                   <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>

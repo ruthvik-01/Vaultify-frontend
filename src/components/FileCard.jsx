@@ -7,6 +7,7 @@ import {
   Music, Image as ImageIcon, FileSpreadsheet, Presentation
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatDate } from '../utils/formatDate';
 
 export default function FileCard({ file, viewMode = 'grid', isTrashView = false }) {
   const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl, showNotification } = useFiles();
@@ -65,13 +66,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const formatDate = (isoString) => {
-    return new Date(isoString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+
 
   // Get matching icon based on file properties
   const getFileIcon = () => {
@@ -511,17 +506,25 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                 )}
               </div>
 
-              {/* Public link share */}
               <div className="mt-5 pt-4 border-t border-brand-sand flex justify-between items-center">
                 <div>
-                  <span className="text-xs font-bold text-brand-charcoal block">Secret Sharing URL</span>
+                  <span className="text-xs font-bold text-brand-charcoal block">Public Share Link</span>
                   <span className="text-[10px] text-gray-400">Anyone with this link can access the file</span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/shared-preview/${file.id}`);
-                    showNotification('Copied secure file share link to clipboard!', 'success');
+                  onClick={async () => {
+                    try {
+                      const link = await shareFile(file.id, 'read', 24);
+                      if (link) {
+                        navigator.clipboard.writeText(link);
+                        showNotification('Share link copied to clipboard!', 'success');
+                      } else {
+                        showNotification('Failed to generate share link', 'error');
+                      }
+                    } catch (e) {
+                      showNotification('Failed to generate share link', 'error');
+                    }
                   }}
                   className="bg-brand-cream-dark hover:bg-brand-sand text-brand-charcoal px-3 py-2 rounded-xl text-[10px] font-bold border border-brand-sand transition-all flex items-center space-x-1"
                 >

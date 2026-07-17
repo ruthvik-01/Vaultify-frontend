@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { 
   FolderLock, LayoutDashboard, FolderClosed, UploadCloud, 
-  Users, Trash2, User, Settings, X, GraduationCap, Video 
+  Trash2, User, Settings, X, Video 
 } from 'lucide-react';
 import { useFiles } from '../context/FileContext';
 import StorageCard from './StorageCard';
@@ -18,7 +18,6 @@ export default function Sidebar({ onClose }) {
     { name: 'My Files', path: '/my-files', icon: FolderClosed },
     { name: 'Upload Files', path: '/upload', icon: UploadCloud },
     { name: 'Videos', path: '/videos', icon: Video },
-    { name: 'Shared Files', path: '/shared', icon: Users },
     { name: 'Trash Bin', path: '/trash', icon: Trash2 },
     { name: 'My Profile', path: '/profile', icon: User },
     { name: 'Settings', path: '/settings', icon: Settings },
@@ -78,15 +77,9 @@ export default function Sidebar({ onClose }) {
         </nav>
       </div>
 
-      {/* Storage & User Quota at the bottom */}
+      {/* Storage at the bottom */}
       <div className={`mt-8 pt-6 border-t border-brand-sand w-full ${isCompact ? 'flex flex-col items-center' : ''}`}>
         <StorageCard isCompact={isCompact} />
-        {!isCompact && (
-          <div className="mt-4 flex items-center space-x-2.5 px-2 text-xs text-gray-500">
-            <GraduationCap className="w-4 h-4 text-brand-olive animate-pulse" />
-            <span className="truncate">Personal Account Secured</span>
-          </div>
-        )}
       </div>
     </aside>
   );

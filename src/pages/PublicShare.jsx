@@ -5,6 +5,7 @@ import {
   Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatDate } from '../utils/formatDate';
 
 const formatSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 B';
@@ -88,11 +89,7 @@ export default function PublicShare() {
 
   const isVideo = fileType.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(fileName.split('.').pop().toLowerCase());
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
+
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center p-4 md:p-8 font-sans select-none text-left">

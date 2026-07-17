@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFiles, categories } from '../context/FileContext';
 import FileCard from '../components/FileCard';
@@ -54,49 +54,52 @@ export default function MyFiles() {
     setSearchParams(searchParams);
   };
 
-  // Filter active files (NOT in Trash)
-  const activeFiles = files.filter(f => !f.inTrash);
+  // Filter and sort files using useMemo for performance optimization
+  const sortedFiles = useMemo(() => {
+    // Filter active files (NOT in Trash)
+    const activeFiles = files.filter(f => !f.inTrash);
 
-  // Filter by search query
-  const searchedFiles = activeFiles.filter(f => {
-    if (!searchQuery) return true;
-    return f.name.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+    // Filter by search query
+    const searchedFiles = activeFiles.filter(f => {
+      if (!searchQuery) return true;
+      return f.name.toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
-  // Filter by active category
-  const categorizedFiles = activeCategory === 'All' 
-    ? searchedFiles 
-    : searchedFiles.filter(f => f.category === activeCategory);
+    // Filter by active category
+    const categorizedFiles = activeCategory === 'All' 
+      ? searchedFiles 
+      : searchedFiles.filter(f => f.category === activeCategory);
 
-  // Filter by file type
-  const filteredFiles = categorizedFiles.filter(f => {
-    if (fileTypeFilter === 'all') return true;
-    const ext = f.name.split('.').pop().toLowerCase();
-    const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (f.mimeType && f.mimeType.startsWith('image/'));
-    const isPdf = ext === 'pdf' || (f.mimeType && f.mimeType === 'application/pdf');
-    const isVideo = ['mp4', 'mkv', 'avi', 'mov', 'video'].includes(f.type) || (f.mimeType && f.mimeType.startsWith('video/'));
-    const isDoc = ['doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext) || (f.mimeType && (f.mimeType.startsWith('text/') || f.mimeType.includes('document') || f.mimeType.includes('sheet')));
-    
-    if (fileTypeFilter === 'image') return isImg;
-    if (fileTypeFilter === 'pdf') return isPdf;
-    if (fileTypeFilter === 'video') return isVideo;
-    if (fileTypeFilter === 'document') return isDoc;
-    if (fileTypeFilter === 'other') return !isImg && !isPdf && !isVideo && !isDoc;
-    return true;
-  });
+    // Filter by file type
+    const filteredFiles = categorizedFiles.filter(f => {
+      if (fileTypeFilter === 'all') return true;
+      const ext = f.name.split('.').pop().toLowerCase();
+      const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (f.mimeType && f.mimeType.startsWith('image/'));
+      const isPdf = ext === 'pdf' || (f.mimeType && f.mimeType === 'application/pdf');
+      const isVideo = ['mp4', 'mkv', 'avi', 'mov', 'video'].includes(f.type) || (f.mimeType && f.mimeType.startsWith('video/'));
+      const isDoc = ['doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'].includes(ext) || (f.mimeType && (f.mimeType.startsWith('text/') || f.mimeType.includes('document') || f.mimeType.includes('sheet')));
+      
+      if (fileTypeFilter === 'image') return isImg;
+      if (fileTypeFilter === 'pdf') return isPdf;
+      if (fileTypeFilter === 'video') return isVideo;
+      if (fileTypeFilter === 'document') return isDoc;
+      if (fileTypeFilter === 'other') return !isImg && !isPdf && !isVideo && !isDoc;
+      return true;
+    });
 
-  // Sort files
-  const sortedFiles = [...filteredFiles].sort((a, b) => {
-    let comparison = 0;
-    if (sortBy === 'dateAdded') {
-      comparison = new Date(a.dateAdded) - new Date(b.dateAdded);
-    } else if (sortBy === 'size') {
-      comparison = a.size - b.size;
-    } else if (sortBy === 'name') {
-      comparison = a.name.localeCompare(b.name);
-    }
-    return sortOrder === 'desc' ? -comparison : comparison;
-  });
+    // Sort files
+    return [...filteredFiles].sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'dateAdded') {
+        comparison = new Date(a.dateAdded) - new Date(b.dateAdded);
+      } else if (sortBy === 'size') {
+        comparison = a.size - b.size;
+      } else if (sortBy === 'name') {
+        comparison = a.name.localeCompare(b.name);
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+  }, [files, searchQuery, activeCategory, fileTypeFilter, sortBy, sortOrder]);
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');

@@ -3,6 +3,7 @@ import {
   Play, MoreVertical, Edit2, Move, Download, Share2, Trash2, Video, Clock, HardDrive, Calendar, User, Folder 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatDate } from '../../utils/formatDate';
 
 const formatSize = (bytes) => {
   if (bytes === 0) return '0 B';
@@ -10,12 +11,6 @@ const formatSize = (bytes) => {
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return 'Just now';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
 export default function VideoCard({
@@ -45,7 +40,7 @@ export default function VideoCard({
   const folderName = videoFolder ? videoFolder.name : 'Root';
 
   return (
-    <div className="bg-white border border-brand-sand/70 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-brand-sage/60 transition-all duration-200 text-left relative flex flex-col h-full">
+    <div className="bg-white border border-brand-sand/70 rounded-2xl shadow-sm hover:shadow-md hover:border-brand-sage/60 transition-all duration-200 text-left relative flex flex-col h-full">
       {/* Thumbnail Placeholder */}
       <div 
         onClick={() => onPlay(video)}
@@ -100,7 +95,8 @@ export default function VideoCard({
                   initial={{ opacity: 0, scale: 0.95, y: -8 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 mt-2 w-48 bg-white border border-brand-sand/80 rounded-2xl shadow-xl z-30 py-1.5 text-xs text-left"
+                  className="absolute right-0 mt-2 w-48 bg-white border border-brand-sand/80 rounded-2xl shadow-xl z-[100] py-1.5 text-xs text-left"
+                  style={{ top: '100%' }}
                 >
                   <button
                     onClick={(e) => {
@@ -186,7 +182,7 @@ export default function VideoCard({
             </div>
             <div className="flex items-center space-x-1 truncate">
               <Calendar className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-              <span>{formatDate(video.dateAdded)}</span>
+              <span>{video.status === 'Uploading' ? 'Uploading...' : formatDate(video.dateAdded)}</span>
             </div>
             <div className="flex items-center space-x-1 truncate">
               <User className="w-3.5 h-3.5 text-gray-400 shrink-0" />

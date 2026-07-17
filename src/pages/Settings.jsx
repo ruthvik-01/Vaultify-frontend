@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
-  User, Bell, Palette, CreditCard, Save, ShieldCheck, 
-  Sparkles, CheckCircle2, Monitor, GraduationCap, Moon, Sun, Type
+  User, Bell, Palette, Save, ShieldCheck, 
+  CheckCircle2, Monitor, GraduationCap, Moon, Sun, Type
 } from 'lucide-react';
 
 export default function Settings() {
   const { user, notifications, updateProfile, updateNotifications, showNotification } = useFiles();
-  const [activeSubTab, setActiveSubTab] = useState('account'); // account | notifications | preferences | plan
+  const [activeSubTab, setActiveSubTab] = useState('account'); // account | notifications | preferences
 
   // Account Form states
   const [name, setName] = useState(user.name);
@@ -84,16 +84,6 @@ export default function Settings() {
       });
   };
 
-  const handleUpgradePlan = (planName) => {
-    updateProfile({
-      storage_plan: planName === 'pro' ? 'pro' : 'free'
-    }).then(() => {
-      showNotification(`Successfully configured account storage allocation plan to ${planName.toUpperCase()}!`, 'success');
-    }).catch(err => {
-      showNotification('Plan update failed: ' + err.message, 'error');
-    });
-  };
-
   return (
     <div className="bg-white border border-brand-sand rounded-3xl overflow-hidden shadow-sm flex flex-col md:flex-row min-h-[550px]">
       
@@ -135,18 +125,6 @@ export default function Settings() {
         >
           <Palette className="w-4 h-4" />
           <span>Display & Styling</span>
-        </button>
-
-        <button
-          onClick={() => setActiveSubTab('plan')}
-          className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeSubTab === 'plan'
-              ? 'bg-brand-olive text-white'
-              : 'text-gray-600 hover:bg-brand-sand/50 hover:text-brand-charcoal'
-          }`}
-        >
-          <CreditCard className="w-4 h-4" />
-          <span>Storage Plan Quota</span>
         </button>
       </div>
 
@@ -424,75 +402,6 @@ export default function Settings() {
                 <span>Preferences auto-save instantly</span>
               </div>
 
-            </div>
-          </div>
-        )}
-
-        {/* Sub-tab: Storage pricing tier */}
-        {activeSubTab === 'plan' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-serif text-lg font-bold text-brand-charcoal">Storage Plan Quota</h3>
-              <p className="text-xs text-gray-500 mt-1">Review your allocation stats and upgrade details.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Current allocation stats */}
-              <div className="border border-brand-sand rounded-2xl p-5 bg-brand-cream/40 space-y-4">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 block">Current Allocation</span>
-                <div className="flex justify-between items-center">
-                  <span className="font-serif text-xl font-bold text-brand-charcoal">
-                    {user.storage_plan === 'pro' ? 'Pro Scholar Vault' : 'Free Scholar Vault'}
-                  </span>
-                  <span className="bg-brand-sage-light/35 text-brand-olive px-2.5 py-0.5 rounded text-[10px] font-bold border border-brand-sage-light/20">
-                    Active Plan
-                  </span>
-                </div>
-                
-                <div className="text-xs text-gray-500 space-y-1.5">
-                  <p>• Allowed Space Quota: {user.storage_plan === 'pro' ? '1 TB' : '100 GB'} SSD space</p>
-                  <p>• Verification Badges: Included</p>
-                  <p>• Access Control Settings: Allowed</p>
-                </div>
-
-                {user.storage_plan === 'pro' && (
-                  <button
-                    onClick={() => handleUpgradePlan('free')}
-                    className="w-full mt-2 text-[10px] bg-brand-cream border border-brand-sand hover:bg-brand-sand text-brand-charcoal font-semibold py-1.5 rounded-lg text-center transition-all cursor-pointer"
-                  >
-                    Downgrade back to Free Tier (100 GB)
-                  </button>
-                )}
-              </div>
-
-              {/* Upgrade option preview */}
-              <div className="border border-amber-200 bg-amber-50/10 rounded-2xl p-5 relative overflow-hidden space-y-4">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-amber-400/5 rounded-full" />
-                <div className="flex justify-between items-start">
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-amber-700 bg-amber-100/50 border border-amber-200 px-2 py-0.5 rounded-md">
-                    Pro upgrade
-                  </span>
-                  <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
-                </div>
-                <div>
-                  <h4 className="font-serif text-lg font-bold text-brand-charcoal">Expand to 1 TB Secure Locker</h4>
-                  <p className="text-[10px] text-gray-500 mt-0.5 font-sans">Enable detailed download analytics and unlimited shared credential nodes.</p>
-                </div>
-                
-                {user.storage_plan === 'pro' ? (
-                  <div className="w-full text-center text-xs py-2 text-brand-olive font-semibold bg-brand-sage-light/25 border border-brand-sage-light/30 rounded-xl">
-                    You are already using this plan!
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => handleUpgradePlan('pro')}
-                    className="w-full bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer flex items-center justify-center space-x-1"
-                  >
-                    <span>Activate 1 TB Plan ($2.99/mo)</span>
-                  </button>
-                )}
-              </div>
             </div>
           </div>
         )}

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { videoService } from '../services/videoService';
 import { videoUploadService } from '../services/videoUploadService';
@@ -37,6 +37,7 @@ export const FileProvider = ({ children }) => {
   const [folders, setFolders] = useState([]);
   const [activities, setActivities] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const isFetchingFiles = useRef(false);
   const [user, setUser] = useState({
     name: '',
     email: '',
@@ -263,6 +264,9 @@ export const FileProvider = ({ children }) => {
 
   // ─── Files ────────────────────────────────────────────────────────────────
   const fetchAllFiles = async () => {
+    // Prevent duplicate concurrent fetches (fixes 429 Too Many Requests)
+    if (isFetchingFiles.current) return;
+    isFetchingFiles.current = true;
     try {
       const [filesRes, videosList] = await Promise.all([
         api.getFiles(),
@@ -282,17 +286,23 @@ export const FileProvider = ({ children }) => {
         allMapped = [...allMapped, ...videosList];
       }
 
-      // Load local trash and local restored from localStorage
+      // Load local trash from localStorage
       const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
-      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
+      const localStarred = JSON.parse(localStorage.getItem('vaultify_local_starred_ids') || '[]');
 
       const trashIds = localTrash.map(f => f.id);
-      const restoredIds = localRestored.map(f => f.id);
 
-      // Filter out any duplicates that might come from backend
-      const activeBackendFiles = allMapped.filter(f => !trashIds.includes(f.id) && !restoredIds.includes(f.id));
+      // Map backend files, marking them as inTrash if they are in trashIds, and set isStarred if in localStarred
+      const filesWithTrashState = allMapped.map(f => {
+        const inTrash = trashIds.includes(f.id);
+        const isStarred = f.isStarred || localStarred.includes(f.id);
+        return { ...f, inTrash, isStarred };
+      });
 
-      const mergedFiles = [...activeBackendFiles, ...localTrash, ...localRestored];
+      // Include any localTrash items that are not returned by the backend
+      const missingFromBackend = localTrash.filter(f => !allMapped.some(b => b.id === f.id));
+
+      const mergedFiles = [...filesWithTrashState, ...missingFromBackend];
       const localShares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
       const sharedFileIds = localShares.map(s => s.fileId);
       let updatedShares = false;
@@ -331,6 +341,8 @@ export const FileProvider = ({ children }) => {
       setFiles(filesWithShares);
     } catch (err) {
       console.error('Failed to fetch files:', err.message);
+    } finally {
+      isFetchingFiles.current = false;
     }
   };
 
@@ -436,14 +448,6 @@ export const FileProvider = ({ children }) => {
       const file = files.find((f) => f.id === id);
       if (!file) return;
 
-      // Call backend delete API
-      const isVideo = file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase());
-      if (isVideo) {
-        await videoService.deleteVideo(id);
-      } else {
-        await api.deleteFile(id);
-      }
-
       // Add to localTrash in localStorage
       const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
       const updatedFile = { ...file, inTrash: true };
@@ -451,11 +455,6 @@ export const FileProvider = ({ children }) => {
         localTrash.push(updatedFile);
         localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash));
       }
-
-      // Remove from localRestored if it was there
-      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
-      const filteredRestored = localRestored.filter(t => t.id !== id);
-      localStorage.setItem('vaultify_local_restored_files', JSON.stringify(filteredRestored));
 
       // Update files state immediately
       setFiles(prev => {
@@ -483,15 +482,8 @@ export const FileProvider = ({ children }) => {
       const filteredTrash = localTrash.filter(t => t.id !== id);
       localStorage.setItem('vaultify_local_trash_files', JSON.stringify(filteredTrash));
 
-      // Add to localRestored
-      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
-      const updatedFile = { ...file, inTrash: false };
-      if (!localRestored.some(r => r.id === id)) {
-        localRestored.push(updatedFile);
-        localStorage.setItem('vaultify_local_restored_files', JSON.stringify(localRestored));
-      }
-
       // Update files state
+      const updatedFile = { ...file, inTrash: false };
       setFiles(prev => {
         const remaining = prev.filter(f => f.id !== id);
         return [...remaining, updatedFile];
@@ -551,12 +543,23 @@ export const FileProvider = ({ children }) => {
   const toggleStar = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
+      if (!file) return;
       const nextStarred = !file.isStarred;
-      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      const isVideo = file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase());
       
       if (!isVideo) {
         await api.favoriteFile(id, nextStarred);
       }
+
+      // Persist star status locally in localStorage (crucial for videos and offline fallback)
+      const localStarred = JSON.parse(localStorage.getItem('vaultify_local_starred_ids') || '[]');
+      let updatedStarred;
+      if (nextStarred) {
+        updatedStarred = [...localStarred.filter(x => x !== id), id];
+      } else {
+        updatedStarred = localStarred.filter(x => x !== id);
+      }
+      localStorage.setItem('vaultify_local_starred_ids', JSON.stringify(updatedStarred));
 
       setFiles((prev) =>
         prev.map((f) => {

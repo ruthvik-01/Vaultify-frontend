@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFiles } from '../context/FileContext';
 import { videoService } from '../services/videoService';
 import { useVideoFolders } from '../hooks/useVideoFolders';
@@ -18,8 +18,7 @@ import FolderTree from '../components/video/FolderTree';
 import { Film, RefreshCw } from 'lucide-react';
 
 export default function Videos() {
-  const { user } = useFiles();
-  const [videos, setVideos] = useState([]);
+  const { user, files, fetchAllFiles } = useFiles();
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState(user.theme_color || 'grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,24 +52,30 @@ export default function Videos() {
     refreshFolders,
   } = useVideoFolders();
 
-  const fetchVideos = useCallback(async () => {
+  // Derive video list from shared context (avoids duplicate API call)
+  const videos = useMemo(
+    () => files.filter(f =>
+      f.category === 'Media' ||
+      (f.mimeType && f.mimeType.startsWith('video/')) ||
+      ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes((f.name || '').split('.').pop().toLowerCase())
+    ),
+    [files]
+  );
+
+  const refreshVideos = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await videoService.getVideos();
-      setVideos(data);
-    } catch (e) {
-      console.error(e);
+      await fetchAllFiles();
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [fetchAllFiles]);
 
   const handleUploadComplete = (fileData, folderId) => {
-    // Associate the uploaded file with the folderId locally
     if (folderId) {
       videoService.moveVideo(fileData.id, folderId);
     }
-    fetchVideos();
+    fetchAllFiles();
   };
 
   const {
@@ -92,9 +97,8 @@ export default function Videos() {
   } = useVideoShare();
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchVideos();
-  }, [fetchVideos]);
+    // Videos already loaded from context - no extra fetch needed
+  }, []);
 
   // Sync user's preference
   useEffect(() => {
@@ -130,7 +134,7 @@ export default function Videos() {
     if (window.confirm('Are you sure you want to permanently delete this video?')) {
       try {
         await videoService.deleteVideo(id, true);
-        fetchVideos();
+        await fetchAllFiles();
       } catch (e) {
         console.error(e);
       }
@@ -152,7 +156,7 @@ export default function Videos() {
         });
         localStorage.setItem('vaultify_video_file_folders', JSON.stringify(map));
         
-        fetchVideos();
+        await fetchAllFiles();
       } catch (e) {
         console.error(e);
       }
@@ -173,7 +177,7 @@ export default function Videos() {
         await renameFolder(activeItem.id, renameInput);
       } else {
         await videoService.renameVideo(activeItem.id, renameInput);
-        fetchVideos();
+        await fetchAllFiles();
       }
       setIsRenameOpen(false);
       setActiveItem(null);
@@ -194,7 +198,7 @@ export default function Videos() {
         await moveFolder(activeItem.id, targetParentId);
       } else {
         await videoService.moveVideo(activeItem.id, targetParentId);
-        fetchVideos();
+        await fetchAllFiles();
       }
       setIsMoveOpen(false);
       setActiveItem(null);
@@ -248,7 +252,7 @@ export default function Videos() {
 
         <button
           onClick={() => {
-            fetchVideos();
+            refreshVideos();
             refreshFolders();
           }}
           className="flex items-center justify-center space-x-1.5 px-3.5 py-2 bg-brand-cream hover:bg-brand-sand/50 text-brand-charcoal border border-brand-sand rounded-xl text-xs font-semibold cursor-pointer transition-colors"

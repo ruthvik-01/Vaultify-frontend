@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu, Plus, Bell, Calendar } from 'lucide-react';
+import { Menu, Plus, Calendar } from 'lucide-react';
 import SearchBar from './SearchBar';
 import UserMenu from './UserMenu';
 import UploadModal from './UploadModal';
-import { useFiles } from '../context/FileContext';
 
 export default function Navbar({ onMenuToggle }) {
   const location = useLocation();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const { showNotification } = useFiles();
 
   // Derive page title from path
   const getPageTitle = (pathname) => {
@@ -20,8 +18,6 @@ export default function Navbar({ onMenuToggle }) {
         return 'My Digital Locker';
       case '/upload':
         return 'Upload Hub';
-      case '/shared':
-        return 'Shared Credentials';
       case '/trash':
         return 'Trash Archive';
       case '/profile':
@@ -78,15 +74,6 @@ export default function Navbar({ onMenuToggle }) {
           >
             <Plus className="w-4 h-4" />
             <span className="hidden sm:inline">Upload File</span>
-          </button>
-
-          {/* Dummy notification button */}
-          <button
-            onClick={() => showNotification('Activity Logs: No new alerts.', 'info')}
-            className="p-2 bg-brand-cream border border-brand-sand hover:bg-brand-cream-dark rounded-xl text-gray-500 hover:text-brand-charcoal relative transition-all cursor-pointer"
-          >
-            <Bell className="w-4.5 h-4.5" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full" />
           </button>
 
           {/* User Menu avatar dropdown */}
