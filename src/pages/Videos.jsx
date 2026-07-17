@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useFiles } from '../context/FileContext';
 import { videoService } from '../services/videoService';
 import { useVideoFolders } from '../hooks/useVideoFolders';
-import { useVideoUpload } from '../hooks/useVideoUpload';
 import { useVideoShare } from '../hooks/useVideoShare';
 
 import Breadcrumbs from '../components/video/Breadcrumbs';
@@ -11,14 +10,19 @@ import VideoGrid from '../components/video/VideoGrid';
 import VideoList from '../components/video/VideoList';
 import VideoPlayer from '../components/video/VideoPlayer';
 import VideoUploadDialog from '../components/video/VideoUploadDialog';
-import UploadProgress from '../components/video/UploadProgress';
 import ShareVideoModal from '../components/video/ShareVideoModal';
 import FolderTree from '../components/video/FolderTree';
 
 import { Film, RefreshCw } from 'lucide-react';
 
 export default function Videos() {
-  const { user, files, fetchAllFiles } = useFiles();
+  const { 
+    user, files, fetchAllFiles,
+    uploadQueue: queue,
+    addFilesToUploadQueue: addFilesToQueue,
+    isUploadProgressOpen,
+    setIsUploadProgressOpen,
+  } = useFiles();
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState(user.theme_color || 'grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +32,6 @@ export default function Videos() {
   const [isMoveOpen, setIsMoveOpen] = useState(false);
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
-  const [isUploadProgressOpen, setIsUploadProgressOpen] = useState(true);
 
   // Modal active items
   const [activeItem, setActiveItem] = useState(null); // video or folder object
@@ -71,19 +74,7 @@ export default function Videos() {
     }
   }, [fetchAllFiles]);
 
-  const handleUploadComplete = (fileData, folderId) => {
-    if (folderId) {
-      videoService.moveVideo(fileData.id, folderId);
-    }
-    fetchAllFiles();
-  };
 
-  const {
-    queue,
-    addFilesToQueue,
-    cancelUpload,
-    retryUpload,
-  } = useVideoUpload(handleUploadComplete);
 
   const {
     activeItem: shareItem,
@@ -339,16 +330,6 @@ export default function Videos() {
           setIsUploadProgressOpen(true);
         }}
       />
-
-      {/* Upload Queue Progress floating dock */}
-      {isUploadProgressOpen && queue.length > 0 && (
-        <UploadProgress
-          queue={queue}
-          onCancel={cancelUpload}
-          onRetry={retryUpload}
-          onClose={() => setIsUploadProgressOpen(false)}
-        />
-      )}
 
       {/* Share Modal */}
       <ShareVideoModal

@@ -1,12 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { useFiles, categories } from '../context/FileContext';
-import { UploadCloud, X, CheckCircle2, FileUp, Sparkles, FolderDot } from 'lucide-react';
+import { useFiles } from '../context/FileContext';
+import { UploadCloud, X, CheckCircle2, FileUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UploadModal({ isOpen, onClose }) {
   const { uploadFile, showNotification } = useFiles();
   const [dragActive, setDragActive] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('Resumes');
   const [uploadState, setUploadState] = useState('idle'); // idle | uploading | success
   const [progress, setProgress] = useState(0);
   const [uploadedName, setUploadedName] = useState('');
@@ -25,7 +24,6 @@ export default function UploadModal({ isOpen, onClose }) {
     }
   };
 
-  // Allowed file extensions matching backend's fileValidation.js whitelist
   const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'zip', 'txt'];
   const allowedVideoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'];
   const allowedMimeTypes = [
@@ -74,9 +72,12 @@ export default function UploadModal({ isOpen, onClose }) {
     }, 150);
 
     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const currentFolderId = searchParams.get('folder') || null;
+
       await uploadFile({
         file,
-        category: selectedCategory,
+        folderId: currentFolderId,
       });
       clearInterval(interval);
       setProgress(100);
@@ -154,25 +155,6 @@ export default function UploadModal({ isOpen, onClose }) {
 
           {uploadState === 'idle' && (
             <div>
-              {/* Category Dropdown Selector */}
-              <div className="mb-5">
-                <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1.5 flex items-center space-x-1">
-                  <FolderDot className="w-3.5 h-3.5 text-brand-olive" />
-                  <span>Choose Target Category Folder</span>
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full bg-brand-cream border border-brand-sand rounded-xl px-3 py-2.5 text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
-                >
-                  {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               {/* Drag Area */}
               <div
                 onDragEnter={handleDrag}
@@ -211,9 +193,6 @@ export default function UploadModal({ isOpen, onClose }) {
               <h4 className="text-xs font-bold text-brand-charcoal truncate max-w-[320px]">
                 Uploading "{uploadedName}"
               </h4>
-              <p className="text-[10px] text-gray-500 mt-1 uppercase font-semibold tracking-wider">
-                Category: {selectedCategory}
-              </p>
 
               {/* Progress Slider */}
               <div className="w-full max-w-xs bg-brand-cream-dark h-2 rounded-full overflow-hidden mt-6 mb-2">
@@ -237,7 +216,7 @@ export default function UploadModal({ isOpen, onClose }) {
               </motion.div>
               <h4 className="text-sm font-bold text-brand-charcoal">Upload Successful!</h4>
               <p className="text-xs text-gray-400 mt-1.5 truncate max-w-[320px]">
-                "{uploadedName}" is now stored in your <span className="font-semibold text-brand-olive">{selectedCategory}</span> folder.
+                "{uploadedName}" is now stored in your folder.
               </p>
 
               <div className="flex space-x-3 mt-8 w-full">

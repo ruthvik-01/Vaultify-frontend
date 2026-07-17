@@ -48,32 +48,20 @@ export default function SearchBar() {
     : files
         .filter(f => !f.inTrash)
         .filter(f => 
-          f.name.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-          (f.tags && f.tags.some(tag => tag.toLowerCase().includes(debouncedQuery.toLowerCase()))) ||
-          f.category.toLowerCase().includes(debouncedQuery.toLowerCase())
+          f.name.toLowerCase().includes(debouncedQuery.toLowerCase())
         )
         .slice(0, 5); // limit to top 5 results
 
   const getIcon = (category) => {
-    switch (category) {
-      case 'Resumes':
-      case 'Notes':
-      case 'Assignments':
-        return <FileText className="w-4 h-4 text-emerald-600" />;
-      case 'Certificates':
-        return <Award className="w-4 h-4 text-amber-600" />;
-      case 'Projects':
-        return <FolderGit className="w-4 h-4 text-brand-olive" />;
-      default:
-        return <FileQuestion className="w-4 h-4 text-gray-500" />;
-    }
+    return <FileText className="w-4 h-4 text-emerald-600" />;
   };
 
   const handleResultClick = (file) => {
     setQuery('');
     setIsOpen(false);
-    // Navigate to My Files and let the screen show files of that category
-    navigate(`/my-files?category=${encodeURIComponent(file.category)}&highlight=${encodeURIComponent(file.id)}`);
+    // Navigate to My Files containing folder and highlight the item
+    const path = `/my-files` + (file.folder_id ? `?folder=${encodeURIComponent(file.folder_id)}&highlight=${encodeURIComponent(file.id)}` : `?highlight=${encodeURIComponent(file.id)}`);
+    navigate(path);
   };
 
   return (
@@ -90,7 +78,7 @@ export default function SearchBar() {
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search files, tags, certificates... (Ctrl + K)"
+          placeholder="Search files... (Ctrl + K)"
           className="w-full pl-10 pr-16 py-2 bg-brand-cream border border-brand-sand rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-brand-olive focus:border-brand-olive transition-all text-brand-charcoal"
         />
         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center space-x-1 pointer-events-none">
@@ -134,7 +122,7 @@ export default function SearchBar() {
                               {file.name}
                             </span>
                             <span className="text-[10px] text-gray-500 font-sans block mt-0.5">
-                              {file.category} • {(file.size / (1024 * 1024)).toFixed(2)} MB
+                              {(file.size / (1024 * 1024)).toFixed(2)} MB
                             </span>
                           </div>
                         </div>

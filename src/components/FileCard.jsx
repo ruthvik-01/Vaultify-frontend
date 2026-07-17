@@ -157,14 +157,8 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
             </div>
             <div className="max-w-xs sm:max-w-md truncate">
               <span className="text-xs font-semibold text-brand-charcoal block truncate">{file.name}</span>
-              <span className="text-[10px] text-gray-400 font-sans block mt-0.5 sm:hidden">{file.category}</span>
             </div>
           </div>
-        </td>
-        <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-500 hidden sm:table-cell">
-          <span className="bg-brand-sage-light/25 text-brand-olive font-medium px-2 py-0.5 rounded-full text-[10px]">
-            {file.category}
-          </span>
         </td>
         <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-500 font-mono">
           {formatSize(file.size)}
@@ -709,16 +703,6 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                 )}
               </div>
 
-              {/* Tag showcase */}
-              {file.tags && file.tags.length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {file.tags.map((tag, idx) => (
-                    <span key={idx} className="bg-brand-cream-dark text-gray-600 text-[10px] px-2 py-0.5 rounded-md border border-brand-sand/60">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
 
               <div className="mt-4 pt-4 border-t border-brand-sand flex justify-between items-center text-xs">
                 <span className="text-gray-400">Uploaded on {formatDate(file.dateAdded)} • {file.downloadCount || 0} downloads</span>

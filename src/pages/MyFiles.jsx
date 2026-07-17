@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useFiles, categories } from '../context/FileContext';
+import { useFiles } from '../context/FileContext';
 import FileCard from '../components/FileCard';
-import FolderCard from '../components/FolderCard';
 import EmptyState from '../components/EmptyState';
 import { 
-  Grid, List, ArrowUpDown, Filter, Search, FileX, Plus,
-  FolderClosed, Archive, Award, FolderGit, FileText, FileQuestion
+  Grid, List, Filter, Search, FileX, Plus,
+  FolderClosed, Trash2, Edit2, Share2, X, FolderDot
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MyFiles() {
-  const { files, user, searchQuery, setSearchQuery, updateProfile } = useFiles();
+  const { 
+    files, folders, user, searchQuery, setSearchQuery, updateProfile,
+    createFolder, renameFolder, deleteFolder, shareFile, showNotification
+  } = useFiles();
   const [searchParams, setSearchParams] = useSearchParams();
   
   // States
@@ -21,6 +23,15 @@ export default function MyFiles() {
   const [sortOrder, setSortOrder] = useState('desc'); // asc | desc
   const [highlightedId, setHighlightedId] = useState(null);
 
+  // Folder Modals
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
+  const [folderToRename, setFolderToRename] = useState(null);
+
+  // Active folder from URL params
+  const currentFolderId = searchParams.get('folder') || null;
+
   // Sync viewMode preference immediately from User profile settings
   useEffect(() => {
     if (user.theme_color) {
@@ -28,11 +39,7 @@ export default function MyFiles() {
     }
   }, [user.theme_color]);
 
-  // Active category derived from URL search param
-  const activeCategory = searchParams.get('category') || 'All';
-
   useEffect(() => {
-    // If a highlight query exists, note it and auto-clear it after 3 seconds
     const highlight = searchParams.get('highlight');
     if (highlight) {
       setHighlightedId(highlight);
@@ -43,35 +50,54 @@ export default function MyFiles() {
     }
   }, [searchParams]);
 
-  const handleCategorySelect = (category) => {
-    if (category === 'All') {
-      searchParams.delete('category');
+  // Navigate folder
+  const handleNavigateFolder = (folderId) => {
+    if (!folderId) {
+      searchParams.delete('folder');
     } else {
-      searchParams.set('category', category);
+      searchParams.set('folder', folderId);
     }
-    // Clear highlight on category switch
     searchParams.delete('highlight');
     setSearchParams(searchParams);
   };
 
-  // Filter and sort files using useMemo for performance optimization
+  // Derive breadcrumbs trail
+  const breadcrumbs = useMemo(() => {
+    const trail = [];
+    let currentId = currentFolderId;
+    while (currentId) {
+      const folder = folders.find(f => f.id === currentId);
+      if (folder) {
+        trail.unshift(folder);
+        currentId = folder.parent_folder_id;
+      } else {
+        break;
+      }
+    }
+    return trail;
+  }, [folders, currentFolderId]);
+
+  // Filter custom folders in current directory
+  const activeFolders = useMemo(() => {
+    return folders.filter(f => f.parent_folder_id === currentFolderId);
+  }, [folders, currentFolderId]);
+
+  // Filter and sort files inside current folder
   const sortedFiles = useMemo(() => {
-    // Filter active files (NOT in Trash)
     const activeFiles = files.filter(f => !f.inTrash);
 
-    // Filter by search query
-    const searchedFiles = activeFiles.filter(f => {
+    // Search query matches globally, or filters by directory if no query
+    const dirFiltered = activeFiles.filter(f => {
+      if (searchQuery) return true;
+      return f.folder_id === currentFolderId;
+    });
+
+    const searchedFiles = dirFiltered.filter(f => {
       if (!searchQuery) return true;
       return f.name.toLowerCase().includes(searchQuery.toLowerCase());
     });
 
-    // Filter by active category
-    const categorizedFiles = activeCategory === 'All' 
-      ? searchedFiles 
-      : searchedFiles.filter(f => f.category === activeCategory);
-
-    // Filter by file type
-    const filteredFiles = categorizedFiles.filter(f => {
+    const typeFiltered = searchedFiles.filter(f => {
       if (fileTypeFilter === 'all') return true;
       const ext = f.name.split('.').pop().toLowerCase();
       const isImg = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (f.mimeType && f.mimeType.startsWith('image/'));
@@ -87,8 +113,7 @@ export default function MyFiles() {
       return true;
     });
 
-    // Sort files
-    return [...filteredFiles].sort((a, b) => {
+    return [...typeFiltered].sort((a, b) => {
       let comparison = 0;
       if (sortBy === 'dateAdded') {
         comparison = new Date(a.dateAdded) - new Date(b.dateAdded);
@@ -99,66 +124,91 @@ export default function MyFiles() {
       }
       return sortOrder === 'desc' ? -comparison : comparison;
     });
-  }, [files, searchQuery, activeCategory, fileTypeFilter, sortBy, sortOrder]);
+  }, [files, searchQuery, currentFolderId, fileTypeFilter, sortBy, sortOrder]);
 
-  const toggleSortOrder = () => {
-    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  const handleCreateFolderSubmit = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+      await createFolder(newFolderName.trim(), currentFolderId);
+      setNewFolderName('');
+      setIsCreateOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  // Calculate folder counts for summaries
-  const getFolderIcon = (cat) => {
-    switch (cat) {
-      case 'Resumes':
-        return <FileText className="w-5 h-5 text-emerald-600" />;
-      case 'Certificates':
-        return <Award className="w-5 h-5 text-amber-600" />;
-      case 'Projects':
-        return <FolderGit className="w-5 h-5 text-brand-olive" />;
-      default:
-        return <FolderClosed className="w-5 h-5 text-gray-400" />;
+  const handleRenameFolderSubmit = async () => {
+    if (!newFolderName.trim() || !folderToRename) return;
+    try {
+      await renameFolder(folderToRename.id, newFolderName.trim());
+      setNewFolderName('');
+      setFolderToRename(null);
+      setIsRenameOpen(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const triggerFolderShare = async (folder) => {
+    try {
+      const link = await shareFile(null, 'read', 24, folder.id);
+      if (link) {
+        await navigator.clipboard.writeText(link);
+        showNotification('Folder share link copied to clipboard!', 'success');
+      } else {
+        showNotification('Failed to generate folder share link', 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification('Failed to generate folder share link', 'error');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-left">
       
-      {/* Category Navigation Tags */}
-      <div className="flex overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 space-x-2 scrollbar-none">
-        <button
-          onClick={() => handleCategorySelect('All')}
-          className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
-            activeCategory === 'All'
-              ? 'bg-brand-olive text-white border-brand-olive shadow-sm'
-              : 'bg-white border-brand-sand text-gray-500 hover:text-brand-charcoal hover:border-brand-sand'
-          }`}
-        >
-          All Folders
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => handleCategorySelect(cat)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border cursor-pointer ${
-              activeCategory === cat
-                ? 'bg-brand-olive text-white border-brand-olive shadow-sm'
-                : 'bg-white border-brand-sand text-gray-500 hover:text-brand-charcoal hover:border-brand-sand'
-            }`}
+      {/* Folder Navigation Breadcrumbs Path */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-brand-sand rounded-3xl p-5 shadow-sm">
+        <div className="flex flex-wrap items-center space-x-1.5 text-xs text-gray-400 select-none">
+          <FolderDot className="w-4 h-4 text-brand-olive" />
+          <button 
+            onClick={() => handleNavigateFolder(null)}
+            className="hover:text-brand-charcoal hover:underline font-bold text-gray-500 cursor-pointer"
           >
-            {cat}
+            Locker Root
           </button>
-        ))}
+          {breadcrumbs.map((crumb, idx) => (
+            <React.Fragment key={crumb.id}>
+              <span>/</span>
+              <button 
+                onClick={() => handleNavigateFolder(crumb.id)}
+                className={`hover:text-brand-charcoal hover:underline cursor-pointer ${
+                  idx === breadcrumbs.length - 1 ? 'text-brand-charcoal font-bold' : 'text-gray-500 font-semibold'
+                }`}
+              >
+                {crumb.folder_name}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Action Button: Create Folder */}
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="flex items-center justify-center space-x-1.5 px-4.5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer shrink-0"
+        >
+          <Plus className="w-4 h-4" />
+          <span>New Folder</span>
+        </button>
       </div>
-
-
 
       {/* Search Bar & File Type Filter Tags */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white border border-brand-sand rounded-3xl p-5 shadow-sm">
-        {/* Search omnibar */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search files in locker..."
+            placeholder="Search files inside locker..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-brand-cream border border-brand-sand rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-olive text-brand-charcoal"
@@ -173,7 +223,7 @@ export default function MyFiles() {
           )}
         </div>
 
-        {/* File Type Filter tags */}
+        {/* File Type Filters */}
         <div className="flex overflow-x-auto gap-2 scrollbar-none pb-1 md:pb-0">
           {[
             { id: 'all', name: 'All Types' },
@@ -198,19 +248,71 @@ export default function MyFiles() {
         </div>
       </div>
 
+      {/* Folders List/Grid Cards */}
+      {activeFolders.length > 0 && !searchQuery && (
+        <div className="space-y-3">
+          <h3 className="font-serif text-sm font-bold text-brand-charcoal">Folders</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {activeFolders.map((folder) => (
+              <div
+                key={folder.id}
+                onClick={() => handleNavigateFolder(folder.id)}
+                className="bg-white border border-brand-sand hover:border-brand-olive rounded-2xl p-4 flex items-center justify-between shadow-xs hover:shadow-sm cursor-pointer select-none relative transition-all group"
+              >
+                <div className="flex items-center space-x-3 min-w-0">
+                  <div className="bg-brand-sage-light/20 p-2.5 rounded-xl text-brand-olive shrink-0">
+                    <FolderClosed className="w-5 h-5 fill-brand-sage/10" />
+                  </div>
+                  <span className="text-xs font-bold text-brand-charcoal truncate pr-4" title={folder.folder_name}>
+                    {folder.folder_name}
+                  </span>
+                </div>
+
+                {/* Folder Row Actions */}
+                <div className="flex items-center space-x-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => triggerFolderShare(folder)}
+                    className="p-1 text-gray-400 hover:text-brand-olive hover:bg-brand-cream rounded-lg transition-colors cursor-pointer"
+                    title="Share Folder"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setFolderToRename(folder);
+                      setNewFolderName(folder.folder_name);
+                      setIsRenameOpen(true);
+                    }}
+                    className="p-1 text-gray-400 hover:text-brand-olive hover:bg-brand-cream rounded-lg transition-colors cursor-pointer"
+                    title="Rename Folder"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => deleteFolder(folder.id)}
+                    className="p-1 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                    title="Delete Folder"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb & Sorting options */}
       <div className="bg-white border border-brand-sand rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-        <div className="flex items-center space-x-2 text-xs text-left">
+        <div className="flex items-center space-x-2 text-xs">
           <Filter className="w-4 h-4 text-brand-olive" />
-          <span className="text-gray-500">Locker:</span>
-          <span className="font-serif font-bold text-brand-charcoal text-sm">{activeCategory}</span>
+          <span className="text-gray-500 font-medium">Locker Contents:</span>
           <span className="text-[10px] text-gray-400 bg-brand-cream-dark px-2 py-0.5 rounded-full font-bold font-mono">
-            {filteredFiles.length} file{filteredFiles.length !== 1 ? 's' : ''} found
+            {sortedFiles.length} file{sortedFiles.length !== 1 ? 's' : ''} found
           </span>
         </div>
 
         <div className="flex items-center justify-between sm:justify-end space-x-4">
-          {/* Sorting controls */}
           <div className="flex items-center space-x-2">
             <label className="text-[10px] uppercase font-bold text-gray-400">Sort By</label>
             <select
@@ -240,7 +342,7 @@ export default function MyFiles() {
                 setViewMode('grid');
                 updateProfile({ theme_color: 'grid' });
               }}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-brand-olive shadow-sm' : 'text-gray-400 hover:text-brand-charcoal'}`}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-white text-brand-olive shadow-sm' : 'text-gray-400 hover:text-brand-charcoal'}`}
               title="Grid Layout"
             >
               <Grid className="w-4 h-4" />
@@ -250,7 +352,7 @@ export default function MyFiles() {
                 setViewMode('list');
                 updateProfile({ theme_color: 'list' });
               }}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-brand-olive shadow-sm' : 'text-gray-400 hover:text-brand-charcoal'}`}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === 'list' ? 'bg-white text-brand-olive shadow-sm' : 'text-gray-400 hover:text-brand-charcoal'}`}
               title="List Layout"
             >
               <List className="w-4 h-4" />
@@ -282,14 +384,13 @@ export default function MyFiles() {
               })}
             </div>
           ) : (
-            /* List Layout (Table view) */
+            /* List Layout */
             <div className="bg-white border border-brand-sand rounded-2xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-brand-sand/70 text-left">
                   <thead className="bg-brand-cream">
                     <tr>
                       <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">File Name</th>
-                      <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider hidden sm:table-cell">Category</th>
                       <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Size</th>
                       <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Date Added</th>
                       <th className="py-3.5 px-4 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">Actions</th>
@@ -305,18 +406,129 @@ export default function MyFiles() {
             </div>
           )
         ) : (
-          /* Empty Folder State */
+          /* Empty Directory State */
           <div className="py-12">
             <EmptyState 
-              title={`No files in ${activeCategory}`}
-              description={`You haven't archived any items in your ${activeCategory} category locker folder yet.`}
-              actionText="Upload First File"
-              onActionClick={() => handleCategorySelect('All')} // or direct link
+              title="Empty Folder"
+              description="No files inside this directory. Upload file or navigate back."
+              actionText="Back to Root"
+              onActionClick={() => handleNavigateFolder(null)}
               icon={FileX}
             />
           </div>
         )}
       </div>
+
+      {/* Create Folder Modal */}
+      <AnimatePresence>
+        {isCreateOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsCreateOpen(false)}
+              className="absolute inset-0 bg-brand-charcoal"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white border border-brand-sand rounded-3xl p-6 shadow-xl w-full max-w-sm relative z-10 overflow-hidden"
+            >
+              <div className="flex justify-between items-center pb-3 border-b border-brand-sand mb-4">
+                <h3 className="font-serif text-sm font-bold text-brand-charcoal">Create New Folder</h3>
+                <button
+                  onClick={() => setIsCreateOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-brand-charcoal hover:bg-brand-cream rounded-full transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Folder Name"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-olive text-brand-charcoal mb-5"
+                autoFocus
+              />
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setIsCreateOpen(false)}
+                  className="flex-1 bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal text-xs font-semibold py-2.5 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateFolderSubmit}
+                  className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm cursor-pointer"
+                >
+                  Create Folder
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Rename Folder Modal */}
+      <AnimatePresence>
+        {isRenameOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsRenameOpen(false)}
+              className="absolute inset-0 bg-brand-charcoal"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white border border-brand-sand rounded-3xl p-6 shadow-xl w-full max-w-sm relative z-10 overflow-hidden"
+            >
+              <div className="flex justify-between items-center pb-3 border-b border-brand-sand mb-4">
+                <h3 className="font-serif text-sm font-bold text-brand-charcoal">Rename Folder</h3>
+                <button
+                  onClick={() => setIsRenameOpen(false)}
+                  className="p-1.5 text-gray-400 hover:text-brand-charcoal hover:bg-brand-cream rounded-full transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <input
+                type="text"
+                placeholder="Folder Name"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-brand-olive text-brand-charcoal mb-5"
+                autoFocus
+              />
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setIsRenameOpen(false)}
+                  className="flex-1 bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal text-xs font-semibold py-2.5 rounded-xl cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleRenameFolderSubmit}
+                  className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white text-xs font-semibold py-2.5 rounded-xl shadow-sm cursor-pointer"
+                >
+                  Rename Folder
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

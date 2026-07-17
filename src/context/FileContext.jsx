@@ -2,6 +2,8 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import { api } from '../services/api';
 import { videoService } from '../services/videoService';
 import { videoUploadService } from '../services/videoUploadService';
+import { useVideoUpload } from '../hooks/useVideoUpload';
+import UploadProgress from '../components/video/UploadProgress';
 
 const FileContext = createContext(null);
 
@@ -638,35 +640,13 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const shareFile = async (id, permission = 'read', expiryHours = 24) => {
+  const shareFile = async (id, permission = 'read', expiryHours = 24, folderId = null) => {
     try {
-      const file = files.find((f) => f.id === id);
-      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
-      
       let link;
       let shareRecordId = null;
 
-      if (isVideo) {
-        const token = localStorage.getItem('vaultify_token');
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${API_URL}/videos/${id}/share`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        if (!res.ok) {
-          throw new Error('Failed to generate permanent share link.');
-        }
-        const data = await res.json();
-        if (data && data.shareUrl) {
-          const parts = data.shareUrl.split('/');
-          const shareToken = parts[parts.length - 1];
-          link = `${window.location.origin}/share/${shareToken}`;
-          shareRecordId = shareToken;
-        }
-      } else {
+      if (folderId) {
+        // Share standard folder on backend
         const res = await fetch(
           `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/share`,
           {
@@ -675,45 +655,97 @@ export const FileProvider = ({ children }) => {
               Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ file_id: id, permission, expiry_hours: expiryHours }),
+            body: JSON.stringify({ folder_id: folderId, permission, expiry_hours: expiryHours }),
           }
         );
+        if (!res.ok) {
+          throw new Error('Failed to generate folder share link.');
+        }
         const data = await res.json();
         if (data.data) {
-          link = data.data.share_link;
+          link = `${window.location.origin}/share/${data.data.token}`;
           shareRecordId = data.data.id;
+        }
+      } else {
+        const file = files.find((f) => f.id === id);
+        const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+        
+        if (isVideo) {
+          const token = localStorage.getItem('vaultify_token');
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const res = await fetch(`${API_URL}/videos/${id}/share`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (!res.ok) {
+            throw new Error('Failed to generate permanent share link.');
+          }
+          const data = await res.json();
+          if (data && data.shareUrl) {
+            const parts = data.shareUrl.split('/');
+            const shareToken = parts[parts.length - 1];
+            link = `${window.location.origin}/share/${shareToken}`;
+            shareRecordId = shareToken;
+          }
+        } else {
+          const res = await fetch(
+            `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/share`,
+            {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ file_id: id, permission, expiry_hours: expiryHours }),
+            }
+          );
+          const data = await res.json();
+          if (data.data) {
+            link = data.data.share_link;
+            shareRecordId = data.data.id;
+          }
         }
       }
 
       if (link) {
-        // Save share locally to vaultify_local_shares in localStorage
-        const shares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
-        const existingIdx = shares.findIndex(s => s.fileId === id);
-        const shareRecord = {
-          id: id + '_' + Date.now(),
-          fileId: id,
-          shareRecordId: shareRecordId || null,
-          name: file.name,
-          category: file.category || (isVideo ? 'Media' : 'Notes'),
-          type: file.type,
-          mimeType: file.mimeType,
-          size: file.size,
-          shareLink: link,
-          permission: permission,
-          createdAt: new Date().toISOString(),
-          status: 'Active'
-        };
-        if (existingIdx >= 0) {
-          shares[existingIdx] = shareRecord;
+        if (!folderId) {
+          const file = files.find((f) => f.id === id);
+          const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+          // Save share locally to vaultify_local_shares in localStorage
+          const shares = JSON.parse(localStorage.getItem('vaultify_local_shares') || '[]');
+          const existingIdx = shares.findIndex(s => s.fileId === id);
+          const shareRecord = {
+            id: id + '_' + Date.now(),
+            fileId: id,
+            shareRecordId: shareRecordId || null,
+            name: file.name,
+            category: file.category || (isVideo ? 'Media' : 'Notes'),
+            type: file.type,
+            mimeType: file.mimeType,
+            size: file.size,
+            shareLink: link,
+            permission: permission,
+            createdAt: new Date().toISOString(),
+            status: 'Active'
+          };
+          if (existingIdx >= 0) {
+            shares[existingIdx] = shareRecord;
+          } else {
+            shares.push(shareRecord);
+          }
+          localStorage.setItem('vaultify_local_shares', JSON.stringify(shares));
+
+          // Update files array locally to reflect shared status
+          setFiles(prev => prev.map(f => f.id === id ? { ...f, sharedWith: [...(f.sharedWith || []), 'recruiter@company.com'] } : f));
+          addActivity('shared', file.name, file.category);
         } else {
-          shares.push(shareRecord);
+          // Folder shared
+          const folder = folders.find(f => f.id === folderId);
+          addActivity('shared', folder ? folder.folder_name : 'Folder', 'Folder');
         }
-        localStorage.setItem('vaultify_local_shares', JSON.stringify(shares));
-
-        // Update files array locally to reflect shared status
-        setFiles(prev => prev.map(f => f.id === id ? { ...f, sharedWith: [...(f.sharedWith || []), 'recruiter@company.com'] } : f));
-
-        addActivity('shared', file.name, file.category);
         return link;
       }
     } catch (err) {
@@ -765,7 +797,6 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  // ─── Folders ──────────────────────────────────────────────────────────────
   const fetchAllFolders = async () => {
     try {
       const res = await api.getFolders();
@@ -777,6 +808,61 @@ export const FileProvider = ({ children }) => {
       console.error('Failed to fetch folders:', err.message);
     }
   };
+
+  const createFolder = async (name, parentId = null) => {
+    try {
+      const res = await api.createFolder(name, parentId);
+      await fetchAllFolders();
+      showNotification(`Folder "${name}" created successfully`, 'success');
+      return res.data?.folder || res.data;
+    } catch (err) {
+      console.error('Failed to create folder:', err.message);
+      showNotification('Failed to create folder', 'error');
+      throw err;
+    }
+  };
+
+  const renameFolder = async (id, newName) => {
+    try {
+      await api.renameFolder(id, newName);
+      await fetchAllFolders();
+      showNotification('Folder renamed successfully', 'success');
+    } catch (err) {
+      console.error('Failed to rename folder:', err.message);
+      showNotification('Failed to rename folder', 'error');
+      throw err;
+    }
+  };
+
+  const deleteFolder = async (id) => {
+    try {
+      await api.deleteFolder(id);
+      await fetchAllFolders();
+      await fetchAllFiles();
+      showNotification('Folder and all its contents deleted', 'success');
+    } catch (err) {
+      console.error('Failed to delete folder:', err.message);
+      showNotification('Failed to delete folder', 'error');
+      throw err;
+    }
+  };
+
+  // ─── Global Video Upload Queue ─────────────────────────────────────────────
+  const [isUploadProgressOpen, setIsUploadProgressOpen] = useState(true);
+
+  const handleUploadComplete = async (fileData, folderId) => {
+    if (folderId) {
+      await videoService.moveVideo(fileData.id, folderId);
+    }
+    await fetchAllFiles();
+  };
+
+  const {
+    queue: uploadQueue,
+    addFilesToQueue: addFilesToUploadQueue,
+    cancelUpload: cancelVideoUpload,
+    retryUpload: retryVideoUpload,
+  } = useVideoUpload(handleUploadComplete);
 
   // ─── Auth ─────────────────────────────────────────────────────────────────
   const login = async (email, password) => {
@@ -893,11 +979,20 @@ export const FileProvider = ({ children }) => {
         googleLogin,
         register,
         logout,
-        fetchAllFiles,
+         fetchAllFiles,
         fetchAllFolders,
         fetchTrashFiles,
         fetchUserProfile,
         showNotification,
+        createFolder,
+        renameFolder,
+        deleteFolder,
+        uploadQueue,
+        addFilesToUploadQueue,
+        cancelVideoUpload,
+        retryVideoUpload,
+        isUploadProgressOpen,
+        setIsUploadProgressOpen,
       }}
     >
       {children}
@@ -940,6 +1035,15 @@ export const FileProvider = ({ children }) => {
             </span>
           </div>
         </div>
+      )}
+      {/* Global Upload Queue Progress Dock */}
+      {uploadQueue && uploadQueue.length > 0 && isUploadProgressOpen && (
+        <UploadProgress
+          queue={uploadQueue}
+          onCancel={cancelVideoUpload}
+          onRetry={retryVideoUpload}
+          onClose={() => setIsUploadProgressOpen(false)}
+        />
       )}
     </FileContext.Provider>
   );

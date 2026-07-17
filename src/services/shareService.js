@@ -60,24 +60,27 @@ export const shareService = {
         folderId: info.folderId
       };
     } else {
-      // Call public GET /share/:token endpoint
       const res = await fetch(`${API_URL}/share/${token}`);
       if (!res.ok) {
         throw new Error('Shared link is invalid or has expired.');
       }
       const json = await res.json();
+      const data = json.data;
+      if (data.type === 'folder') {
+        return data;
+      }
       return {
         type: 'file',
-        name: json.data.file_name,
-        file_name: json.data.file_name,
-        size: json.data.file_size,
-        file_size: json.data.file_size,
-        mimeType: json.data.file_type,
-        file_type: json.data.file_type,
-        downloadUrl: json.data.download_url,
-        download_url: json.data.download_url,
-        createdAt: json.data.createdAt,
-        ownerName: json.data.ownerName
+        name: data.file_name,
+        file_name: data.file_name,
+        size: data.file_size,
+        file_size: data.file_size,
+        mimeType: data.file_type,
+        file_type: data.file_type,
+        downloadUrl: data.download_url,
+        download_url: data.download_url,
+        createdAt: data.createdAt,
+        ownerName: data.ownerName
       };
     }
   }
