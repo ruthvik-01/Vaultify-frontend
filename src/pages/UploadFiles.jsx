@@ -24,6 +24,8 @@ export default function UploadFiles() {
   const [credentialId, setCredentialId] = useState('');
   const [projectLink, setProjectLink] = useState('');
   const [progress, setProgress] = useState(0);
+  const [speed, setSpeed] = useState(0);
+  const [eta, setEta] = useState(0);
 
   const fileInputRef = useRef(null);
   const selectedFileRef = useRef(null);
@@ -123,18 +125,26 @@ export default function UploadFiles() {
   const executeUpload = async () => {
     setUploadState('uploading');
     setProgress(0);
+    setSpeed(0);
+    setEta(0);
+
+    const ext = fileName.split('.').pop().toLowerCase();
+    const isVideo = allowedVideoExtensions.includes(ext) || (selectedFileRef.current && selectedFileRef.current.type && selectedFileRef.current.type.startsWith('video/'));
 
     try {
-      // Start a progress animation while the real upload happens
-      const progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90; // Hold at 90% until real upload completes
-          }
-          return prev + 10;
-        });
-      }, 120);
+      let progressInterval;
+      if (!isVideo) {
+        // Start a progress animation while the real upload happens for standard files
+        progressInterval = setInterval(() => {
+          setProgress((prev) => {
+            if (prev >= 90) {
+              clearInterval(progressInterval);
+              return 90; // Hold at 90% until real upload completes
+            }
+            return prev + 10;
+          });
+        }, 120);
+      }
 
       // Upload the actual file to the backend
       await uploadFile({
@@ -147,15 +157,25 @@ export default function UploadFiles() {
         certificateIssuer: category === 'Certificates' ? certificateIssuer : undefined,
         credentialId: category === 'Certificates' ? credentialId : undefined,
         projectLink: category === 'Projects' ? projectLink : undefined
+      }, (progInfo) => {
+        if (isVideo) {
+          setProgress(progInfo.progress);
+          if (progInfo.speed) setSpeed(progInfo.speed);
+          if (progInfo.eta) setEta(progInfo.eta);
+        }
       });
 
-      clearInterval(progressInterval);
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       setProgress(100);
       setUploadState('success');
     } catch (error) {
       console.error('Upload failed:', error);
       setUploadState('idle');
       setProgress(0);
+      setSpeed(0);
+      setEta(0);
       showNotification('Upload failed: ' + (error?.message || 'Unknown error'), 'error');
     }
   };
@@ -164,6 +184,22 @@ export default function UploadFiles() {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     return (bytes / (k * k)).toFixed(2) + ' MB';
+  };
+
+  const formatSpeed = (bytesPerSec) => {
+    if (!bytesPerSec || bytesPerSec <= 0) return '';
+    const k = 1024;
+    const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+    const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+    return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  const formatETA = (seconds) => {
+    if (!seconds || seconds <= 0) return 'estimating...';
+    if (seconds < 60) return `${seconds}s remaining`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s remaining`;
   };
 
   const resetUploadPage = () => {
@@ -178,6 +214,8 @@ export default function UploadFiles() {
     setCredentialId('');
     setProjectLink('');
     setProgress(0);
+    setSpeed(0);
+    setEta(0);
     setUploadState('idle');
   };
 
@@ -413,7 +451,14 @@ export default function UploadFiles() {
                     style={{ width: `${progress}%` }} 
                   />
                 </div>
-                <span className="font-mono text-xs text-gray-500 font-semibold">{progress}% COMPLETE</span>
+                <div className="flex flex-col space-y-1 text-center font-sans font-medium text-xs text-gray-500">
+                  <span className="font-mono text-xs text-gray-600 font-bold">{progress}% COMPLETE</span>
+                  <div className="flex justify-center space-x-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
+                    <span>Size: {formatSize(fileSize)}</span>
+                    {speed > 0 && <span>Speed: {formatSpeed(speed)}</span>}
+                    {eta > 0 && <span>{formatETA(eta)}</span>}
+                  </div>
+                </div>
               </motion.div>
             )}
 

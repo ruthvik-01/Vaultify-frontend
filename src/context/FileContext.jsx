@@ -1,5 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { api } from '../services/api';
+import { videoService } from '../services/videoService';
+import { videoUploadService } from '../services/videoUploadService';
 
 const FileContext = createContext(null);
 
@@ -262,13 +264,25 @@ export const FileProvider = ({ children }) => {
   // ─── Files ────────────────────────────────────────────────────────────────
   const fetchAllFiles = async () => {
     try {
-      const res = await api.getFiles();
-      // Backend returns: { status, results, data: { files: [...] } }
-      const filesList = res.data?.files || res.data;
+      const [filesRes, videosList] = await Promise.all([
+        api.getFiles(),
+        videoService.getVideos().catch((err) => {
+          console.error('Failed to fetch videos:', err.message);
+          return [];
+        })
+      ]);
+
+      const filesList = filesRes.data?.files || filesRes.data;
+      let allMapped = [];
       if (Array.isArray(filesList)) {
-        const mapped = filesList.map(mapBackendFile);
-        setFiles(mapped);
+        allMapped = filesList.map(mapBackendFile);
       }
+
+      if (Array.isArray(videosList)) {
+        allMapped = [...allMapped, ...videosList];
+      }
+
+      setFiles(allMapped);
     } catch (err) {
       console.error('Failed to fetch files:', err.message);
     }
@@ -308,23 +322,80 @@ export const FileProvider = ({ children }) => {
     setActivities((prev) => [newActivity, ...prev.slice(0, 49)]);
   };
 
-  const uploadFile = async (fileData) => {
+  const uploadFile = async (fileData, onProgressCallback = null) => {
     try {
-      const formData = new FormData();
-      formData.append('file', fileData.file);
-      if (fileData.category) {
-        formData.append('category', fileData.category);
-      }
-      if (fileData.folderId) {
-        formData.append('folder_id', fileData.folderId);
-      }
+      const file = fileData.file;
+      const ext = file.name.split('.').pop().toLowerCase();
+      const allowedVideoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'];
+      const isVideo = allowedVideoExtensions.includes(ext) || (file.type && file.type.startsWith('video/'));
 
-      const res = await api.uploadFile(formData);
-      const fileData2 = res.data?.file || res.data;
-      if (fileData2) {
-        const newFile = mapBackendFile(fileData2);
-        setFiles((prev) => [newFile, ...prev]);
-        addActivity('uploaded', newFile.name, newFile.category);
+      if (isVideo) {
+        const task = {
+          id: `up_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          file: file,
+          name: file.name,
+          size: file.size,
+          progress: 0,
+          status: 'queued',
+          speed: 0,
+          eta: 0,
+          folderId: fileData.folderId || null,
+        };
+
+        return new Promise((resolve, reject) => {
+          videoUploadService.uploadVideo(task, {
+            onProgress: ({ progress, speed, eta }) => {
+              if (onProgressCallback) {
+                onProgressCallback({ progress, speed, eta });
+              }
+            },
+            onComplete: (videoData) => {
+              const name = videoData.filename || videoData.originalName;
+              const videoExt = name.split('.').pop().toLowerCase();
+              const newVideoFile = {
+                id: videoData._id || videoData.id,
+                name: name,
+                category: 'Media',
+                type: videoExt,
+                size: videoData.size || 0,
+                dateAdded: videoData.createdAt,
+                isStarred: false,
+                inTrash: videoData.status === 'Failed',
+                sharedWith: [],
+                downloadCount: 0,
+                s3_key: videoData.s3Key,
+                mimeType: videoData.mimeType || `video/${videoExt}`,
+                videoFolderId: videoData.folderId || null,
+                owner: videoData.owner || { name: 'Me' },
+                status: videoData.status || 'Active',
+              };
+              setFiles((prev) => [newVideoFile, ...prev]);
+              addActivity('uploaded', newVideoFile.name, 'Media');
+              resolve(newVideoFile);
+            },
+            onError: (err) => {
+              reject(err);
+            }
+          });
+        });
+      } else {
+        const formData = new FormData();
+        formData.append('file', file);
+        if (fileData.category) {
+          formData.append('category', fileData.category);
+        }
+        if (fileData.folderId) {
+          formData.append('folder_id', fileData.folderId);
+        }
+
+        const res = await api.uploadFile(formData);
+        const fileData2 = res.data?.file || res.data;
+        if (fileData2) {
+          const newFile = mapBackendFile(fileData2);
+          setFiles((prev) => [newFile, ...prev]);
+          addActivity('uploaded', newFile.name, newFile.category);
+          return newFile;
+        }
       }
     } catch (err) {
       console.error('Upload failed:', err.message);
@@ -367,7 +438,14 @@ export const FileProvider = ({ children }) => {
   const permanentlyDeleteFile = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
-      await api.deleteFile(id);
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      
+      if (isVideo) {
+        await videoService.deleteVideo(id);
+      } else {
+        await api.deleteFile(id);
+      }
+
       setFiles((prev) => prev.filter((f) => f.id !== id));
       if (file) {
         addActivity('purged', file.name, file.category);
@@ -391,7 +469,11 @@ export const FileProvider = ({ children }) => {
     try {
       const file = files.find((f) => f.id === id);
       const nextStarred = !file.isStarred;
-      await api.favoriteFile(id, nextStarred);
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      
+      if (!isVideo) {
+        await api.favoriteFile(id, nextStarred);
+      }
 
       setFiles((prev) =>
         prev.map((f) => {
@@ -409,7 +491,15 @@ export const FileProvider = ({ children }) => {
 
   const renameFile = async (id, newName) => {
     try {
-      await api.renameFile(id, newName);
+      const file = files.find((f) => f.id === id);
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      
+      if (isVideo) {
+        await videoService.renameVideo(id, newName);
+      } else {
+        await api.renameFile(id, newName);
+      }
+
       setFiles((prev) =>
         prev.map((f) => {
           if (f.id === id) {
@@ -425,11 +515,20 @@ export const FileProvider = ({ children }) => {
 
   const downloadFile = async (id, name) => {
     try {
-      const res = await api.downloadFile(id);
-      const url = res.download_url || (res.data && res.data.download_url);
+      const file = files.find((f) => f.id === id);
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      let url;
+      
+      if (isVideo) {
+        url = await videoService.downloadVideo(id);
+      } else {
+        const res = await api.downloadFile(id);
+        url = res.download_url || (res.data && res.data.download_url);
+      }
+
       if (url) {
         window.open(url, '_blank');
-        addActivity('downloaded', name, 'System');
+        addActivity('downloaded', name, isVideo ? 'Media' : 'System');
       }
     } catch (err) {
       console.error('Download failed:', err.message);
@@ -438,8 +537,15 @@ export const FileProvider = ({ children }) => {
 
   const getPreviewUrl = async (id) => {
     try {
-      const res = await api.getPreviewUrl(id);
-      return res.download_url || (res.data && res.data.download_url) || null;
+      const file = files.find((f) => f.id === id);
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      
+      if (isVideo) {
+        return await videoService.getPlaybackUrl(id);
+      } else {
+        const res = await api.getPreviewUrl(id);
+        return res.download_url || (res.data && res.data.download_url) || null;
+      }
     } catch (err) {
       console.error('Failed to obtain preview link:', err.message);
       return null;
@@ -448,21 +554,47 @@ export const FileProvider = ({ children }) => {
 
   const shareFile = async (id, permission = 'read', expiryHours = 24) => {
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/share`,
-        {
+      const file = files.find((f) => f.id === id);
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      
+      if (isVideo) {
+        const token = localStorage.getItem('vaultify_token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${API_URL}/videos/${id}/share`, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ file_id: id, permission, expiry_hours: expiryHours }),
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!res.ok) {
+          throw new Error('Failed to generate permanent share link.');
         }
-      );
-      const data = await res.json();
-      if (data.data) {
-        addActivity('shared', files.find((f) => f.id === id)?.name || 'file', 'System');
-        return data.data.share_link;
+        const data = await res.json();
+        if (data && data.shareUrl) {
+          const parts = data.shareUrl.split('/');
+          const shareToken = parts[parts.length - 1];
+          addActivity('shared', file.name, 'Media');
+          return `${window.location.origin}/share/${shareToken}`;
+        }
+        throw new Error('Link generation failed.');
+      } else {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/share`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('vaultify_token')}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ file_id: id, permission, expiry_hours: expiryHours }),
+          }
+        );
+        const data = await res.json();
+        if (data.data) {
+          addActivity('shared', file?.name || 'file', 'System');
+          return data.data.share_link;
+        }
       }
     } catch (err) {
       console.error('Share failed:', err.message);

@@ -69,9 +69,15 @@ export const shareService = {
       return {
         type: 'file',
         name: json.data.file_name,
+        file_name: json.data.file_name,
         size: json.data.file_size,
+        file_size: json.data.file_size,
         mimeType: json.data.file_type,
-        downloadUrl: json.data.download_url
+        file_type: json.data.file_type,
+        downloadUrl: json.data.download_url,
+        download_url: json.data.download_url,
+        createdAt: json.data.createdAt,
+        ownerName: json.data.ownerName
       };
     }
   }

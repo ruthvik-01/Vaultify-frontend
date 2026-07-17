@@ -60,10 +60,12 @@ export default function VideoCard({
         <Video className="w-12 h-12 text-brand-sage/40 stroke-[1.5]" />
         
         {/* Video length tag overlay */}
+        {video.duration > 0 && (
         <span className="absolute bottom-2.5 right-2.5 bg-brand-charcoal/80 text-white font-mono text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center space-x-1 shadow-sm">
           <Clock className="w-2.5 h-2.5" />
-          <span>03:14</span>
+          <span>{Math.floor(video.duration / 60).toString().padStart(2, '0')}:{Math.floor(video.duration % 60).toString().padStart(2, '0')}</span>
         </span>
+        )}
 
         {/* Video Type Badge */}
         <span className="absolute top-2.5 left-2.5 bg-brand-cream/90 border border-brand-sand/80 text-brand-olive-dark font-sans text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">

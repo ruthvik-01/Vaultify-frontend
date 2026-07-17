@@ -534,6 +534,7 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                     const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || (file.mimeType && file.mimeType.startsWith('image/'));
                     const isPdf = ext === 'pdf' || (file.mimeType && file.mimeType === 'application/pdf');
                     const isText = ['txt', 'js', 'json', 'css', 'html', 'md'].includes(ext) || (file.mimeType && file.mimeType.startsWith('text/'));
+                    const isVideo = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'].includes(ext) || (file.mimeType && file.mimeType.startsWith('video/'));
 
                     if (isImage) {
                       return (
@@ -543,6 +544,20 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                             className="max-h-[55vh] max-w-full object-contain rounded-xl shadow border border-brand-sand/40 bg-white" 
                             alt={file.name} 
                           />
+                        </div>
+                      );
+                    } else if (isVideo) {
+                      return (
+                        <div className="w-full h-full flex items-center justify-center p-2 bg-black">
+                          <video
+                            src={previewUrl}
+                            controls
+                            autoPlay
+                            preload="metadata"
+                            className="max-h-[55vh] max-w-full object-contain rounded-xl shadow focus:outline-none"
+                          >
+                            Your browser does not support the video tag.
+                          </video>
                         </div>
                       );
                     } else if (isPdf) {
