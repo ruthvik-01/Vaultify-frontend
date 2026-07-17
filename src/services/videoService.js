@@ -1,8 +1,3 @@
-// Service for managing video files, bridging the standard backend file APIs
-// with isolated, local video folder categorization.
-
-import { api } from './api';
-
 const FILES_FOLDER_KEY = 'vaultify_video_file_folders';
 
 const getFileFoldersMap = () => {
@@ -21,39 +16,40 @@ const saveFileFoldersMap = (map) => {
 export const videoService = {
   // Get all files from backend, filter to video types, and assign their local video folder mapping
   getVideos: async () => {
-    const res = await api.getFiles();
-    const allFiles = res.data?.files || res.data || [];
-    
-    // Whitelist video formats matching requirement: mp4, mov, avi, mkv, webm, flv, wmv, m4v, mpeg, 3gp, ogv
-    const videoExts = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'];
-    
-    const rawVideos = allFiles.filter((f) => {
-      const ext = (f.file_name || f.original_name || '').split('.').pop().toLowerCase();
-      const mime = f.file_type || '';
-      return videoExts.includes(ext) || mime.startsWith('video/');
+    const token = localStorage.getItem('vaultify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const res = await fetch(`${API_URL}/videos`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
+    if (!res.ok) {
+      throw new Error('Failed to fetch videos.');
+    }
+    const data = await res.json();
+    const rawVideos = data.data?.videos || [];
 
     const fileFolderMap = getFileFoldersMap();
 
     // Map each backend video into frontend UI structure
     return rawVideos.map((f) => {
-      const name = f.file_name || f.original_name;
+      const name = f.filename || f.originalName;
       const ext = name.split('.').pop().toLowerCase();
       return {
-        id: f.id,
+        id: f._id || f.id,
         name: name,
-        category: f.category || 'Media',
+        category: 'Media',
         type: ext,
-        size: f.file_size || 0,
-        dateAdded: f.created_at,
-        isStarred: f.is_favorite === true || f.is_favorite === 1,
-        inTrash: f.is_deleted === true || f.is_deleted === 1,
+        size: f.size || 0,
+        dateAdded: f.createdAt,
+        isStarred: false,
+        inTrash: f.status === 'Failed',
         sharedWith: [],
-        downloadCount: f.download_count || 0,
-        s3_key: f.s3_key,
-        mimeType: f.file_type || `video/${ext}`,
+        downloadCount: 0,
+        s3_key: f.s3Key,
+        mimeType: f.mimeType || `video/${ext}`,
         // Local Folder Mapping
-        videoFolderId: fileFolderMap[f.id] || null,
+        videoFolderId: f.folderId || fileFolderMap[f._id || f.id] || null,
         owner: f.owner || { name: 'Me' },
         status: f.status || 'Active', // Active, Uploading, Failed
       };
@@ -61,7 +57,19 @@ export const videoService = {
   },
 
   renameVideo: async (id, newName) => {
-    await api.renameFile(id, newName);
+    const token = localStorage.getItem('vaultify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const res = await fetch(`${API_URL}/videos/${id}/rename`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: newName })
+    });
+    if (!res.ok) {
+      throw new Error('Failed to rename video.');
+    }
   },
 
   moveVideo: async (id, targetFolderId) => {
@@ -76,12 +84,16 @@ export const videoService = {
   },
 
   deleteVideo: async (id, permanent = false) => {
-    if (permanent) {
-      await api.deleteFile(id);
-    } else {
-      // Use the soft-delete API (or let Context handle it)
-      // Mapped to DELETE /files/:id on backend which does the soft-delete or delete
-      await api.deleteFile(id);
+    const token = localStorage.getItem('vaultify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const res = await fetch(`${API_URL}/videos/${id}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Failed to delete video.');
     }
     
     // Clean up local folder mapping
@@ -91,12 +103,32 @@ export const videoService = {
   },
 
   downloadVideo: async (id) => {
-    const res = await api.downloadFile(id);
-    return res.download_url || (res.data && res.data.download_url);
+    const token = localStorage.getItem('vaultify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const res = await fetch(`${API_URL}/videos/${id}/download`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Failed to get download URL.');
+    }
+    const result = await res.json();
+    return result.data?.downloadUrl;
   },
 
   getPlaybackUrl: async (id) => {
-    const res = await api.getPreviewUrl(id);
-    return res.download_url || (res.data && res.data.download_url);
+    const token = localStorage.getItem('vaultify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const res = await fetch(`${API_URL}/videos/${id}/preview`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Failed to get preview URL.');
+    }
+    const result = await res.json();
+    return result.data?.downloadUrl;
   }
 };
