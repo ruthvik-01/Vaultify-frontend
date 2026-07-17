@@ -17,14 +17,14 @@ import { FolderClosed, RefreshCw } from 'lucide-react';
 
 export default function Videos() {
   const { 
-    user, files, fetchAllFiles,
+    user, files, fetchAllFiles, deleteFile,
     uploadQueue: queue,
     addFilesToUploadQueue: addFilesToQueue,
     isUploadProgressOpen,
     setIsUploadProgressOpen,
   } = useFiles();
   const [loading, setLoading] = useState(false);
-  const [viewMode, setViewMode] = useState(user.theme_color || 'grid');
+  const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Dialogs / Modals toggles
@@ -118,9 +118,9 @@ export default function Videos() {
   };
 
   const handleVideoDelete = async (id) => {
-    if (window.confirm('Are you sure you want to permanently delete this file?')) {
+    if (window.confirm('Are you sure you want to move this file to trash?')) {
       try {
-        await videoService.deleteVideo(id, true);
+        await deleteFile(id);
         await fetchAllFiles();
       } catch (e) {
         console.error(e);
