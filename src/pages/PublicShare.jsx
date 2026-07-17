@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { shareService } from '../services/shareService';
 import { 
-  Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User 
+  Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar 
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -78,7 +78,21 @@ export default function PublicShare() {
     );
   }
 
-  const isVideo = item.mimeType?.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(item.name?.split('.').pop().toLowerCase());
+  const fileName = item.file_name || item.name || 'Shared File';
+  const fileSize = item.file_size || item.size || 0;
+  const fileType = item.file_type || item.mimeType || '';
+  const downloadUrl = item.download_url || item.downloadUrl;
+  const createdAt = item.createdAt;
+  const ownerName = item.ownerName || 'Owner';
+  const isFolder = item.type === 'folder';
+
+  const isVideo = fileType.startsWith('video/') || ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(fileName.split('.').pop().toLowerCase());
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   return (
     <div className="min-h-screen bg-brand-cream flex flex-col items-center justify-center p-4 md:p-8 font-sans select-none text-left">
@@ -107,14 +121,15 @@ export default function PublicShare() {
         </div>
 
         {/* Shared file details */}
-        {item.type === 'file' ? (
+        {!isFolder ? (
           <div className="flex flex-col">
             {/* Video Preview Frame */}
-            {isVideo && item.downloadUrl ? (
+            {isVideo && downloadUrl ? (
               <div className="bg-black aspect-video flex items-center justify-center relative w-full border-b border-brand-sand">
                 <video
-                  src={item.downloadUrl}
+                  src={downloadUrl}
                   controls
+                  preload="metadata"
                   className="w-full h-full max-h-[45vh] object-contain focus:outline-none"
                 >
                   Your browser does not support the video tag.
@@ -135,7 +150,7 @@ export default function PublicShare() {
                 <div className="flex items-center space-x-2">
                   <Film className="w-5 h-5 text-brand-olive shrink-0" />
                   <h1 className="font-serif font-bold text-base md:text-lg text-brand-charcoal truncate">
-                    {item.name}
+                    {fileName}
                   </h1>
                 </div>
                 
@@ -143,20 +158,26 @@ export default function PublicShare() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 font-medium font-sans">
                   <div className="flex items-center space-x-1">
                     <HardDrive className="w-4 h-4 text-gray-400 shrink-0" />
-                    <span>{formatSize(item.size)}</span>
+                    <span>{formatSize(fileSize)}</span>
                   </div>
+                  {createdAt && (
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span>Uploaded: {formatDate(createdAt)}</span>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-1">
                     <User className="w-4 h-4 text-gray-400 shrink-0" />
-                    <span>Owner: Academic Partner</span>
+                    <span>Owner: {ownerName}</span>
                   </div>
                 </div>
               </div>
 
               {/* Download Action button */}
-              {item.downloadUrl && (
+              {downloadUrl && (
                 <a
-                  href={item.downloadUrl}
-                  download={item.name}
+                  href={downloadUrl}
+                  download={fileName}
                   className="flex items-center justify-center space-x-2 px-6 py-3.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-2xl text-xs font-semibold cursor-pointer transition-colors shadow-lg shadow-brand-olive/15 text-center shrink-0"
                 >
                   <Download className="w-4.5 h-4.5" />

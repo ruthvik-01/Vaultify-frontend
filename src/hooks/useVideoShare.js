@@ -19,19 +19,34 @@ export function useVideoShare() {
       let result;
       if (item.type === 'folder') {
         result = await shareService.shareFolder(item.id);
+        if (result && result.share_link) {
+          const parts = result.share_link.split('/');
+          const token = parts[parts.length - 1];
+          setShareLink(`${window.location.origin}/share/${token}`);
+        } else {
+          throw new Error('Link generation failed.');
+        }
       } else {
-        result = await shareService.shareFile(item.id);
-      }
-      
-      // Look for the correct URL layout
-      // The backend returns a full share_link that ends with /api/share/:token.
-      // We will parse out the token and build the frontend route /share/:token.
-      if (result && result.share_link) {
-        const parts = result.share_link.split('/');
-        const token = parts[parts.length - 1];
-        setShareLink(`${window.location.origin}/share/${token}`);
-      } else {
-        throw new Error('Link generation failed.');
+        const token = localStorage.getItem('vaultify_token');
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const res = await fetch(`${API_URL}/videos/${item.id}/share`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (!res.ok) {
+          throw new Error('Failed to generate permanent share link.');
+        }
+        const data = await res.json();
+        if (data && data.shareUrl) {
+          const parts = data.shareUrl.split('/');
+          const shareToken = parts[parts.length - 1];
+          setShareLink(`${window.location.origin}/share/${shareToken}`);
+        } else {
+          throw new Error('Link generation failed.');
+        }
       }
     } catch (e) {
       setError(e.message || 'Failed to generate share link.');
