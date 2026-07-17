@@ -237,13 +237,13 @@ export default function PublicShare() {
                           <Film className="w-4 h-4" />
                         </div>
                         <div className="truncate">
-                          <span className="text-xs font-semibold text-brand-charcoal block truncate">{file.file_name || file.name}</span>
-                          <span className="text-[10px] text-gray-400 font-mono block mt-0.5">{formatSize(file.file_size || file.size)}</span>
+                          <span className="text-xs font-semibold text-brand-charcoal block truncate">{file.name || file.filename || file.file_name}</span>
+                          <span className="text-[10px] text-gray-400 font-mono block mt-0.5">{formatSize(file.size || file.file_size)}</span>
                         </div>
                       </div>
 
                       <button
-                        onClick={() => handleDownloadFile(file.id || file._id, file.file_name || file.name)}
+                        onClick={() => handleDownloadFile(file.id || file._id, file.name || file.filename || file.file_name)}
                         className="flex items-center space-x-1.5 px-4 py-2 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
                       >
                         <Download className="w-3.5 h-3.5" />

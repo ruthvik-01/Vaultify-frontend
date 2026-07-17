@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFiles } from '../context/FileContext';
 import FileCard from '../components/FileCard';
 import EmptyState from '../components/EmptyState';
 import { 
-  Grid, List, Filter, Search, FileX, Plus,
-  FolderClosed, Trash2, Edit2, Share2, X, FolderDot
+  Grid, List, Filter, Search, FileX, Plus, FileUp, Loader2,
+  FolderClosed, Trash2, Edit2, Share2, X, FolderDot, UploadCloud
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MyFiles() {
   const { 
     files, folders, user, searchQuery, setSearchQuery, updateProfile,
-    createFolder, renameFolder, deleteFolder, shareFile, showNotification
+    createFolder, renameFolder, deleteFolder, shareFile, showNotification, uploadFile
   } = useFiles();
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -28,6 +28,13 @@ export default function MyFiles() {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [folderToRename, setFolderToRename] = useState(null);
+
+  // Direct folder upload states
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [dragActive, setDragActive] = useState(false);
+
+  const fileInputRef = useRef(null);
 
   // Active folder from URL params
   const currentFolderId = searchParams.get('folder') || null;
@@ -164,8 +171,73 @@ export default function MyFiles() {
     }
   };
 
+  const handleUploadFileSelect = async (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      await handleDirectUpload(file);
+    }
+  };
+
+  const handleDirectUpload = async (file) => {
+    setIsUploading(true);
+    setUploadProgress(10);
+    const interval = setInterval(() => {
+      setUploadProgress(p => Math.min(p + 10, 90));
+    }, 100);
+    try {
+      await uploadFile({
+        file,
+        folderId: currentFolderId
+      });
+      clearInterval(interval);
+      setUploadProgress(100);
+      showNotification(`File "${file.name}" uploaded successfully`, 'success');
+    } catch (err) {
+      clearInterval(interval);
+      showNotification('Failed to upload file: ' + err.message, 'error');
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      await handleDirectUpload(file);
+    }
+  };
+
   return (
-    <div className="space-y-6 text-left">
+    <div 
+      onDragEnter={handleDrag}
+      onDragOver={handleDrag}
+      onDragLeave={handleDrag}
+      onDrop={handleDrop}
+      className="space-y-6 text-left relative min-h-[70vh]"
+    >
+      {/* Full Page Drag and Drop Overlay */}
+      {dragActive && (
+        <div className="absolute inset-0 bg-brand-olive/10 border-2 border-dashed border-brand-olive rounded-3xl z-40 flex flex-col items-center justify-center pointer-events-none backdrop-blur-xs transition-all">
+          <div className="bg-white p-6 rounded-full shadow-lg text-brand-olive flex flex-col items-center justify-center space-y-2">
+            <UploadCloud className="w-10 h-10 animate-bounce" />
+            <span className="text-xs font-bold text-brand-charcoal">Drop file to upload directly to this folder</span>
+          </div>
+        </div>
+      )}
       
       {/* Folder Navigation Breadcrumbs Path */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-brand-sand rounded-3xl p-5 shadow-sm">
@@ -192,14 +264,29 @@ export default function MyFiles() {
           ))}
         </div>
 
-        {/* Action Button: Create Folder */}
-        <button
-          onClick={() => setIsCreateOpen(true)}
-          className="flex items-center justify-center space-x-1.5 px-4.5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Folder</span>
-        </button>
+        {/* Action Buttons: Upload File & Create Folder */}
+        <div className="flex items-center space-x-2 shrink-0">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleUploadFileSelect}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center justify-center space-x-1.5 px-4 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer select-none"
+          >
+            <FileUp className="w-4 h-4" />
+            <span>Upload File</span>
+          </button>
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="flex items-center justify-center space-x-1.5 px-4 py-2.5 bg-brand-cream border border-brand-sand hover:bg-brand-sand/55 text-brand-charcoal rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer select-none"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Folder</span>
+          </button>
+        </div>
       </div>
 
       {/* Search Bar & File Type Filter Tags */}
@@ -418,6 +505,23 @@ export default function MyFiles() {
           </div>
         )}
       </div>
+
+      {/* Uploading progress card */}
+      {isUploading && (
+        <div className="fixed bottom-6 left-6 z-[9999] bg-white border border-brand-sand rounded-2xl shadow-xl p-4 w-72 flex items-center space-x-3 select-none">
+          <Loader2 className="w-5 h-5 text-brand-olive animate-spin shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-[11px] font-bold text-brand-charcoal block truncate">Uploading directly...</span>
+            <div className="w-full bg-brand-cream-dark h-1.5 rounded-full overflow-hidden mt-1.5">
+              <div 
+                className="bg-brand-olive h-full transition-all duration-200" 
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+          <span className="text-[10px] font-mono text-gray-500 font-bold shrink-0">{uploadProgress}%</span>
+        </div>
+      )}
 
       {/* Create Folder Modal */}
       <AnimatePresence>
