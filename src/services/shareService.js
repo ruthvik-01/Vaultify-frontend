@@ -4,16 +4,19 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export const shareService = {
-  // Share a video file (uses the real backend /share API)
-  shareFile: async (fileId) => {
+  // Share a file or regular folder (uses the real backend /share API)
+  shareFile: async (fileId, folderId = null) => {
     const token = localStorage.getItem('vaultify_token');
+    const body = { permission: 'read', expiry_hours: 24 };
+    if (fileId) body.file_id = fileId;
+    if (folderId) body.folder_id = folderId;
     const res = await fetch(`${API_URL}/share`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ file_id: fileId, permission: 'read', expiry_hours: 24 })
+      body: JSON.stringify(body)
     });
     if (!res.ok) {
       throw new Error('Failed to generate share link.');

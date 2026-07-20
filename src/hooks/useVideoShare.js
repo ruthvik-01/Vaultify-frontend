@@ -18,13 +18,29 @@ export function useVideoShare() {
     try {
       let result;
       if (item.type === 'folder') {
-        result = await shareService.shareFolder(item.id);
-        if (result && result.share_link) {
-          const parts = result.share_link.split('/');
-          const token = parts[parts.length - 1];
-          setShareLink(`${window.location.origin}/share/${token}`);
+        // Determine if this is a regular (Work) folder or a VideoFolder
+        const isWorkFolder = item.folder_name || item.parent_folder_id || item.user_id || item.isWorkFolder;
+        
+        if (isWorkFolder) {
+          // Regular folder — use POST /share with folder_id
+          result = await shareService.shareFile(null, item.id);
+          if (result && result.share_link) {
+            const parts = result.share_link.split('/');
+            const token = parts[parts.length - 1];
+            setShareLink(`${window.location.origin}/share/${token}`);
+          } else {
+            throw new Error('Link generation failed.');
+          }
         } else {
-          throw new Error('Link generation failed.');
+          // VideoFolder — use POST /videos/share
+          result = await shareService.shareFolder(item.id);
+          if (result && result.share_link) {
+            const parts = result.share_link.split('/');
+            const token = parts[parts.length - 1];
+            setShareLink(`${window.location.origin}/share/${token}`);
+          } else {
+            throw new Error('Link generation failed.');
+          }
         }
       } else {
         const isVideo = item.videoFolderId !== undefined || (item.mimeType && item.mimeType.startsWith('video/')) || ['mp4', 'mov', 'webm', 'mkv', 'avi'].includes((item.name || '').split('.').pop().toLowerCase());
@@ -51,7 +67,7 @@ export function useVideoShare() {
             throw new Error('Link generation failed.');
           }
         } else {
-          // Work file sharing
+          // Regular file sharing
           const result = await shareService.shareFile(item.id);
           if (result && result.share_link) {
             const parts = result.share_link.split('/');
