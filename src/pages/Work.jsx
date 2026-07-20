@@ -165,6 +165,16 @@ export default function Work() {
     }
   };
 
+  const handleFolderDelete = async (id) => {
+    if (window.confirm('Deleting this folder will delete all subfolders. Are you sure you want to proceed?')) {
+      try {
+        await deleteFolder(id);
+      } catch (_) {
+        showNotification('Failed to delete folder', 'error');
+      }
+    }
+  };
+
   const handlePlayFile = async (target) => {
     const file = typeof target === 'object' ? target : files.find(f => f.id === target);
     if (!file) return;
