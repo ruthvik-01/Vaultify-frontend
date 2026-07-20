@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
-  Briefcase, FolderOpen, Upload, Plus, HardDrive, 
-  Search, LayoutGrid, List, RefreshCw, FileText, ArrowRight 
+  Briefcase, FolderOpen, Upload, Plus, ChevronRight,
+  LayoutGrid, List
 } from 'lucide-react';
 import VideoGrid from '../components/video/VideoGrid';
 import VideoList from '../components/video/VideoList';
@@ -24,6 +24,7 @@ export default function Work() {
     getPreviewUrl,
     deleteFile, 
     renameFile, 
+    moveFile,
     createFolder,
     renameFolder,
     deleteFolder,
@@ -165,14 +166,31 @@ export default function Work() {
     }
   };
 
-  const handleFolderDelete = async (id) => {
+  const handleFolderDelete = async (target) => {
+    const folderId = typeof target === 'object' ? (target?.id || target?._id) : target;
+    if (!folderId) return;
     if (window.confirm('Deleting this folder will delete all subfolders. Are you sure you want to proceed?')) {
       try {
-        await deleteFolder(id);
+        await deleteFolder(folderId);
+        await fetchAllFolders();
+        showNotification('Folder deleted', 'success');
       } catch (_) {
         showNotification('Failed to delete folder', 'error');
       }
     }
+  };
+
+  const handleFolderShare = (folder) => {
+    const shareObj = typeof folder === 'object' ? { ...folder, type: 'folder' } : { id: folder, type: 'folder' };
+    openShare(shareObj);
+  };
+
+  const handleFolderMove = () => {
+    showNotification('Move is not available in Work folders', 'info');
+  };
+
+  const handleMoveFile = () => {
+    showNotification('Move is not available in Work folders', 'info');
   };
 
   const handlePlayFile = async (target) => {
@@ -304,6 +322,28 @@ export default function Work() {
     }
   };
 
+  // Breadcrumb navigation
+  const breadcrumbs = useMemo(() => {
+    const crumbs = [];
+    if (!workFolder) return crumbs;
+    crumbs.push({ id: workFolder.id, name: 'Work' });
+    if (activeFolderId && activeFolderId !== workFolder.id) {
+      // Walk up folder chain
+      let currentId = activeFolderId;
+      const chain = [];
+      let depth = 0;
+      while (currentId && currentId !== workFolder.id && depth < 10) {
+        const f = folders.find(fd => fd.id === currentId);
+        if (!f) break;
+        chain.unshift({ id: f.id, name: f.name || f.folder_name });
+        currentId = f.parentId || f.parent_folder_id;
+        depth++;
+      }
+      crumbs.push(...chain);
+    }
+    return crumbs;
+  }, [workFolder, activeFolderId, folders]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -394,6 +434,25 @@ export default function Work() {
         </div>
       </div>
 
+      {/* Breadcrumbs */}
+      {breadcrumbs.length > 1 && (
+        <div className="flex items-center space-x-1 text-xs text-gray-500 bg-white border border-brand-sand rounded-xl px-4 py-2.5 shadow-sm">
+          {breadcrumbs.map((crumb, idx) => (
+            <span key={crumb.id} className="flex items-center">
+              {idx > 0 && <ChevronRight className="w-3 h-3 mx-1 text-gray-300" />}
+              <button
+                onClick={() => setCurrentFolderId(crumb.id)}
+                className={`hover:text-brand-olive transition-colors cursor-pointer ${
+                  idx === breadcrumbs.length - 1 ? 'font-semibold text-brand-charcoal' : 'text-gray-500'
+                }`}
+              >
+                {crumb.name}
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Create Subfolder Inline Modal */}
       {isCreatingFolder && (
         <form onSubmit={handleCreateSubFolder} className="bg-white border border-brand-sand rounded-2xl p-4 shadow-sm flex items-center space-x-3 max-w-md">
@@ -427,14 +486,17 @@ export default function Work() {
         <VideoGrid
           folders={currentFolders}
           videos={currentFiles}
-          onFolderEnter={(f) => setCurrentFolderId(f.id)}
+          onFolderEnter={(f) => setCurrentFolderId(typeof f === 'object' ? f.id : f)}
           onFolderRename={(f) => {
             const name = window.prompt('Rename folder:', f.name || f.folder_name);
             if (name && name.trim()) renameFolder(f.id, name.trim());
           }}
+          onFolderMove={handleFolderMove}
+          onFolderShare={handleFolderShare}
           onFolderDelete={handleFolderDelete}
           onVideoPlay={handlePlayFile}
           onVideoRename={handleRenameFile}
+          onVideoMove={handleMoveFile}
           onVideoDownload={handleDownloadFile}
           onVideoShare={(f) => openShare(f)}
           onVideoDelete={handleDeleteFile}
@@ -448,9 +510,12 @@ export default function Work() {
             const name = window.prompt('Rename folder:', f?.name || f?.folder_name);
             if (name && name.trim()) renameFolder(typeof f === 'object' ? f.id : f, name.trim());
           }}
+          onFolderMove={handleFolderMove}
+          onFolderShare={handleFolderShare}
           onFolderDelete={handleFolderDelete}
           onVideoPlay={handlePlayFile}
           onVideoRename={handleRenameFile}
+          onVideoMove={handleMoveFile}
           onVideoDownload={handleDownloadFile}
           onVideoShare={(f) => openShare(f)}
           onVideoDelete={handleDeleteFile}
