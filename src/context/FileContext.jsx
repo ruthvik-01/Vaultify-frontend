@@ -136,7 +136,7 @@ export const FileProvider = ({ children }) => {
   });
 
   const [storageStats, setStorageStats] = useState({
-    totalCapacity: 10 * 1024 * 1024 * 1024, // 10 GB
+    totalCapacity: 500 * 1024 * 1024 * 1024, // 500 GB
     used: 0,
     breakdown: {
       Documents: 0,
@@ -190,7 +190,7 @@ export const FileProvider = ({ children }) => {
 
     const capacity = user.storage_plan === 'pro'
       ? 1000 * 1024 * 1024 * 1024 // 1 TB
-      : 100 * 1024 * 1024 * 1024; // 100 GB
+      : 500 * 1024 * 1024 * 1024; // 500 GB
 
     setStorageStats({
       totalCapacity: capacity,
@@ -250,12 +250,15 @@ export const FileProvider = ({ children }) => {
    */
   const mapBackendFile = (file) => ({
     id: file.id,
+    user_id: file.user_id,
+    folderId: file.folder_id ? file.folder_id.toString() : null,
     name: file.file_name || file.original_name,
     category: file.category || 'Others',
     type: file.file_type ? file.file_type.split('/').pop() : 'unknown',
     size: file.file_size || 0,
     dateAdded: file.created_at,
     isStarred: file.is_favorite === true || file.is_favorite === 1,
+    isWorkSubmission: file.is_work_submission === true,
     inTrash: file.is_deleted === true || file.is_deleted === 1,
     sharedWith: [],
     downloadCount: file.download_count || 0,
@@ -825,6 +828,17 @@ export const FileProvider = ({ children }) => {
     }
   };
 
+  const getOrCreateWorkFolder = async () => {
+    try {
+      const res = await api.getOrCreateWorkFolder();
+      await fetchAllFolders();
+      return res.data?.folder || res.data;
+    } catch (err) {
+      console.error('Failed to get or create Work folder:', err.message);
+      throw err;
+    }
+  };
+
   const createFolder = async (name, parentId = null) => {
     try {
       const res = await api.createFolder(name, parentId);
@@ -1001,6 +1015,7 @@ export const FileProvider = ({ children }) => {
         fetchUserProfile,
         showNotification,
         createFolder,
+        getOrCreateWorkFolder,
         renameFolder,
         deleteFolder,
         uploadQueue,

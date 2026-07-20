@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFiles } from '../context/FileContext';
-import { User, Settings, LogOut, CheckCircle, GraduationCap } from 'lucide-react';
+import { adminService } from '../services/adminService';
+import { User, Settings, LogOut, CheckCircle, GraduationCap, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UserMenu() {
@@ -9,6 +10,8 @@ export default function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
+
+  const isAdmin = user?.role === 'admin' || user?.email?.toLowerCase() === 'admin@vaultify.com' || adminService.isAuthenticated();
 
   // Close dropdown if clicking outside
   useEffect(() => {
@@ -89,6 +92,16 @@ export default function UserMenu() {
 
             {/* Links */}
             <div className="p-1.5 border-b border-brand-sand">
+              {isAdmin && (
+                <button
+                  onClick={() => handleMenuClick('/admin/dashboard')}
+                  className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-semibold text-brand-olive bg-brand-cream/80 hover:bg-brand-olive hover:text-white text-left transition-all cursor-pointer mb-1 border border-brand-sand/70"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span>Admin Monitoring Portal</span>
+                </button>
+              )}
+
               <button
                 onClick={() => handleMenuClick('/profile')}
                 className="w-full flex items-center space-x-3 px-3 py-2 rounded-xl text-xs font-medium text-gray-700 hover:bg-brand-cream hover:text-brand-charcoal text-left transition-all cursor-pointer"
