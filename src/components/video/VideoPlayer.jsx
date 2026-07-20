@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Video, FileText, Image as ImageIcon, Eye, Download, HardDrive, Share2, Check, User, FolderClosed, Calendar, ExternalLink, Maximize, Gauge } from 'lucide-react';
+import { X, Video, FileText, Image as ImageIcon, Eye, Download, HardDrive, Share2, Check, User, FolderClosed, Calendar, ExternalLink, Maximize, Gauge, Music } from 'lucide-react';
 
 const formatSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 B';
@@ -22,6 +22,7 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
   const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext) || (video.mimeType && video.mimeType.startsWith('image/'));
   const isPdf = ext === 'pdf' || (video.mimeType && video.mimeType === 'application/pdf');
   const isText = ['txt', 'log', 'json', 'js', 'html', 'css'].includes(ext) || (video.mimeType && video.mimeType.startsWith('text/'));
+  const isAudio = ['mp3', 'wav', 'aac', 'ogg', 'm4a', 'flac'].includes(ext) || (video.mimeType && video.mimeType.startsWith('audio/'));
 
   const handleDownload = () => {
     if (url) window.open(url, '_blank');
@@ -93,6 +94,22 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
       );
     }
 
+    if (isAudio && url) {
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-brand-cream/40 rounded-xl animate-fade-in select-text">
+          <Music className="w-16 h-16 text-purple-500 mb-4 animate-bounce" />
+          <audio
+            src={url}
+            controls
+            className="w-full max-w-md focus:outline-none"
+          >
+            Your browser does not support the audio player.
+          </audio>
+          <span className="text-xs text-gray-500 mt-2 font-mono">{video.name || video.fileName}</span>
+        </div>
+      );
+    }
+
     return (
       <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
         <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-brand-olive border border-brand-sand">
@@ -120,6 +137,7 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
   const getHeaderIcon = () => {
     if (isVideo) return <Video className="w-5 h-5 text-brand-olive shrink-0" />;
     if (isImage) return <ImageIcon className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isAudio) return <Music className="w-5 h-5 text-brand-olive shrink-0" />;
     return <Eye className="w-5 h-5 text-brand-olive shrink-0" />;
   };
 

@@ -179,5 +179,11 @@ export const adminService = {
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
+  },
+
+  getPreviewUrl: async (id, fileType) => {
+    const type = fileType === 'video' ? 'video' : 'file';
+    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}/preview?type=${type}`);
+    return res.download_url;
   }
 };

@@ -36,6 +36,7 @@ export default function AdminUploads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedFileForPreview, setSelectedFileForPreview] = useState(null);
+  const [playbackUrl, setPlaybackUrl] = useState('');
 
   // Search input debouncing
   const [searchInput, setSearchInput] = useState('');
@@ -171,13 +172,19 @@ export default function AdminUploads() {
     fetchUploads();
   }, [fetchUploads]);
 
-  const handleOpenPreview = (file) => {
-    setSelectedFileForPreview({
-      name: file.fileName,
-      size: file.size,
-      mimeType: file.fileType === 'video' ? 'video/mp4' : file.fileType === 'image' ? 'image/png' : 'application/pdf',
-      ...file
-    });
+  const handleOpenPreview = async (file) => {
+    try {
+      const url = await adminService.getPreviewUrl(file.id, file.fileType);
+      setSelectedFileForPreview({
+        name: file.fileName,
+        size: file.size,
+        mimeType: file.fileType === 'video' ? 'video/mp4' : file.fileType === 'image' ? 'image/png' : 'application/pdf',
+        ...file
+      });
+      setPlaybackUrl(url);
+    } catch (err) {
+      alert(err.message || 'Failed to retrieve preview.');
+    }
   };
 
   const handleDeleteUpload = async (id, fileType, fileName) => {
@@ -577,7 +584,11 @@ export default function AdminUploads() {
       {selectedFileForPreview && (
         <VideoPlayer
           video={selectedFileForPreview}
-          onClose={() => setSelectedFileForPreview(null)}
+          playbackUrl={playbackUrl}
+          onClose={() => {
+            setSelectedFileForPreview(null);
+            setPlaybackUrl('');
+          }}
         />
       )}
     </div>

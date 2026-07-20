@@ -136,7 +136,7 @@ export const FileProvider = ({ children }) => {
   });
 
   const [storageStats, setStorageStats] = useState({
-    totalCapacity: 10 * 1024 * 1024 * 1024, // 10 GB
+    totalCapacity: 500 * 1024 * 1024 * 1024, // 500 GB
     used: 0,
     breakdown: {
       Documents: 0,
@@ -190,7 +190,7 @@ export const FileProvider = ({ children }) => {
 
     const capacity = user.storage_plan === 'pro'
       ? 1000 * 1024 * 1024 * 1024 // 1 TB
-      : 100 * 1024 * 1024 * 1024; // 100 GB
+      : 500 * 1024 * 1024 * 1024; // 500 GB
 
     setStorageStats({
       totalCapacity: capacity,

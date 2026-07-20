@@ -121,7 +121,7 @@ export default function Dashboard() {
               <HardDrive className="w-5 h-5 stroke-[1.5]" />
             </div>
             <span className="text-[10px] font-bold text-brand-olive uppercase tracking-wider bg-brand-sage-light/25 px-2 py-0.5 rounded-full">
-              {user.storage_plan === 'pro' ? 'Pro 1 TB' : 'Free 100 GB'}
+              {user.storage_plan === 'pro' ? 'Pro 1 TB' : 'Free 500 GB'}
             </span>
           </div>
           <div className="mt-4">

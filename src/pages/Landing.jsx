@@ -196,7 +196,7 @@ export default function Landing() {
               </div>
               <div className="flex justify-between text-[9px] text-gray-400 font-mono">
                 <span>2.4 GB Used</span>
-                <span>100 GB Max</span>
+                <span>500 GB Max</span>
               </div>
 
               {/* Stacked details */}
