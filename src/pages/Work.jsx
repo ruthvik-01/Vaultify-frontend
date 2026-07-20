@@ -116,13 +116,14 @@ export default function Work() {
     if (!fileList || fileList.length === 0) return;
     const filesArray = Array.from(fileList);
     const targetFolderId = activeFolderId;
+    const uploadBatchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     setIsUploading(true);
     if (setIsUploadProgressOpen) setIsUploadProgressOpen(true);
 
     try {
       if (addFilesToUploadQueue) {
-        await addFilesToUploadQueue(filesArray, targetFolderId);
+        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId);
         showNotification(`${filesArray.length} file(s) queued for upload to Work folder`, 'success');
       } else {
         for (const f of filesArray) {
@@ -130,7 +131,8 @@ export default function Work() {
             file: f,
             name: f.name,
             size: f.size,
-            folderId: targetFolderId
+            folderId: targetFolderId,
+            uploadBatchId
           });
         }
         await fetchAllFiles();

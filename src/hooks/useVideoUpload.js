@@ -48,9 +48,10 @@ export function useVideoUpload(onUploadComplete) {
   }, [onUploadComplete]);
 
   // Queue files/folders
-  const addFilesToQueue = useCallback(async (filesList, currentFolderId) => {
+  const addFilesToQueue = useCallback(async (filesList, currentFolderId, passedBatchId = null) => {
     const tasksToAdd = [];
     const folderCache = {};
+    const uploadBatchId = passedBatchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const resolveFolderIdForPath = async (relativePath) => {
       if (!relativePath) return currentFolderId;
@@ -73,7 +74,7 @@ export function useVideoUpload(onUploadComplete) {
           if (existing) {
             parentId = existing.id;
           } else {
-            const created = await folderService.createFolder(part, parentId);
+            const created = await folderService.createFolder(part, parentId, uploadBatchId);
             parentId = created.id;
           }
           folderCache[pathAccum] = parentId;
@@ -96,6 +97,7 @@ export function useVideoUpload(onUploadComplete) {
         speed: 0,
         eta: 0,
         folderId,
+        uploadBatchId
       };
 
       tasksToAdd.push(task);

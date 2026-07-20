@@ -369,6 +369,7 @@ export const FileProvider = ({ children }) => {
   const uploadFile = async (fileData, onProgressCallback = null) => {
     try {
       const file = fileData.file;
+      const batchId = fileData.uploadBatchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const ext = file.name.split('.').pop().toLowerCase();
       const allowedVideoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'];
       const isVideo = allowedVideoExtensions.includes(ext) || (file.type && file.type.startsWith('video/'));
@@ -384,6 +385,7 @@ export const FileProvider = ({ children }) => {
           speed: 0,
           eta: 0,
           folderId: fileData.folderId || null,
+          uploadBatchId: batchId
         };
 
         return new Promise((resolve, reject) => {
@@ -431,6 +433,7 @@ export const FileProvider = ({ children }) => {
         if (fileData.folderId) {
           formData.append('folder_id', fileData.folderId);
         }
+        formData.append('uploadBatchId', batchId);
 
         const res = await api.uploadFile(formData);
         const fileData2 = res.data?.file || res.data;
