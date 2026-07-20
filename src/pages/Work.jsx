@@ -267,6 +267,7 @@ export default function Work() {
         console.error('Rename error:', err);
         showNotification('Failed to rename file', 'error');
       }
+    }
   };
 
   const [dragActive, setDragActive] = useState(false);
