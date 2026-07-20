@@ -19,6 +19,9 @@ export default function Work() {
     fetchAllFolders,
     getOrCreateWorkFolder, 
     uploadFile, 
+    addFilesToUploadQueue,
+    setIsUploadProgressOpen,
+    getPreviewUrl,
     deleteFile, 
     renameFile, 
     createFolder,
@@ -109,27 +112,41 @@ export default function Work() {
   }, [files, activeFolderId, workFolder, searchQuery, activeFilter]);
 
   // Actions
-  const handleUploadSelect = async (e) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    const selectedFile = e.target.files[0];
+  const processUploadFiles = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    const filesArray = Array.from(fileList);
     const targetFolderId = activeFolderId;
 
     setIsUploading(true);
+    if (setIsUploadProgressOpen) setIsUploadProgressOpen(true);
+
     try {
-      await uploadFile({
-        file: selectedFile,
-        name: selectedFile.name,
-        size: selectedFile.size,
-        folderId: targetFolderId
-      });
-      await fetchAllFiles();
-      showNotification(`"${selectedFile.name}" uploaded to Work folder`, 'success');
+      if (addFilesToUploadQueue) {
+        await addFilesToUploadQueue(filesArray, targetFolderId);
+        showNotification(`${filesArray.length} file(s) queued for upload to Work folder`, 'success');
+      } else {
+        for (const f of filesArray) {
+          await uploadFile({
+            file: f,
+            name: f.name,
+            size: f.size,
+            folderId: targetFolderId
+          });
+        }
+        await fetchAllFiles();
+        showNotification(`Uploaded to Work folder`, 'success');
+      }
     } catch (err) {
       showNotification('Upload failed: ' + (err.message || 'Unknown error'), 'error');
     } finally {
       setIsUploading(false);
-      e.target.value = '';
     }
+  };
+
+  const handleUploadSelect = async (e) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    await processUploadFiles(e.target.files);
+    e.target.value = '';
   };
 
   const handleCreateSubFolder = async (e) => {
@@ -148,17 +165,26 @@ export default function Work() {
 
   const handlePlayFile = async (file) => {
     try {
-      const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.type);
+      const ext = (file.name || '').split('.').pop().toLowerCase();
+      const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes(ext);
       if (isVideo) {
         const url = await videoService.getPlaybackUrl(file.id);
         setPlaybackUrl(url);
         setPlayingVideo(file);
       } else {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?disposition=inline`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('vaultify_token')}` }
-        });
-        const json = await res.json();
-        const url = json.download_url || json.data?.download_url;
+        let url;
+        try {
+          if (getPreviewUrl) url = await getPreviewUrl(file.id);
+        } catch (_) {}
+
+        if (!url) {
+          const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?disposition=inline`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('vaultify_token')}` }
+          });
+          const json = await res.json();
+          url = json.download_url || json.data?.download_url;
+        }
+
         if (url) window.open(url, '_blank');
       }
     } catch (err) {
@@ -168,7 +194,8 @@ export default function Work() {
 
   const handleDownloadFile = async (file) => {
     try {
-      const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.type);
+      const ext = (file.name || '').split('.').pop().toLowerCase();
+      const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext);
       let url;
       if (isVideo) {
         url = await videoService.downloadVideo(file.id);
@@ -225,24 +252,8 @@ export default function Work() {
     e.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const selectedFile = e.dataTransfer.files[0];
-      const targetFolderId = activeFolderId;
-      setIsUploading(true);
-      try {
-        await uploadFile({
-          file: selectedFile,
-          name: selectedFile.name,
-          size: selectedFile.size,
-          folderId: targetFolderId
-        });
-        await fetchAllFiles();
-        showNotification(`"${selectedFile.name}" uploaded to Work folder`, 'success');
-      } catch (err) {
-        showNotification('Upload failed: ' + (err.message || 'Unknown error'), 'error');
-      } finally {
-        setIsUploading(false);
-      }
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await processUploadFiles(e.dataTransfer.files);
     }
   };
 
