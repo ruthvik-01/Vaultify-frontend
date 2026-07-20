@@ -309,15 +309,11 @@ export default function Work() {
         </div>
       </div>
 
-      {/* Toolbar / Search & Filter */}
+      {/* Toolbar / Grid & List View Toggle */}
       <VideoToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        activeFilter={activeFilter}
-        onFilterChange={setActiveFilter}
-        onRefresh={() => fetchAllFiles()}
+        hideSearch={true}
       />
 
       {/* Create Subfolder Inline Modal */}
