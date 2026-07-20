@@ -209,6 +209,44 @@ export default function Work() {
     }
   };
 
+  const [dragActive, setDragActive] = useState(false);
+
+  const handleDrag = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const selectedFile = e.dataTransfer.files[0];
+      const targetFolderId = activeFolderId;
+      setIsUploading(true);
+      try {
+        await uploadFile({
+          file: selectedFile,
+          name: selectedFile.name,
+          size: selectedFile.size,
+          folderId: targetFolderId
+        });
+        await fetchAllFiles();
+        showNotification(`"${selectedFile.name}" uploaded to Work folder`, 'success');
+      } catch (err) {
+        showNotification('Upload failed: ' + (err.message || 'Unknown error'), 'error');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -219,7 +257,13 @@ export default function Work() {
   }
 
   return (
-    <div className="space-y-6 text-left">
+    <div 
+      onDragEnter={handleDrag}
+      onDragOver={handleDrag}
+      onDragLeave={handleDrag}
+      onDrop={handleDrop}
+      className={`space-y-6 text-left transition-all rounded-3xl p-1 ${dragActive ? 'bg-brand-sage-light/20 ring-2 ring-brand-olive ring-dashed' : ''}`}
+    >
       {/* Header Banner */}
       <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
