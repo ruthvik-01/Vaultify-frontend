@@ -112,10 +112,12 @@ export default function Videos() {
     }
   };
 
-  const handleVideoDelete = async (id) => {
+  const handleVideoDelete = async (target) => {
+    const fileId = typeof target === 'object' ? (target?.id || target?._id) : target;
+    if (!fileId) return;
     if (window.confirm('Are you sure you want to move this file to trash?')) {
       try {
-        await deleteFile(id);
+        await deleteFile(fileId);
         await fetchAllFiles();
       } catch (e) {
         console.error(e);
@@ -124,10 +126,12 @@ export default function Videos() {
   };
 
   // Folder Actions
-  const handleFolderDelete = async (id) => {
+  const handleFolderDelete = async (target) => {
+    const folderId = typeof target === 'object' ? (target?.id || target?._id) : target;
+    if (!folderId) return;
     if (window.confirm('Deleting this folder will delete all subfolders. Are you sure you want to proceed?')) {
       try {
-        const deletedIds = await deleteFolder(id);
+        const deletedIds = await deleteFolder(folderId);
         
         // Clean up video folder references
         const map = JSON.parse(localStorage.getItem('vaultify_video_file_folders') || '{}');
