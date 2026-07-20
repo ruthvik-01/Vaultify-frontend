@@ -821,7 +821,12 @@ export const FileProvider = ({ children }) => {
       const res = await api.getFolders();
       const foldersList = res.data?.folders || res.data;
       if (foldersList) {
-        setFolders(Array.isArray(foldersList) ? foldersList : []);
+        const mappedFolders = (Array.isArray(foldersList) ? foldersList : []).map(f => ({
+          ...f,
+          name: f.name || f.folder_name,
+          parentId: f.parentId || f.parent_folder_id
+        }));
+        setFolders(mappedFolders);
       }
     } catch (err) {
       console.error('Failed to fetch folders:', err.message);
@@ -832,7 +837,12 @@ export const FileProvider = ({ children }) => {
     try {
       const res = await api.getOrCreateWorkFolder();
       await fetchAllFolders();
-      return res.data?.folder || res.data;
+      const folder = res.data?.folder || res.data;
+      if (folder) {
+        folder.name = folder.name || folder.folder_name;
+        folder.parentId = folder.parentId || folder.parent_folder_id;
+      }
+      return folder;
     } catch (err) {
       console.error('Failed to get or create Work folder:', err.message);
       throw err;
@@ -844,7 +854,12 @@ export const FileProvider = ({ children }) => {
       const res = await api.createFolder(name, parentId);
       await fetchAllFolders();
       showNotification(`Folder "${name}" created successfully`, 'success');
-      return res.data?.folder || res.data;
+      const folder = res.data?.folder || res.data;
+      if (folder) {
+        folder.name = folder.name || folder.folder_name;
+        folder.parentId = folder.parentId || folder.parent_folder_id;
+      }
+      return folder;
     } catch (err) {
       console.error('Failed to create folder:', err.message);
       showNotification('Failed to create folder', 'error');

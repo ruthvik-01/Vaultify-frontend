@@ -4,7 +4,7 @@ import DashboardLayout from '../layouts/DashboardLayout';
 import AuthLayout from '../layouts/AuthLayout';
 
 // Guest Pages & Landing
-import Landing from '../pages/Landing';
+import Landing from '../pages/LandingNew';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';

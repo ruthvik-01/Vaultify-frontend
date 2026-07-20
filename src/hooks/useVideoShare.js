@@ -27,25 +27,39 @@ export function useVideoShare() {
           throw new Error('Link generation failed.');
         }
       } else {
-        const token = localStorage.getItem('vaultify_token');
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-        const res = await fetch(`${API_URL}/videos/${item.id}/share`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        const isVideo = item.videoFolderId !== undefined || (item.mimeType && item.mimeType.startsWith('video/')) || ['mp4', 'mov', 'webm', 'mkv', 'avi'].includes((item.name || '').split('.').pop().toLowerCase());
+        
+        if (isVideo) {
+          const token = localStorage.getItem('vaultify_token');
+          const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+          const res = await fetch(`${API_URL}/videos/${item.id}/share`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          if (!res.ok) {
+            throw new Error('Failed to generate permanent share link.');
           }
-        });
-        if (!res.ok) {
-          throw new Error('Failed to generate permanent share link.');
-        }
-        const data = await res.json();
-        if (data && data.shareUrl) {
-          const parts = data.shareUrl.split('/');
-          const shareToken = parts[parts.length - 1];
-          setShareLink(`${window.location.origin}/share/${shareToken}`);
+          const data = await res.json();
+          if (data && data.shareUrl) {
+            const parts = data.shareUrl.split('/');
+            const shareToken = parts[parts.length - 1];
+            setShareLink(`${window.location.origin}/share/${shareToken}`);
+          } else {
+            throw new Error('Link generation failed.');
+          }
         } else {
-          throw new Error('Link generation failed.');
+          // Work file sharing
+          const result = await shareService.shareFile(item.id);
+          if (result && result.share_link) {
+            const parts = result.share_link.split('/');
+            const shareToken = parts[parts.length - 1];
+            setShareLink(`${window.location.origin}/share/${shareToken}`);
+          } else {
+            throw new Error('Link generation failed.');
+          }
         }
       }
     } catch (e) {

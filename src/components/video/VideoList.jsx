@@ -44,7 +44,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
         <MoreVertical className="w-4 h-4" />
       </button>
       {open && (
-        <div className="absolute right-0 mt-1 w-40 bg-white border border-brand-sand rounded-xl shadow-lg z-20 py-1.5 text-xs text-left">
+        <div className="absolute right-0 mt-1 w-40 bg-white border border-brand-sand rounded-xl shadow-lg z-50 py-1.5 text-xs text-left">
           {type === 'video' && onPlay && (
             <button
               onClick={(e) => {
@@ -187,8 +187,8 @@ export default function VideoList({
   }
 
   return (
-    <div className="bg-white border border-brand-sand rounded-2xl overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
+    <div className="bg-white border border-brand-sand rounded-2xl shadow-sm">
+      <div className="overflow-visible min-w-full">
         <table className="w-full text-xs text-left border-collapse">
           <thead>
             <tr className="bg-brand-cream border-b border-brand-sand text-gray-500 font-bold font-sans tracking-wide uppercase">

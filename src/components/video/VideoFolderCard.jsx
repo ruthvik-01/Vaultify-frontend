@@ -95,7 +95,7 @@ export default function VideoFolderCard({
                 onClick={(e) => {
                   e.stopPropagation();
                   setMenuOpen(false);
-                  onDelete(folder.id);
+                  onDelete(folder);
                 }}
                 className="w-full px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2 cursor-pointer"
               >

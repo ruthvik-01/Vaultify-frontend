@@ -420,9 +420,7 @@ export default function Work() {
             const name = window.prompt('Rename folder:', f.name || f.folder_name);
             if (name && name.trim()) renameFolder(f.id, name.trim());
           }}
-          onFolderDelete={(f) => {
-            if (window.confirm('Delete folder and contents?')) deleteFolder(f.id);
-          }}
+          onFolderDelete={handleFolderDelete}
           onVideoPlay={handlePlayFile}
           onVideoRename={handleRenameFile}
           onVideoDownload={handleDownloadFile}
@@ -438,10 +436,7 @@ export default function Work() {
             const name = window.prompt('Rename folder:', f?.name || f?.folder_name);
             if (name && name.trim()) renameFolder(typeof f === 'object' ? f.id : f, name.trim());
           }}
-          onFolderDelete={(f) => {
-            const id = typeof f === 'object' ? f.id : f;
-            if (window.confirm('Delete folder and contents?')) deleteFolder(id);
-          }}
+          onFolderDelete={handleFolderDelete}
           onVideoPlay={handlePlayFile}
           onVideoRename={handleRenameFile}
           onVideoDownload={handleDownloadFile}
