@@ -365,143 +365,68 @@ export default function Landing() {
 
 
 
+      {/* Footer */}
+      <footer className="border-t border-brand-sand bg-gradient-to-b from-white to-brand-cream/40">
+        <div className="max-w-7xl mx-auto px-6 py-14">
 
+          {/* Brand */}
+          <div className="flex flex-col items-center text-center">
 
-      {/* About Section & Team Credits */}
-      <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 border-t border-brand-sand/60">
-        <div className="text-center max-w-2xl mx-auto space-y-3">
-          <span className="text-[10px] uppercase tracking-widest text-brand-olive bg-brand-sage-light/25 border border-brand-sage-light/40 px-3.5 py-1.5 rounded-full font-bold inline-block">
-            Meet the Builders
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-charcoal">
-            The Team behind Vaultify
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 font-sans leading-relaxed">
-            Vaultify is designed, built, and optimized by a dedicated group of engineers passionate about secure, seamless, and high-fidelity cloud workspaces.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 max-w-5xl mx-auto">
-          {/* Vangada Raju */}
-          <a href="https://www.vangadaraju.tech/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block">
-            <img
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Vangada%20Raju"
-              alt="Vangada Raju"
-              className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
-            />
-            <div>
-              <h4 className="font-serif text-base font-bold text-brand-charcoal">Vangada Raju</h4>
-              <span className="text-xs text-brand-olive font-semibold font-sans">Frontend Developer</span>
+            <div className="flex items-center gap-3">
+              <BrandIcon className="w-9 h-9" />
+              <h2 className="font-serif text-3xl font-bold text-brand-charcoal">
+                Vaultify
+              </h2>
             </div>
-            <p className="text-xs text-gray-500 leading-relaxed font-sans">
-              Crafts responsive, premium UI components, styling design systems, and glassmorphic micro-animations.
-            </p>
-          </a>
 
-          {/* Lokeshreddy Devireddy */}
-          <a href="https://lokeshreddy.me/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block">
-            <img
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Lokeshreddy%20Devireddy"
-              alt="Lokeshreddy Devireddy"
-              className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
-            />
-            <div>
-              <h4 className="font-serif text-base font-bold text-brand-charcoal">Lokeshreddy Devireddy</h4>
-              <span className="text-xs text-brand-olive font-semibold font-sans">Frontend Developer</span>
+            <p className="mt-4 max-w-xl text-gray-500 leading-relaxed">
+              Secure cloud storage platform built for students and professionals to
+              safely store, organize, preview and manage important documents from
+              anywhere.
+            </p>
+
+            {/* Features */}
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+
+              <span className="px-4 py-2 rounded-full bg-brand-cream text-brand-charcoal text-sm">
+                Secure Storage
+              </span>
+
+              <span className="px-4 py-2 rounded-full bg-brand-cream text-brand-charcoal text-sm">
+                File Sharing
+              </span>
+
+              <span className="px-4 py-2 rounded-full bg-brand-cream text-brand-charcoal text-sm">
+                Video Preview
+              </span>
+
+              <span className="px-4 py-2 rounded-full bg-brand-cream text-brand-charcoal text-sm">
+                Cloud Backup
+              </span>
+
+              <span className="px-4 py-2 rounded-full bg-brand-cream text-brand-charcoal text-sm">
+                AWS Powered
+              </span>
+
             </div>
-            <p className="text-xs text-gray-500 leading-relaxed font-sans">
-              Specialize in client-side state synchronization, complex user settings configurations, and routing architectures.
-            </p>
-          </a>
-
-          {/* Pitchika Ruthvik */}
-          <a href="https://www.ruthvik.tech/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block sm:col-span-2 lg:col-span-1 mx-auto max-w-sm lg:max-w-none w-full">
-            <img
-              src="https://api.dicebear.com/7.x/initials/svg?seed=Pitchika%20Ruthvik"
-              alt="Pitchika Ruthvik"
-              className="w-20 h-20 rounded-full bg-brand-sage-light/20 border border-brand-sand shadow-sm"
-            />
-            <div>
-              <h4 className="font-serif text-base font-bold text-brand-charcoal">Pitchika Ruthvik</h4>
-              <span className="text-xs text-brand-olive font-semibold font-sans">Backend & Cloud Engineer</span>
-            </div>
-            <p className="text-xs text-gray-500 leading-relaxed font-sans">
-              Architects secure MySQL databases, token authorization layers, AWS S3 storage APIs, and verified mailing relays.
-            </p>
-          </a>
-        </div>
-      </section>
 
 
-      {/* 10. Footer Section */}
-      <footer id="footer" className="bg-gradient-to-b from-white to-brand-cream/30 border-t border-brand-sand py-12 text-xs text-gray-500 font-sans">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 flex flex-col md:flex-row justify-between gap-10">
-          <div className="space-y-3 shrink-0">
-            <div className="flex items-center space-x-2">
-              <BrandIcon className="w-7 h-7" />
-              <span className="font-serif text-base font-bold text-brand-charcoal">Vaultify</span>
-            </div>
-            <p className="text-[11px] text-gray-400 leading-relaxed max-w-[200px]">
-              The public cloud storage space designed specifically for verified personal and student document lockers.
-            </p>
+
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 flex-grow max-w-3xl">
-            {/* Card 1 */}
-            <div className="space-y-2 bg-brand-cream/40 rounded-xl p-3 -m-1">
-              <h4 className="font-bold text-brand-charcoal text-base">Vangada Raju</h4>
-              <div className="flex items-center space-x-2 text-gray-400">
-                <Mail className="w-4 h-4" />
-                <a href="mailto:vrajuu4646@gmail.com" className="hover:text-brand-olive text-xs truncate">vrajuu4646@gmail.com</a>
-              </div>
-              <div className="flex space-x-3 pt-1">
-                <a href="https://www.linkedin.com/in/vangada-raju/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a href="https://github.com/rajuvangada" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
-                  <Github className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
+          {/* Bottom */}
+          <div className="mt-12 pt-6 border-t border-brand-sand/60 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-gray-400">
 
-            {/* Card 2 */}
-            <div className="space-y-2 bg-brand-cream/40 rounded-xl p-3 -m-1">
-              <h4 className="font-bold text-brand-charcoal text-base">Lokeshreddy Devireddy</h4>
-              <div className="flex items-center space-x-2 text-gray-400">
-                <Mail className="w-4 h-4" />
-                <a href="mailto:mailtolokeshdevireddy@gmail.com" className="hover:text-brand-olive text-xs truncate">mailtolokeshdevireddy@gmail.com</a>
-              </div>
-              <div className="flex space-x-3 pt-1">
-                <a href="https://www.linkedin.com/in/lokeshreddydevireddy/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a href="https://github.com/lokeshreddydevireddy" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
-                  <Github className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
+            <p>
+              © {new Date().getFullYear()} Vaultify. All rights reserved.
+            </p>
 
-            {/* Card 3 */}
-            <div className="space-y-2 bg-brand-cream/40 rounded-xl p-3 -m-1">
-              <h4 className="font-bold text-brand-charcoal text-base">Pitchika Ruthvik</h4>
-              <div className="flex items-center space-x-2 text-gray-400">
-                <Mail className="w-4 h-4" />
-                <a href="mailto:ruthvikp186@gmail.com" className="hover:text-brand-olive text-xs truncate">ruthvikp186@gmail.com</a>
-              </div>
-              <div className="flex space-x-3 pt-1">
-                <a href="https://www.linkedin.com/in/p-ruthvik/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
-                  <Linkedin className="w-4 h-4" />
-                </a>
-                <a href="https://github.com/ruthvik-01" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-brand-olive transition-colors">
-                  <Github className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
+            <p>
+              Built with React • Node.js • MongoDB • AWS
+            </p>
+
           </div>
-        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 border-t border-brand-sand/60 flex justify-center items-center text-xs text-gray-400">
-          <p className="font-medium">© {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
         </div>
       </footer>
 
