@@ -16,6 +16,7 @@ import PublicShare from '../pages/PublicShare';
 import Dashboard from '../pages/Dashboard';
 import UploadFiles from '../pages/UploadFiles';
 import Videos from '../pages/Videos';
+import Work from '../pages/Work';
 import Trash from '../pages/Trash';
 import Profile from '../pages/Profile';
 import Settings from '../pages/Settings';
@@ -49,6 +50,7 @@ export default function AppRoutes() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-files" element={<Videos />} />
+          <Route path="/work" element={<Work />} />
           <Route path="/upload" element={<UploadFiles />} />
           <Route path="/trash" element={<Trash />} />
           <Route path="/profile" element={<Profile />} />
