@@ -356,14 +356,12 @@ export default function Landing() {
               <div className="bg-brand-sage-light/20 text-brand-olive p-2.5 rounded-xl border border-brand-sage-light/30 w-10 h-10 flex items-center justify-center mb-4">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
-              <h4 className="font-serif text-base font-bold text-brand-charcoal">{item.title}</h4>
+          <h4 className="font-serif text-base font-bold text-brand-charcoal">{item.title}</h4>
               <p className="text-xs text-gray-500 mt-2 leading-relaxed font-sans">{item.desc}</p>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* About Section & Team Credits */}
+      </section>      {/* About Section & Team Credits */}
       <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 border-t border-brand-sand/60">
         <div className="text-center max-w-2xl mx-auto space-y-3">
           <span className="text-[10px] uppercase tracking-widest text-brand-olive bg-brand-sage-light/25 border border-brand-sage-light/40 px-3.5 py-1.5 rounded-full font-bold inline-block">
@@ -499,7 +497,6 @@ export default function Landing() {
           <p className="font-medium">© {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
         </div>
       </footer>
-
     </div>
   );
 }
