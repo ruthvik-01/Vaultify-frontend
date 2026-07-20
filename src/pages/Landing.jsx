@@ -362,7 +362,21 @@ export default function Landing() {
           ))}
         </div>
       </section>
+      {/* About Section & Team Credits */}
+      <section id="about" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-12 border-t border-brand-sand/60">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-[10px] uppercase tracking-widest text-brand-olive bg-brand-sage-light/25 border border-brand-sage-light/40 px-3.5 py-1.5 rounded-full font-bold inline-block">
+            Meet the Builders
+          </span>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-brand-charcoal">
+            The Team behind Vaultify
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 font-sans leading-relaxed">
+            Vaultify is designed, built, and optimized by a dedicated group of engineers passionate about secure, seamless, and high-fidelity cloud workspaces.
+          </p>
+        </div>
 
+<<<<<<< Updated upstream
 
 
 
@@ -381,6 +395,8 @@ export default function Landing() {
           </p>
         </div>
 
+=======
+>>>>>>> Stashed changes
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 max-w-5xl mx-auto">
           {/* Vangada Raju */}
           <a href="https://www.vangadaraju.tech/" target="_blank" rel="noopener noreferrer" className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col items-center text-center space-y-4 hover:shadow-md hover:-translate-y-1 cursor-pointer transition-all block">
@@ -433,6 +449,11 @@ export default function Landing() {
       </section>
 
 
+<<<<<<< Updated upstream
+=======
+
+
+>>>>>>> Stashed changes
       {/* 10. Footer Section */}
       <footer id="footer" className="bg-gradient-to-b from-white to-brand-cream/30 border-t border-brand-sand py-12 text-xs text-gray-500 font-sans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-10 flex flex-col md:flex-row justify-between gap-10">
