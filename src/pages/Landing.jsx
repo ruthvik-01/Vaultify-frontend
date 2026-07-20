@@ -105,7 +105,6 @@ export default function Landing() {
           <nav className="hidden md:flex space-x-8 text-xs font-semibold text-gray-500">
             <a href="#" className="hover:text-brand-olive transition-all">Home</a>
             <a href="#about" className="hover:text-brand-olive transition-all">About</a>
-            <a href="#footer" className="hover:text-brand-olive transition-all">Contact</a>
             <a href="#features" className="hover:text-brand-olive transition-all">Features</a>
           </nav>
 
@@ -228,7 +227,7 @@ export default function Landing() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-[10px] font-bold text-brand-charcoal block truncate">Vraj_Raju_Resume_2026.pdf</span>
-                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Resumes • Verified Main</span>
+                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Resumes ?????? Verified Main</span>
                   </div>
                   <span className="absolute top-2 right-2"><Star className="w-3.5 h-3.5 text-amber-500 fill-current" /></span>
                 </div>
@@ -240,7 +239,7 @@ export default function Landing() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-[10px] font-bold text-brand-charcoal block truncate">AWS_Cloud_Practitioner.pdf</span>
-                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Certificates • Verified Creds</span>
+                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Certificates ?????? Verified Creds</span>
                   </div>
                   <span className="absolute top-2 right-2"><Star className="w-3.5 h-3.5 text-amber-500 fill-current" /></span>
                 </div>
@@ -252,7 +251,7 @@ export default function Landing() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-[10px] font-bold text-brand-charcoal block truncate">E-Commerce_App.zip</span>
-                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Projects • Github Sync</span>
+                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Projects ?????? Github Sync</span>
                   </div>
                   <span className="absolute top-2 right-2"><Star className="w-3.5 h-3.5 text-amber-500 fill-current" /></span>
                 </div>
@@ -264,7 +263,7 @@ export default function Landing() {
                   </div>
                   <div className="min-w-0">
                     <span className="text-[10px] font-bold text-brand-charcoal block truncate">Project_Demo.mp4</span>
-                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Videos • Showcase</span>
+                    <span className="text-[9px] text-gray-400 font-sans block mt-0.5">Videos ?????? Showcase</span>
                   </div>
                   <span className="absolute top-2 right-2"><Star className="w-3.5 h-3.5 text-amber-500 fill-current" /></span>
                 </div>
@@ -494,9 +493,10 @@ export default function Landing() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 border-t border-brand-sand/60 flex justify-center items-center text-xs text-gray-400">
-          <p className="font-medium">© {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
+          <p className="font-medium">?????? {new Date().getFullYear()} Vaultify. Cloud locker verification engine.</p>
         </div>
       </footer>
     </div>
   );
 }
+
