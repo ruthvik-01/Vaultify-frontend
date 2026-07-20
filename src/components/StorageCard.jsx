@@ -17,8 +17,8 @@ export default function StorageCard({ isCompact = false }) {
     ? Math.min((storageStats.used / storageStats.totalCapacity) * 100, 100)
     : 0;
 
-  const planLabel = user.storage_plan === 'pro' ? '1 TB Plan' : '100 GB Plan';
-  const limitLabel = user.storage_plan === 'pro' ? '1 TB' : '100 GB';
+  const planLabel = user.storage_plan === 'pro' ? '1 TB Plan' : '500 GB Plan';
+  const limitLabel = user.storage_plan === 'pro' ? '1 TB' : '500 GB';
 
   if (isCompact) {
     return (
