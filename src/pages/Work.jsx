@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
   Briefcase, FolderOpen, Upload, Plus, HardDrive, 
-  Search, Grid, List, RefreshCw, FileText, ArrowRight 
+  Search, LayoutGrid, List, RefreshCw, FileText, ArrowRight 
 } from 'lucide-react';
 import VideoGrid from '../components/video/VideoGrid';
 import VideoList from '../components/video/VideoList';
-import VideoToolbar from '../components/video/VideoToolbar';
 import VideoPlayer from '../components/video/VideoPlayer';
 import ShareVideoModal from '../components/video/ShareVideoModal';
 import { videoService } from '../services/videoService';
@@ -284,10 +283,38 @@ export default function Work() {
         </div>
 
         {/* Header Actions */}
-        <div className="flex items-center space-x-3 shrink-0">
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
+          {/* View Mode Toggle */}
+          <div className="bg-brand-cream border border-brand-sand rounded-xl p-0.5 flex space-x-0.5 shadow-inner">
+            <button
+              onClick={() => setViewMode('grid')}
+              title="Grid view"
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                viewMode === 'grid'
+                  ? 'bg-white text-brand-charcoal shadow-sm'
+                  : 'text-gray-400 hover:text-brand-charcoal'
+              }`}
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              title="List view"
+              className={`p-2 rounded-lg transition-colors cursor-pointer ${
+                viewMode === 'list'
+                  ? 'bg-white text-brand-charcoal shadow-sm'
+                  : 'text-gray-400 hover:text-brand-charcoal'
+              }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="w-px h-6 bg-brand-sand/80 mx-1 hidden sm:block" />
+
           <button
             onClick={() => setIsCreatingFolder(true)}
-            className="flex items-center space-x-1.5 bg-brand-cream border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all"
+            className="flex items-center space-x-1.5 bg-brand-cream border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4 text-brand-olive" />
             <span>New Subfolder</span>
@@ -308,13 +335,6 @@ export default function Work() {
           </label>
         </div>
       </div>
-
-      {/* Toolbar / Grid & List View Toggle */}
-      <VideoToolbar
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
-        hideSearch={true}
-      />
 
       {/* Create Subfolder Inline Modal */}
       {isCreatingFolder && (
