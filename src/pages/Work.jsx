@@ -423,12 +423,30 @@ export default function Work() {
             ${isUploading ? 'opacity-50 pointer-events-none' : ''}
           `}>
             <Upload className="w-4 h-4" />
-            <span>{isUploading ? 'Uploading...' : 'Upload to Work'}</span>
+            <span>{isUploading ? 'Uploading...' : 'Upload Files'}</span>
             <input 
               type="file" 
               onChange={handleUploadSelect} 
               className="hidden" 
               disabled={isUploading}
+              multiple
+            />
+          </label>
+
+          <label className={`
+            flex items-center space-x-2 bg-brand-cream border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer
+            ${isUploading ? 'opacity-50 pointer-events-none' : ''}
+          `}>
+            <FolderOpen className="w-4 h-4 text-brand-olive" />
+            <span>Upload Folder</span>
+            <input 
+              type="file" 
+              onChange={handleUploadSelect} 
+              className="hidden" 
+              disabled={isUploading}
+              webkitdirectory=""
+              directory=""
+              multiple
             />
           </label>
         </div>
@@ -526,7 +544,7 @@ export default function Work() {
       {playingVideo && (
         <VideoPlayer
           video={playingVideo}
-          src={playbackUrl}
+          playbackUrl={playbackUrl}
           onClose={() => {
             setPlayingVideo(null);
             setPlaybackUrl(null);
@@ -535,17 +553,16 @@ export default function Work() {
       )}
 
       {/* Share Modal */}
-      {shareItem && (
-        <ShareVideoModal
-          video={shareItem}
-          shareLink={shareLink}
-          loading={shareLoading}
-          copied={shareCopied}
-          error={shareError}
-          onClose={closeShare}
-          onCopy={copyToClipboard}
-        />
-      )}
+      <ShareVideoModal
+        isOpen={!!shareItem}
+        onClose={closeShare}
+        item={shareItem}
+        shareLink={shareLink}
+        loading={shareLoading}
+        copied={shareCopied}
+        error={shareError}
+        onCopy={copyToClipboard}
+      />
     </div>
   );
 }
