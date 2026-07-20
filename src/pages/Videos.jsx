@@ -22,6 +22,7 @@ export default function Videos() {
     addFilesToUploadQueue: addFilesToQueue,
     isUploadProgressOpen,
     setIsUploadProgressOpen,
+    showNotification
   } = useFiles();
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
@@ -119,8 +120,10 @@ export default function Videos() {
       try {
         await deleteFile(fileId);
         await fetchAllFiles();
+        showNotification('File moved to trash bin', 'success');
       } catch (e) {
         console.error(e);
+        showNotification('Failed to move file to trash', 'error');
       }
     }
   };
@@ -143,8 +146,10 @@ export default function Videos() {
         localStorage.setItem('vaultify_video_file_folders', JSON.stringify(map));
         
         await fetchAllFiles();
+        showNotification('Folder deleted successfully', 'success');
       } catch (e) {
         console.error(e);
+        showNotification('Failed to delete folder', 'error');
       }
     }
   };
