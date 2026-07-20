@@ -102,11 +102,7 @@ export default function AdminLogin() {
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-brand-sand/50 pt-4">
-          <p className="text-[11px] text-gray-400 font-semibold">
-            Default Admin: <span className="text-brand-olive">admin@vaultify.com</span> / <span className="text-brand-olive">AdminPassword123!</span>
-          </p>
-        </div>
+
       </motion.div>
     </div>
   );
