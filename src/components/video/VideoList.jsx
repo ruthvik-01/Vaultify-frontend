@@ -45,7 +45,7 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
       </button>
       {open && (
         <div className="absolute right-0 mt-1 w-40 bg-white border border-brand-sand rounded-xl shadow-lg z-20 py-1.5 text-xs text-left">
-          {type === 'video' && (
+          {type === 'video' && onPlay && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -54,42 +54,37 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
               }}
               className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
             >
-              {isVideo ? (
-                <>
-                  <Play className="w-3.5 h-3.5 text-gray-400 fill-gray-400" />
-                  <span>View / Play</span>
-                </>
-              ) : (
-                <>
-                  <Eye className="w-3.5 h-3.5 text-gray-400" />
-                  <span>Open File</span>
-                </>
-              )}
+              <Eye className="w-3.5 h-3.5 text-brand-olive" />
+              <span>Preview</span>
             </button>
           )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-              onRename(item);
-            }}
-            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
-          >
-            <Edit2 className="w-3.5 h-3.5 text-gray-400" />
-            <span>Rename</span>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-              onMove(item);
-            }}
-            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
-          >
-            <Move className="w-3.5 h-3.5 text-gray-400" />
-            <span>Move</span>
-          </button>
-          {type === 'video' && (
+          {onRename && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onRename(item);
+              }}
+              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-gray-400" />
+              <span>Rename</span>
+            </button>
+          )}
+          {onMove && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onMove(item);
+              }}
+              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
+            >
+              <Move className="w-3.5 h-3.5 text-gray-400" />
+              <span>Move</span>
+            </button>
+          )}
+          {type === 'video' && onDownload && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -102,29 +97,35 @@ function ActionsDropdown({ item, type, onPlay, onRename, onMove, onDownload, onS
               <span>Download</span>
             </button>
           )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-              onShare(item);
-            }}
-            className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
-          >
-            <Share2 className="w-3.5 h-3.5 text-gray-400" />
-            <span>Share</span>
-          </button>
-          <hr className="border-brand-sand/60 my-1" />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setOpen(false);
-              onDelete(item.id);
-            }}
-            className="w-full px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2 cursor-pointer font-semibold"
-          >
-            <Trash2 className="w-3.5 h-3.5 text-red-400" />
-            <span>Delete</span>
-          </button>
+          {onShare && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onShare(item);
+              }}
+              className="w-full px-4 py-2 hover:bg-brand-cream text-gray-700 flex items-center space-x-2 cursor-pointer font-semibold"
+            >
+              <Share2 className="w-3.5 h-3.5 text-gray-400" />
+              <span>Share</span>
+            </button>
+          )}
+          {onDelete && (
+            <>
+              <hr className="border-brand-sand/60 my-1" />
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                  onDelete(item);
+                }}
+                className="w-full px-4 py-2 hover:bg-red-50 text-red-600 flex items-center space-x-2 cursor-pointer font-semibold"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                <span>Delete</span>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

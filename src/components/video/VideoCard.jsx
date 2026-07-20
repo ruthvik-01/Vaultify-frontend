@@ -190,17 +190,8 @@ export default function VideoCard({
                     }}
                     className="w-full px-4 py-2.5 hover:bg-brand-cream text-gray-700 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >
-                    {isVideo ? (
-                      <>
-                        <Play className="w-4 h-4 text-brand-olive fill-brand-olive/10" />
-                        <span>View / Play</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4 text-brand-olive" />
-                        <span>Open File</span>
-                      </>
-                    )}
+                    <Eye className="w-4 h-4 text-brand-olive" />
+                    <span>Preview</span>
                   </button>
                   <button
                     onClick={(e) => {
@@ -251,7 +242,7 @@ export default function VideoCard({
                     onClick={(e) => {
                       e.stopPropagation();
                       setMenuOpen(false);
-                      onDelete(video.id);
+                      onDelete(video);
                     }}
                     className="w-full px-4 py-2.5 hover:bg-red-50 text-red-600 flex items-center space-x-2.5 transition-colors cursor-pointer font-semibold"
                   >

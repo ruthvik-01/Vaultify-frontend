@@ -163,38 +163,57 @@ export default function Work() {
     }
   };
 
-  const handlePlayFile = async (file) => {
-    try {
-      const ext = (file.name || '').split('.').pop().toLowerCase();
-      const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes(ext);
-      if (isVideo) {
-        const url = await videoService.getPlaybackUrl(file.id);
-        setPlaybackUrl(url);
-        setPlayingVideo(file);
-      } else {
-        let url;
-        try {
-          if (getPreviewUrl) url = await getPreviewUrl(file.id);
-        } catch (_) {}
+  const handlePlayFile = async (target) => {
+    const file = typeof target === 'object' ? target : files.find(f => f.id === target);
+    if (!file) return;
 
-        if (!url) {
+    try {
+      const ext = (file.name || file.filename || '').split('.').pop().toLowerCase();
+      const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv'].includes(ext);
+
+      let url = null;
+      if (isVideo) {
+        try {
+          url = await videoService.getPlaybackUrl(file.id);
+        } catch (e) {
+          console.warn('Video playback URL fetch failed:', e);
+        }
+      }
+
+      if (!url && getPreviewUrl) {
+        try {
+          url = await getPreviewUrl(file.id);
+        } catch (e) {
+          console.warn('getPreviewUrl failed:', e);
+        }
+      }
+
+      if (!url) {
+        try {
           const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/files/download/${file.id}?disposition=inline`, {
             headers: { Authorization: `Bearer ${localStorage.getItem('vaultify_token')}` }
           });
           const json = await res.json();
           url = json.download_url || json.data?.download_url;
+        } catch (e) {
+          console.warn('Inline download fetch failed:', e);
         }
-
-        if (url) window.open(url, '_blank');
       }
+
+      setPlaybackUrl(url || '');
+      setPlayingVideo(file);
     } catch (err) {
       console.error('Preview error:', err);
+      showNotification('Unable to preview file', 'error');
     }
   };
 
-  const handleDownloadFile = async (file) => {
+  const handleDownloadFile = async (target) => {
+    const file = typeof target === 'object' ? target : files.find(f => f.id === target);
+    if (!file) return;
+
     try {
-      const ext = (file.name || '').split('.').pop().toLowerCase();
+      const ext = (file.name || file.filename || '').split('.').pop().toLowerCase();
       const isVideo = file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(ext);
       let url;
       if (isVideo) {
@@ -206,33 +225,48 @@ export default function Work() {
         const json = await res.json();
         url = json.download_url || json.data?.download_url;
       }
-      if (url) window.open(url, '_blank');
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        showNotification('Download link unavailable', 'error');
+      }
     } catch (err) {
       console.error('Download error:', err);
+      showNotification('Failed to download file', 'error');
     }
   };
 
-  const handleDeleteFile = async (fileId) => {
+  const handleDeleteFile = async (target) => {
+    const fileId = typeof target === 'object' ? (target?.id || target?._id) : target;
+    if (!fileId) return;
+
     if (window.confirm('Move this item to trash?')) {
       try {
         await deleteFile(fileId);
         await fetchAllFiles();
+        showNotification('Moved to trash', 'success');
       } catch (err) {
-        console.error(err);
+        console.error('Delete error:', err);
+        showNotification('Failed to delete item: ' + (err.message || 'Unknown error'), 'error');
       }
     }
   };
 
-  const handleRenameFile = async (file) => {
-    const newName = window.prompt('Enter new file name:', file.name);
-    if (newName && newName.trim() && newName !== file.name) {
+  const handleRenameFile = async (target) => {
+    const file = typeof target === 'object' ? target : files.find(f => f.id === target);
+    if (!file) return;
+
+    const currentName = file.name || file.filename || '';
+    const newName = window.prompt('Enter new file name:', currentName);
+    if (newName && newName.trim() && newName !== currentName) {
       try {
         await renameFile(file.id, newName.trim());
         await fetchAllFiles();
+        showNotification('File renamed successfully', 'success');
       } catch (err) {
-        console.error(err);
+        console.error('Rename error:', err);
+        showNotification('Failed to rename file', 'error');
       }
-    }
   };
 
   const [dragActive, setDragActive] = useState(false);
@@ -392,25 +426,26 @@ export default function Work() {
           onVideoRename={handleRenameFile}
           onVideoDownload={handleDownloadFile}
           onVideoShare={(f) => openShare(f)}
-          onVideoDelete={(f) => handleDeleteFile(f.id)}
+          onVideoDelete={handleDeleteFile}
         />
       ) : (
         <VideoList
           folders={currentFolders}
           videos={currentFiles}
-          onFolderEnter={(f) => setCurrentFolderId(f.id)}
+          onFolderEnter={(f) => setCurrentFolderId(typeof f === 'object' ? f.id : f)}
           onFolderRename={(f) => {
-            const name = window.prompt('Rename folder:', f.name || f.folder_name);
-            if (name && name.trim()) renameFolder(f.id, name.trim());
+            const name = window.prompt('Rename folder:', f?.name || f?.folder_name);
+            if (name && name.trim()) renameFolder(typeof f === 'object' ? f.id : f, name.trim());
           }}
           onFolderDelete={(f) => {
-            if (window.confirm('Delete folder and contents?')) deleteFolder(f.id);
+            const id = typeof f === 'object' ? f.id : f;
+            if (window.confirm('Delete folder and contents?')) deleteFolder(id);
           }}
           onVideoPlay={handlePlayFile}
           onVideoRename={handleRenameFile}
           onVideoDownload={handleDownloadFile}
           onVideoShare={(f) => openShare(f)}
-          onVideoDelete={(f) => handleDeleteFile(f.id)}
+          onVideoDelete={handleDeleteFile}
         />
       )}
 
