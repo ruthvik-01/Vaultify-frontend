@@ -191,12 +191,12 @@ export const api = {
     return handleResponse(res);
   },
 
-  createFolder: async (name, parentId = null, uploadBatchId = null) => {
+  createFolder: async (name, parentId = null, uploadBatchId = null, uploadGroupId = null) => {
     const res = await fetch(`${API_URL}/folders`, {
       method: 'POST',
       headers: getHeaders(),
       // backend expects folder_name; we send both for compatibility
-      body: JSON.stringify({ folder_name: name, name, parentId, parent_folder_id: parentId, uploadBatchId }),
+      body: JSON.stringify({ folder_name: name, name, parentId, parent_folder_id: parentId, uploadBatchId, upload_group_id: uploadGroupId }),
     });
     return handleResponse(res);
   },

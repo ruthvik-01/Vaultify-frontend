@@ -27,11 +27,11 @@ export const folderService = {
     }));
   },
 
-  createFolder: async (name, parentId = null, uploadBatchId = null) => {
+  createFolder: async (name, parentId = null, uploadBatchId = null, uploadGroupId = null) => {
     const res = await fetch(`${API_URL}/videos/folders`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ name, parentFolder: parentId || null, uploadBatchId })
+      body: JSON.stringify({ name, parentFolder: parentId || null, uploadBatchId, upload_group_id: uploadGroupId })
     });
     if (!res.ok) {
       throw new Error('Failed to create folder');

@@ -10,6 +10,7 @@ import VideoPlayer from '../components/video/VideoPlayer';
 import ShareVideoModal from '../components/video/ShareVideoModal';
 import { videoService } from '../services/videoService';
 import { useVideoShare } from '../hooks/useVideoShare';
+import UploadTitleModal from '../components/UploadTitleModal';
 
 export default function Work() {
   const { 
@@ -28,7 +29,8 @@ export default function Work() {
     createFolder,
     renameFolder,
     deleteFolder,
-    showNotification 
+    showNotification,
+    createUploadGroup
   } = useFiles();
 
   const [workFolder, setWorkFolder] = useState(null);
@@ -37,6 +39,10 @@ export default function Work() {
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  
+  // Title Modal states
+  const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState(null);
 
   // Modals / dialogs
   const [isUploading, setIsUploading] = useState(false);
@@ -113,7 +119,7 @@ export default function Work() {
   }, [files, activeFolderId, workFolder, searchQuery, activeFilter]);
 
   // Actions
-  const processUploadFiles = async (fileList) => {
+  const processUploadFiles = async (fileList, uploadGroupId) => {
     if (!fileList || fileList.length === 0) return;
     const filesArray = Array.from(fileList);
     const targetFolderId = activeFolderId;
@@ -124,7 +130,7 @@ export default function Work() {
 
     try {
       if (addFilesToUploadQueue) {
-        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId, 'work');
+        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId, uploadGroupId, 'work');
         showNotification(`${filesArray.length} file(s) queued for upload to Work folder`, 'success');
       } else {
         for (const f of filesArray) {
@@ -133,7 +139,8 @@ export default function Work() {
             name: f.name,
             size: f.size,
             folderId: targetFolderId,
-            uploadBatchId
+            uploadBatchId,
+            upload_group_id: uploadGroupId
           });
         }
         await fetchAllFiles();
@@ -148,8 +155,27 @@ export default function Work() {
 
   const handleUploadSelect = async (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    await processUploadFiles(e.target.files);
+    setPendingUploadFiles(e.target.files);
+    setIsTitleModalOpen(true);
     e.target.value = '';
+  };
+
+  const handleConfirmTitleUpload = async (title) => {
+    setIsTitleModalOpen(false);
+    if (!pendingUploadFiles) return;
+    try {
+      const group = await createUploadGroup(title);
+      await processUploadFiles(pendingUploadFiles, group?.id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPendingUploadFiles(null);
+    }
+  };
+
+  const handleCancelTitleUpload = () => {
+    setIsTitleModalOpen(false);
+    setPendingUploadFiles(null);
   };
 
   const handleCreateSubFolder = async (e) => {
@@ -318,7 +344,8 @@ export default function Work() {
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      await processUploadFiles(e.dataTransfer.files);
+      setPendingUploadFiles(e.dataTransfer.files);
+      setIsTitleModalOpen(true);
     }
   };
 
@@ -361,6 +388,11 @@ export default function Work() {
       onDrop={handleDrop}
       className={`space-y-6 text-left transition-all rounded-3xl p-1 ${dragActive ? 'bg-brand-sage-light/20 ring-2 ring-brand-olive ring-dashed' : ''}`}
     >
+      <UploadTitleModal
+        isOpen={isTitleModalOpen}
+        onConfirm={handleConfirmTitleUpload}
+        onCancel={handleCancelTitleUpload}
+      />
       {/* Header Banner */}
       <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
