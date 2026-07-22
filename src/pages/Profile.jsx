@@ -93,9 +93,9 @@ export default function Profile() {
           <div className="flex justify-between items-center text-xs text-brand-charcoal font-semibold">
             <span>{formatSize(storageStats.used)} used</span>
             <span className="text-brand-olive bg-brand-sage-light/35 px-2.5 py-0.5 rounded-full text-[10px]">
-              {percent.toFixed(1)}% Capacity Filled
+              {percent.toFixed(1)}% reference capacity used
             </span>
-            <span>{formatSize(storageStats.totalCapacity)} limit</span>
+            <span>Unlimited total</span>
           </div>
         </div>
 

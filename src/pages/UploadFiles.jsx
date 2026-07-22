@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import UploadTitleModal from '../components/UploadTitleModal';
 
 export default function UploadFiles() {
-  const { uploadFile, folders, files, showNotification, createUploadGroup, fetchUploadGroups } = useFiles();
+  const { uploadFile, folders, files, showNotification, createUploadGroup, fetchUploadGroups, resolveFolderIdForPath, fetchAllFolders } = useFiles();
   const [dragActive, setDragActive] = useState(false);
   const [uploadState, setUploadState] = useState('idle'); // idle | title | configuring | uploading | success
   
@@ -135,6 +135,7 @@ export default function UploadFiles() {
       const groupId = group?.id;
 
       const totalFiles = selectedFiles.length;
+      const folderCache = {};
 
       for (let i = 0; i < totalFiles; i++) {
         const file = selectedFiles[i];
@@ -142,18 +143,21 @@ export default function UploadFiles() {
         setProgress(Math.round((i / totalFiles) * 100));
         setCompletedCount(i);
 
+        const resolvedFolderId = await resolveFolderIdForPath(file.webkitRelativePath, selectedFolderId || null, folderCache, groupId);
+
         await uploadFile({
           file: file,
           name: file.name,
           type: file.name.split('.').pop().toLowerCase(),
           size: file.size,
-          folderId: selectedFolderId || null,
+          folderId: resolvedFolderId,
           upload_group_id: groupId
         });
       }
 
-      // Refresh upload groups to get updated counts
+      // Refresh upload groups and folders
       await fetchUploadGroups();
+      await fetchAllFolders();
 
       setProgress(100);
       setCompletedCount(totalFiles);

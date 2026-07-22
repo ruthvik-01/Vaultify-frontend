@@ -60,7 +60,7 @@ export default function Register() {
     <div>
       <div className="mb-6 text-left">
         <h3 className="font-serif text-2xl font-bold text-brand-charcoal">Create account</h3>
-        <p className="text-xs text-gray-500 mt-1">Get 500 GB of free secure cloud storage on Vaultify</p>
+        <p className="text-xs text-gray-500 mt-1">Get unlimited free secure cloud storage on Vaultify</p>
       </div>
 
       {error && (

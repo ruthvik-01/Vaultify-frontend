@@ -137,14 +137,13 @@ export const FileProvider = ({ children }) => {
   });
 
   const [storageStats, setStorageStats] = useState({
-    totalCapacity: 500 * 1024 * 1024 * 1024, // 500 GB
+    totalCapacity: 1000 * 1024 * 1024 * 1024, // 1 TB reference capacity
     used: 0,
     breakdown: {
       Documents: 0,
       Projects: 0,
       Certificates: 0,
       Media: 0,
-      Others: 0,
     },
   });
 
@@ -166,40 +165,40 @@ export const FileProvider = ({ children }) => {
       Projects: 0,
       Certificates: 0,
       Media: 0,
-      Others: 0,
     };
 
     files
       .filter((f) => !f.inTrash)
       .forEach((f) => {
-        used += f.size || 0;
-        if (f.category === 'Projects') breakdown.Projects += f.size || 0;
-        else if (f.category === 'Certificates') breakdown.Certificates += f.size || 0;
-        else if (
-          f.type === 'video' ||
-          f.type === 'png' ||
-          f.type === 'jpg' ||
-          f.type === 'jpeg' ||
-          f.type === 'webp'
-        )
-          breakdown.Media += f.size || 0;
-        else if (
-          ['Resumes', 'Notes', 'Assignments', 'Placement Documents'].includes(f.category)
-        )
-          breakdown.Documents += f.size || 0;
-        else breakdown.Others += f.size || 0;
+        const size = f.size || 0;
+        used += size;
+        
+        const ext = (f.name || '').split('.').pop().toLowerCase();
+        const isMedia = f.type === 'video' || 
+                        ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext) ||
+                        f.mimeType?.startsWith('video/') || 
+                        f.mimeType?.startsWith('image/');
+
+        if (f.category === 'Projects') {
+          breakdown.Projects += size;
+        } else if (f.category === 'Certificates') {
+          breakdown.Certificates += size;
+        } else if (isMedia) {
+          breakdown.Media += size;
+        } else {
+          // Default everything else to Documents category to ensure the sum equals total used
+          breakdown.Documents += size;
+        }
       });
 
-    const capacity = user.storage_plan === 'pro'
-      ? 1000 * 1024 * 1024 * 1024 // 1 TB
-      : 500 * 1024 * 1024 * 1024; // 500 GB
+    const capacity = 1000 * 1024 * 1024 * 1024; // 1 TB reference capacity
 
     setStorageStats({
       totalCapacity: capacity,
       used,
       breakdown,
     });
-  }, [files, user.storage_plan]);
+  }, [files]);
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   const fetchUserProfile = async () => {
@@ -877,6 +876,44 @@ export const FileProvider = ({ children }) => {
     }
   };
 
+  const resolveFolderIdForPath = async (relativePath, rootFolderId, folderCache = {}, uploadGroupId = null) => {
+    if (!relativePath) return rootFolderId;
+    const parts = relativePath.split('/').slice(0, -1);
+    if (parts.length === 0) return rootFolderId;
+
+    let parentId = rootFolderId;
+    let pathAccum = '';
+
+    for (const part of parts) {
+      pathAccum = pathAccum ? `${pathAccum}/${part}` : part;
+      if (folderCache[pathAccum]) {
+        parentId = folderCache[pathAccum];
+      } else {
+        let existing = folders.find(
+          (f) => (f.name || f.folder_name) === part && (f.parentId || f.parent_folder_id || null) === (parentId || null)
+        );
+
+        if (existing) {
+          parentId = existing.id || existing._id;
+        } else {
+          const res = await api.createFolder(part, parentId, null, uploadGroupId);
+          const f = res.data?.folder || res.data;
+          const newFolderObj = {
+            id: f._id || f.id,
+            name: f.folder_name || f.name,
+            parentId: f.parent_folder_id || f.parentId,
+            folder_name: f.folder_name || f.name,
+            parent_folder_id: f.parent_folder_id || f.parentId
+          };
+          setFolders((prev) => [...prev, newFolderObj]);
+          parentId = newFolderObj.id;
+        }
+        folderCache[pathAccum] = parentId;
+      }
+    }
+    return parentId;
+  };
+
   const renameFolder = async (id, newName) => {
     try {
       await api.renameFolder(id, newName);
@@ -984,6 +1021,7 @@ export const FileProvider = ({ children }) => {
       }
     }
     await fetchAllFiles();
+    await fetchAllFolders();
   };
 
   const {
@@ -1130,6 +1168,7 @@ export const FileProvider = ({ children }) => {
         isUploadProgressOpen,
         setIsUploadProgressOpen,
         moveFile,
+        resolveFolderIdForPath,
       }}
     >
       {children}

@@ -45,7 +45,7 @@ export default function Dashboard() {
   };
 
   const totalStorageUsed = formatSize(storageStats.used);
-  const totalStorageLimit = formatSize(storageStats.totalCapacity);
+  const totalStorageLimit = 'Unlimited';
   
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -146,7 +146,7 @@ export default function Dashboard() {
               <HardDrive className="w-5 h-5 stroke-[1.5]" />
             </div>
             <span className="text-[10px] font-bold text-brand-olive uppercase tracking-wider bg-brand-sage-light/25 px-2 py-0.5 rounded-full">
-              {user.storage_plan === 'pro' ? 'Pro 1 TB' : 'Free 500 GB'}
+              Unlimited Storage
             </span>
           </div>
           <div className="mt-4">

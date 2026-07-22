@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import UploadTitleModal from './UploadTitleModal';
 
 export default function UploadModal({ isOpen, onClose }) {
-  const { uploadFile, showNotification, createUploadGroup, fetchUploadGroups } = useFiles();
+  const { uploadFile, showNotification, createUploadGroup, fetchUploadGroups, resolveFolderIdForPath, fetchAllFolders } = useFiles();
   const [dragActive, setDragActive] = useState(false);
   const [uploadState, setUploadState] = useState('idle'); // idle | title | uploading | success
   const [progress, setProgress] = useState(0);
@@ -97,18 +97,23 @@ export default function UploadModal({ isOpen, onClose }) {
       const searchParams = new URLSearchParams(window.location.search);
       const currentFolderId = searchParams.get('folder') || null;
       const totalFiles = selectedFiles.length;
+      const folderCache = {};
 
       for (let i = 0; i < totalFiles; i++) {
-        setProgress(Math.round(((i + 0.5) / totalFiles) * 90));
+        const file = selectedFiles[i];
+        const resolvedFolderId = await resolveFolderIdForPath(file.webkitRelativePath, currentFolderId, folderCache, groupId);
         
         await uploadFile({
-          file: selectedFiles[i],
-          folderId: currentFolderId,
+          file: file,
+          folderId: resolvedFolderId,
           upload_group_id: groupId,
         });
+
+        setProgress(Math.round(((i + 1) / totalFiles) * 100));
       }
 
       await fetchUploadGroups();
+      await fetchAllFolders();
       setProgress(100);
       setUploadState('success');
     } catch (err) {
