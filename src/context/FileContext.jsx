@@ -1004,9 +1004,19 @@ export const FileProvider = ({ children }) => {
       if (folderCache[pathAccum]) {
         parentId = folderCache[pathAccum];
       } else {
+        // Check stale state only for folders that preexisted (not created this batch)
         let existing = folders.find(
           (f) => (f.name || f.folder_name) === part && (f.parentId || f.parent_folder_id || null) === (parentId || null)
         );
+
+        // Also check if we created this folder in a previous upload (not current batch)
+        // by looking at cache with root-relative path key including rootFolderId
+        const cacheKey = `${rootFolderId}::${pathAccum}`;
+        if (!existing && folderCache[cacheKey]) {
+          parentId = folderCache[cacheKey];
+          folderCache[pathAccum] = parentId;
+          continue;
+        }
 
         if (existing) {
           parentId = existing.id || existing._id;
@@ -1024,6 +1034,7 @@ export const FileProvider = ({ children }) => {
           parentId = newFolderObj.id;
         }
         folderCache[pathAccum] = parentId;
+        folderCache[cacheKey] = parentId;
       }
     }
     return parentId;

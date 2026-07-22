@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { shareService } from '../services/shareService';
 import { 
   Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar,
-  FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Video, Eye, X, Play 
+  FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Video, Eye, X, Play,
+  ChevronRight, ArrowLeft
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '../utils/formatDate';
@@ -22,6 +23,13 @@ export default function PublicShare() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Subfolder navigation state
+  const [folderStack, setFolderStack] = useState([]); // breadcrumb trail [{id, name}]
+  const [currentFolderContents, setCurrentFolderContents] = useState(null); // { files, folders }
+  const [subfolderLoading, setSubfolderLoading] = useState(false);
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   useEffect(() => {
     async function loadSharedItem() {
       setLoading(true);
@@ -29,6 +37,10 @@ export default function PublicShare() {
       try {
         const data = await shareService.getSharedItem(token);
         setItem(data);
+        // Initialize folder contents from root response
+        if (data.type === 'folder') {
+          setCurrentFolderContents({ files: data.files || [], folders: data.folders || [] });
+        }
       } catch (err) {
         setError(err.message || 'The shared link is invalid, has expired, or has been deleted.');
       } finally {
@@ -40,9 +52,45 @@ export default function PublicShare() {
     }
   }, [token]);
 
+  const navigateIntoFolder = useCallback(async (subfolder) => {
+    setSubfolderLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/share/${token}?folder_id=${subfolder.id || subfolder._id}`);
+      if (!res.ok) throw new Error('Failed to load subfolder.');
+      const json = await res.json();
+      const data = json.data || {};
+      setCurrentFolderContents({ files: data.files || [], folders: data.folders || [] });
+      setFolderStack(prev => [...prev, { id: subfolder.id || subfolder._id, name: subfolder.name || subfolder.folder_name }]);
+    } catch (err) {
+      console.error('Subfolder load failed:', err.message);
+    } finally {
+      setSubfolderLoading(false);
+    }
+  }, [token, API_URL]);
+
+  const navigateBack = useCallback(async () => {
+    const newStack = folderStack.slice(0, -1);
+    setSubfolderLoading(true);
+    try {
+      const parentFolderId = newStack.length > 0 ? newStack[newStack.length - 1].id : null;
+      const url = parentFolderId
+        ? `${API_URL}/share/${token}?folder_id=${parentFolderId}`
+        : `${API_URL}/share/${token}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to load folder.');
+      const json = await res.json();
+      const data = json.data || {};
+      setCurrentFolderContents({ files: data.files || [], folders: data.folders || [] });
+      setFolderStack(newStack);
+    } catch (err) {
+      console.error('Navigate back failed:', err.message);
+    } finally {
+      setSubfolderLoading(false);
+    }
+  }, [token, folderStack, API_URL]);
+
   const handleDownloadFile = async (fileId, fileName) => {
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${API_URL}/share/${token}/files/${fileId}`);
       if (!res.ok) {
         throw new Error('Failed to get download URL.');
@@ -76,7 +124,6 @@ export default function PublicShare() {
     setPreviewError('');
     try {
       const fileId = file.id || file._id;
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       const res = await fetch(`${API_URL}/share/${token}/files/${fileId}?disposition=inline`);
       if (!res.ok) {
         throw new Error('Failed to load file preview.');
@@ -276,65 +323,146 @@ export default function PublicShare() {
         ) : (
           /* Shared Folder */
           <div className="p-8 space-y-6 text-left">
+            {/* Breadcrumb Navigation */}
             <div className="flex items-center space-x-3 pb-4 border-b border-brand-sand">
               <div className="bg-brand-sage-light/50 text-brand-olive p-3 rounded-2xl">
                 <Folder className="w-8 h-8 fill-brand-sage/20" />
               </div>
-              <div>
-                <h1 className="font-serif font-bold text-lg text-brand-charcoal mb-0.5">
-                  {item.file_name || item.name}
-                </h1>
+              <div className="flex-grow min-w-0">
+                <div className="flex items-center flex-wrap gap-1 text-xs text-gray-500 font-semibold mb-1">
+                  <button
+                    onClick={() => {
+                      if (folderStack.length > 0) {
+                        setFolderStack([]);
+                        setCurrentFolderContents({ files: item.files || [], folders: item.folders || [] });
+                      }
+                    }}
+                    className="hover:text-brand-olive transition-colors cursor-pointer"
+                  >
+                    {item.file_name || item.name}
+                  </button>
+                  {folderStack.map((crumb, idx) => (
+                    <React.Fragment key={crumb.id}>
+                      <ChevronRight className="w-3 h-3 text-gray-400 shrink-0" />
+                      <button
+                        onClick={async () => {
+                          if (idx < folderStack.length - 1) {
+                            const newStack = folderStack.slice(0, idx + 1);
+                            setSubfolderLoading(true);
+                            try {
+                              const res = await fetch(`${API_URL}/share/${token}?folder_id=${crumb.id}`);
+                              const json = await res.json();
+                              const data = json.data || {};
+                              setCurrentFolderContents({ files: data.files || [], folders: data.folders || [] });
+                              setFolderStack(newStack);
+                            } catch (err) { console.error(err); }
+                            finally { setSubfolderLoading(false); }
+                          }
+                        }}
+                        className={`hover:text-brand-olive transition-colors cursor-pointer ${idx === folderStack.length - 1 ? 'text-brand-charcoal font-bold' : ''}`}
+                      >
+                        {crumb.name}
+                      </button>
+                    </React.Fragment>
+                  ))}
+                </div>
                 <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider font-sans">
                   Shared Folder Content
                 </span>
               </div>
-            </div>
-
-            {/* List of files in the folder */}
-            <div className="space-y-3">
-              <h2 className="font-serif text-sm font-bold text-brand-charcoal">Files</h2>
-              {item.files && item.files.length > 0 ? (
-                <div className="bg-brand-cream/35 border border-brand-sand/70 rounded-2xl overflow-hidden divide-y divide-brand-sand/50">
-                  {item.files.map((file) => (
-                    <div 
-                      key={file.id || file._id} 
-                      className="p-4 flex items-center justify-between hover:bg-brand-cream/70 transition-colors"
-                    >
-                      <div className="flex items-center space-x-3 min-w-0">
-                        <div className="bg-white p-2.5 rounded-xl border border-brand-sand text-brand-olive shrink-0 animate-fade-in">
-                          {getFileIcon(file.name || file.filename || file.file_name, file.mimeType || file.file_type)}
-                        </div>
-                        <div className="truncate">
-                          <span className="text-xs font-semibold text-brand-charcoal block truncate">{file.name || file.filename || file.file_name}</span>
-                          <span className="text-[10px] text-gray-400 font-mono block mt-0.5">{formatSize(file.size || file.file_size)}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 shrink-0">
-                        <button
-                          onClick={() => handlePreviewFile(file)}
-                          className="flex items-center space-x-1.5 px-3 py-2 bg-brand-cream hover:bg-brand-sand/55 text-brand-charcoal border border-brand-sand rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-brand-olive" />
-                          <span>Preview</span>
-                        </button>
-                        <button
-                          onClick={() => handleDownloadFile(file.id || file._id, file.name || file.filename || file.file_name)}
-                          className="flex items-center space-x-1.5 px-3 py-2 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>Download</span>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="bg-brand-cream border border-brand-sand rounded-2xl p-6 text-center text-xs text-gray-500 font-medium">
-                  <span>This folder is empty.</span>
-                </div>
+              {folderStack.length > 0 && (
+                <button
+                  onClick={navigateBack}
+                  disabled={subfolderLoading}
+                  className="flex items-center space-x-1.5 px-3 py-2 bg-brand-cream hover:bg-brand-sand/55 text-brand-charcoal border border-brand-sand rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none disabled:opacity-60"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
               )}
             </div>
+
+            {subfolderLoading ? (
+              <div className="flex flex-col items-center justify-center py-10">
+                <Loader2 className="w-8 h-8 text-brand-olive animate-spin mb-3" />
+                <span className="text-xs text-gray-500 font-medium">Loading folder...</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Subfolders */}
+                {currentFolderContents?.folders && currentFolderContents.folders.length > 0 && (
+                  <div className="space-y-2">
+                    <h2 className="font-serif text-sm font-bold text-brand-charcoal">Folders</h2>
+                    <div className="bg-brand-cream/35 border border-brand-sand/70 rounded-2xl overflow-hidden divide-y divide-brand-sand/50">
+                      {currentFolderContents.folders.map((subfolder) => (
+                        <button
+                          key={subfolder.id || subfolder._id}
+                          onClick={() => navigateIntoFolder(subfolder)}
+                          className="w-full p-4 flex items-center space-x-3 hover:bg-brand-cream/70 transition-colors text-left"
+                        >
+                          <div className="bg-white p-2.5 rounded-xl border border-brand-sand text-brand-olive shrink-0">
+                            <Folder className="w-4 h-4 fill-brand-sage/10" />
+                          </div>
+                          <div className="flex-grow min-w-0">
+                            <span className="text-xs font-semibold text-brand-charcoal block truncate">
+                              {subfolder.folder_name || subfolder.name}
+                            </span>
+                            <span className="text-[10px] text-gray-400 font-mono block mt-0.5">Folder</span>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* List of files in the folder */}
+                <div className="space-y-3">
+                  <h2 className="font-serif text-sm font-bold text-brand-charcoal">Files</h2>
+                  {currentFolderContents?.files && currentFolderContents.files.length > 0 ? (
+                    <div className="bg-brand-cream/35 border border-brand-sand/70 rounded-2xl overflow-hidden divide-y divide-brand-sand/50">
+                      {currentFolderContents.files.map((file) => (
+                        <div 
+                          key={file.id || file._id} 
+                          className="p-4 flex items-center justify-between hover:bg-brand-cream/70 transition-colors"
+                        >
+                          <div className="flex items-center space-x-3 min-w-0">
+                            <div className="bg-white p-2.5 rounded-xl border border-brand-sand text-brand-olive shrink-0 animate-fade-in">
+                              {getFileIcon(file.name || file.filename || file.file_name, file.mimeType || file.file_type)}
+                            </div>
+                            <div className="truncate">
+                              <span className="text-xs font-semibold text-brand-charcoal block truncate">{file.name || file.filename || file.file_name}</span>
+                              <span className="text-[10px] text-gray-400 font-mono block mt-0.5">{formatSize(file.size || file.file_size)}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <button
+                              onClick={() => handlePreviewFile(file)}
+                              className="flex items-center space-x-1.5 px-3 py-2 bg-brand-cream hover:bg-brand-sand/55 text-brand-charcoal border border-brand-sand rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-brand-olive" />
+                              <span>Preview</span>
+                            </button>
+                            <button
+                              onClick={() => handleDownloadFile(file.id || file._id, file.name || file.filename || file.file_name)}
+                              className="flex items-center space-x-1.5 px-3 py-2 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-[10px] font-bold cursor-pointer transition-colors shadow-sm select-none"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>Download</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="bg-brand-cream border border-brand-sand rounded-2xl p-6 text-center text-xs text-gray-500 font-medium">
+                      <span>This folder is empty.</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

@@ -52,6 +52,11 @@ export const videoService = {
         videoFolderId: f.folderId || fileFolderMap[f._id || f.id] || null,
         owner: f.owner || { name: 'Me' },
         status: f.status || 'Active', // Active, Uploading, Failed
+        isWorkSubmission: f.is_work_submission === true,
+        isShared: f.isShared === true,
+        shareToken: f.shareToken || null,
+        upload_group_id: f.upload_group_id || null,
+        uploadBatchId: f.uploadBatchId || null,
       };
     });
   },
