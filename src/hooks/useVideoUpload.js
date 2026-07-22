@@ -73,6 +73,9 @@ const uploadGeneralFile = (task, options = {}) => {
     if (task.uploadBatchId) {
       formData.append('uploadBatchId', task.uploadBatchId);
     }
+    if (task.upload_group_id) {
+      formData.append('upload_group_id', task.upload_group_id);
+    }
     if (task.file.webkitRelativePath) {
       formData.append('relative_path', task.file.webkitRelativePath);
     }

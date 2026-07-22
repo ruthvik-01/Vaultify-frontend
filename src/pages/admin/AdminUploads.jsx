@@ -596,17 +596,17 @@ export default function AdminUploads() {
                       <div className="flex items-center justify-center space-x-1.5">
                         <button
                           onClick={() => handleOpenPreview(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-olive text-white hover:bg-brand-olive-dark transition-colors cursor-pointer shadow-sm ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Preview File"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-olive text-white hover:bg-brand-olive-dark transition-colors cursor-pointer shadow-sm ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Preview not available for Group" : "Preview File"}
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleOpenLink(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Open Link in New Tab"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Link not available for Group" : "Open Link in New Tab"}
                         >
                           {actionLoadingId === file.id ? (
                             <div className="w-3.5 h-3.5 border-2 border-brand-olive border-t-transparent rounded-full animate-spin" />
@@ -616,17 +616,17 @@ export default function AdminUploads() {
                         </button>
                         <button
                           onClick={() => handleCopyShareLink(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Copy Share Link"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Sharing not available for Group" : "Copy Share Link"}
                         >
                           {copiedId === file.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-brand-olive" />}
                         </button>
                         <button
                           onClick={() => handleDownload(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Download File"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Download not available for Group" : "Download File"}
                         >
                           <Download className="w-3.5 h-3.5 text-brand-olive" />
                         </button>
