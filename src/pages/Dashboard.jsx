@@ -1,30 +1,40 @@
 import React, { useMemo, useState } from 'react';
 import { useFiles } from '../context/FileContext';
 import { useNavigate } from 'react-router-dom';
-import FileCard from '../components/FileCard';
 import { 
   Sparkles, Upload, FileText, ArrowRight,
-  Plus, Calendar, HardDrive, Share2
+  Plus, Calendar, HardDrive, Share2,
+  FolderOpen, MoreHorizontal, Pencil, Trash2,
+  ExternalLink, Copy, Check, X, Package
 } from 'lucide-react';
 
 export default function Dashboard() {
-  const { files, activities, user, uploadFile, storageStats, showNotification } = useFiles();
+  const { 
+    files, activities, user, uploadFile, storageStats, showNotification,
+    uploadGroups, renameUploadGroup, deleteUploadGroup, shareUploadGroup
+  } = useFiles();
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
+
+  // Rename state
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
+
+  // Menu state
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Share state
+  const [shareLink, setShareLink] = useState('');
+  const [shareCopied, setShareCopied] = useState(false);
+
+  // Delete confirm state
+  const [deletingId, setDeletingId] = useState(null);
 
   // Get active files
   const activeFiles = useMemo(() => files.filter(f => !f.inTrash), [files]);
 
-  // Get top 6 recent files
-  const recentFiles = useMemo(() =>
-    [...activeFiles]
-      .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded))
-      .slice(0, 6),
-    [activeFiles]
-  );
-
-  // Calculate stats
-  const totalFiles = activeFiles.length;
+  // Calculate stats — show upload group count instead of individual file count
+  const totalUploadGroups = uploadGroups.length;
   
   const formatSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -39,50 +49,7 @@ export default function Dashboard() {
   
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const recentUploadsCount = activeFiles.filter(f => new Date(f.dateAdded) >= sevenDaysAgo).length;
-
-  // Drag and drop handlers for Quick Upload widget
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      const ext = file.name.split('.').pop().toLowerCase();
-      
-      // Upload using default category based on extension
-      let cat = 'Notes';
-      if (['pdf'].includes(ext)) {
-        cat = 'Resumes';
-      } else if (['zip', 'rar'].includes(ext)) {
-        cat = 'Projects';
-      }
-
-      uploadFile({
-        file: file,
-        name: file.name,
-        category: cat,
-        type: ext,
-        size: file.size,
-        tags: ['Quick Upload']
-      }).then(() => {
-        showNotification(`Successfully uploaded "${file.name}" to ${cat} category!`, 'success');
-      }).catch((err) => {
-        showNotification('Upload failed: ' + (err?.message || 'Unknown error'), 'error');
-      });
-    }
-  };
+  const recentUploadsCount = uploadGroups.filter(g => new Date(g.created_at) >= sevenDaysAgo).length;
 
   const timeAgo = (isoString) => {
     const date = new Date(isoString);
@@ -97,6 +64,64 @@ export default function Dashboard() {
     if (diffMin < 60) return `${diffMin}m ago`;
     if (diffHr < 24) return `${diffHr}h ago`;
     return `${diffDays}d ago`;
+  };
+
+  const formatDate = (isoString) => {
+    return new Date(isoString).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric'
+    });
+  };
+
+  // Rename handlers
+  const startRename = (group) => {
+    setRenamingId(group.id);
+    setRenameValue(group.title);
+    setOpenMenuId(null);
+  };
+
+  const confirmRename = async () => {
+    if (!renameValue.trim()) return;
+    try {
+      await renameUploadGroup(renamingId, renameValue.trim());
+    } catch (_) {}
+    setRenamingId(null);
+    setRenameValue('');
+  };
+
+  const cancelRename = () => {
+    setRenamingId(null);
+    setRenameValue('');
+  };
+
+  // Delete handler
+  const confirmDelete = async () => {
+    try {
+      await deleteUploadGroup(deletingId);
+    } catch (_) {}
+    setDeletingId(null);
+  };
+
+  // Share handler
+  const handleShare = async (group) => {
+    setOpenMenuId(null);
+    try {
+      const link = await shareUploadGroup(group.id);
+      if (link) {
+        setShareLink(link);
+        navigator.clipboard.writeText(link);
+        setShareCopied(true);
+        setTimeout(() => {
+          setShareCopied(false);
+          setShareLink('');
+        }, 4000);
+      }
+    } catch (_) {}
+  };
+
+  // Open handler — navigate to my-files
+  const handleOpen = (group) => {
+    setOpenMenuId(null);
+    navigate('/my-files');
   };
 
   return (
@@ -148,23 +173,23 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Total Files Card */}
+        {/* Total Uploads Card */}
         <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex justify-between items-start">
             <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
-              <FileText className="w-5 h-5 stroke-[1.5]" />
+              <Package className="w-5 h-5 stroke-[1.5]" />
             </div>
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-brand-cream-dark px-2 py-0.5 rounded-full">
-              Files
+              Uploads
             </span>
           </div>
           <div className="mt-4">
             <h4 className="text-3xl font-serif font-bold text-brand-charcoal leading-none">
-              {totalFiles}
+              {totalUploadGroups}
             </h4>
-            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1.5">Total Vault Items</p>
+            <p className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider mt-1.5">Total Upload Groups</p>
             <p className="text-[10px] text-gray-400 mt-2">
-              Academic &amp; personal documents
+              Grouped uploads &amp; collections
             </p>
           </div>
           <button 
@@ -205,6 +230,172 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Upload Groups Section */}
+      <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="font-serif text-base font-bold text-brand-charcoal">Your Uploads</h3>
+          <button
+            onClick={() => navigate('/upload')}
+            className="flex items-center space-x-1.5 bg-brand-olive hover:bg-brand-olive-dark text-white px-3 py-1.5 rounded-xl text-[10px] font-semibold transition-all cursor-pointer shadow-sm"
+          >
+            <Plus className="w-3 h-3" />
+            <span>New Upload</span>
+          </button>
+        </div>
+
+        {/* Share link toast */}
+        {shareLink && (
+          <div className="flex items-center space-x-2 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs text-emerald-700">
+            <Check className="w-3.5 h-3.5" />
+            <span className="font-semibold truncate flex-1">{shareLink}</span>
+            <span className="text-[10px] text-emerald-500">
+              {shareCopied ? 'Copied!' : ''}
+            </span>
+          </div>
+        )}
+
+        {/* Delete confirmation */}
+        {deletingId && (
+          <div className="flex items-center justify-between bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 text-xs">
+            <span className="text-rose-700 font-semibold">Delete this upload group and all its files?</span>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setDeletingId(null)}
+                className="px-3 py-1.5 bg-white border border-rose-200 rounded-lg text-rose-600 font-semibold hover:bg-rose-50 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-3 py-1.5 bg-rose-500 text-white rounded-lg font-semibold hover:bg-rose-600 transition-all cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        )}
+
+        {uploadGroups.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {uploadGroups.map((group) => (
+              <div
+                key={group.id}
+                className="bg-brand-cream/50 border border-brand-sand/70 rounded-2xl p-4 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 group relative"
+              >
+                {/* Top row */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2.5 min-w-0 flex-1">
+                    <div className={`p-2 rounded-xl border shrink-0 ${group.has_folders 
+                      ? 'bg-amber-50 border-amber-200 text-amber-600' 
+                      : 'bg-brand-sage-light/30 border-brand-sand text-brand-olive'}`
+                    }>
+                      {group.has_folders 
+                        ? <FolderOpen className="w-4.5 h-4.5" />
+                        : <FileText className="w-4.5 h-4.5" />
+                      }
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      {renamingId === group.id ? (
+                        <div className="flex items-center space-x-1.5">
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') confirmRename();
+                              if (e.key === 'Escape') cancelRename();
+                            }}
+                            autoFocus
+                            className="text-xs font-bold text-brand-charcoal bg-white border border-brand-olive/40 rounded-lg px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                          />
+                          <button onClick={confirmRename} className="text-emerald-500 hover:text-emerald-700 cursor-pointer"><Check className="w-3.5 h-3.5" /></button>
+                          <button onClick={cancelRename} className="text-gray-400 hover:text-gray-600 cursor-pointer"><X className="w-3.5 h-3.5" /></button>
+                        </div>
+                      ) : (
+                        <h4 className="text-xs font-bold text-brand-charcoal truncate">{group.title}</h4>
+                      )}
+                      <p className="text-[10px] text-gray-400 mt-0.5">{formatDate(group.created_at)}</p>
+                    </div>
+                  </div>
+
+                  {/* Action menu */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setOpenMenuId(openMenuId === group.id ? null : group.id)}
+                      className="p-1.5 text-gray-400 hover:text-brand-charcoal hover:bg-white rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+
+                    {openMenuId === group.id && (
+                      <div className="absolute right-0 top-8 bg-white border border-brand-sand rounded-xl shadow-lg z-20 w-40 py-1 overflow-hidden">
+                        <button
+                          onClick={() => handleOpen(group)}
+                          className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-gray-600 hover:bg-brand-cream transition-all cursor-pointer"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open</span>
+                        </button>
+                        <button
+                          onClick={() => startRename(group)}
+                          className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-gray-600 hover:bg-brand-cream transition-all cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>Rename Title</span>
+                        </button>
+                        <button
+                          onClick={() => handleShare(group)}
+                          className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-gray-600 hover:bg-brand-cream transition-all cursor-pointer"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>Share Upload</span>
+                        </button>
+                        <hr className="border-brand-sand/60 my-1" />
+                        <button
+                          onClick={() => { setDeletingId(group.id); setOpenMenuId(null); }}
+                          className="w-full flex items-center space-x-2 px-3 py-2 text-xs text-rose-500 hover:bg-rose-50 transition-all cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete Upload</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Stats row */}
+                <div className="flex items-center space-x-4 text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
+                  <span className="flex items-center space-x-1">
+                    <FileText className="w-3 h-3 text-gray-400" />
+                    <span>{group.file_count} {group.file_count === 1 ? 'file' : 'files'}</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <HardDrive className="w-3 h-3 text-gray-400" />
+                    <span>{formatSize(group.total_size)}</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="bg-brand-cream-dark p-4 rounded-full text-brand-olive mb-3 inline-block">
+              <Upload className="w-8 h-8 stroke-[1.4]" />
+            </div>
+            <h4 className="font-serif text-sm font-bold text-brand-charcoal">No uploads yet</h4>
+            <p className="text-[10px] text-gray-400 mt-1 max-w-xs mx-auto">
+              Upload your first files to see them organized here by upload title.
+            </p>
+            <button
+              onClick={() => navigate('/upload')}
+              className="mt-4 bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+            >
+              Upload Files
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Activity Log */}
       <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm space-y-4">
         <h3 className="font-serif text-base font-bold text-brand-charcoal">Activity Log</h3>
@@ -239,6 +430,10 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Click outside to close menus */}
+      {openMenuId && (
+        <div className="fixed inset-0 z-10" onClick={() => setOpenMenuId(null)} />
+      )}
     </div>
   );
 }

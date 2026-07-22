@@ -2,27 +2,27 @@ import React, { useState, useRef } from 'react';
 import { useFiles } from '../context/FileContext';
 import { 
   UploadCloud, FileText, CheckCircle2, FileUp, Sparkles, 
-  ArrowRight, FolderOpen
+  ArrowRight, FolderOpen, X, Plus, Package
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import UploadTitleModal from '../components/UploadTitleModal';
 
 export default function UploadFiles() {
-  const { uploadFile, folders, files, showNotification } = useFiles();
+  const { uploadFile, folders, files, showNotification, createUploadGroup, fetchUploadGroups } = useFiles();
   const [dragActive, setDragActive] = useState(false);
-  const [uploadState, setUploadState] = useState('idle'); // idle | configuring | uploading | success
+  const [uploadState, setUploadState] = useState('idle'); // idle | title | configuring | uploading | success
   
   // File details states
-  const [fileName, setFileName] = useState('');
-  const [fileSize, setFileSize] = useState(0);
-  const [fileType, setFileType] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState([]); // Array of File objects
   const [selectedFolderId, setSelectedFolderId] = useState('');
   
   const [progress, setProgress] = useState(0);
-  const [speed, setSpeed] = useState(0);
-  const [eta, setEta] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [currentFileName, setCurrentFileName] = useState('');
+  const [uploadGroupTitle, setUploadGroupTitle] = useState('');
 
   const fileInputRef = useRef(null);
-  const selectedFileRef = useRef(null);
+  const folderInputRef = useRef(null);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -39,17 +39,39 @@ export default function UploadFiles() {
     e.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      setupFileDetails(file);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      const validated = droppedFiles.filter(f => validateFile(f));
+      if (validated.length > 0) {
+        setSelectedFiles(validated);
+        setUploadState('title');
+      }
     }
   };
 
   const handleFileSelect = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setupFileDetails(file);
+    if (e.target.files && e.target.files.length > 0) {
+      const picked = Array.from(e.target.files);
+      const validated = picked.filter(f => validateFile(f));
+      if (validated.length > 0) {
+        setSelectedFiles(validated);
+        setUploadState('title');
+      }
     }
+    // Reset input so re-selecting same file works
+    e.target.value = '';
+  };
+
+  const handleFolderSelect = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const picked = Array.from(e.target.files);
+      const validated = picked.filter(f => validateFile(f));
+      if (validated.length > 0) {
+        setSelectedFiles(validated);
+        setUploadState('title');
+      }
+    }
+    e.target.value = '';
   };
 
   const allowedExtensions = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'zip', 'txt'];
@@ -63,81 +85,83 @@ export default function UploadFiles() {
   ];
   const maxFileSize = 10 * 1024 * 1024; // 10 MB
 
-  const setupFileDetails = (file) => {
+  const validateFile = (file) => {
     const ext = file.name.split('.').pop().toLowerCase();
     const isVideo = allowedVideoExtensions.includes(ext) || (file.type && file.type.startsWith('video/'));
 
     if (!isVideo && !allowedExtensions.includes(ext) && !allowedMimeTypes.includes(file.type)) {
       showNotification(
-        `Unsupported file type (.${ext}). Allowed: PDF, DOC/DOCX, JPEG, PNG, ZIP, and TXT.`,
+        `Unsupported file type (.${ext}). Skipping "${file.name}".`,
         'error'
       );
-      return;
+      return false;
     }
 
     if (!isVideo && file.size > maxFileSize) {
       showNotification(
-        `File too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum allowed: 10 MB.`,
+        `File too large: "${file.name}" (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum: 10 MB.`,
         'error'
       );
-      return;
+      return false;
     }
+    return true;
+  };
 
-    selectedFileRef.current = file;
-    setFileName(file.name);
-    setFileSize(file.size);
-    setFileType(ext);
+  const handleTitleConfirm = async (title) => {
+    setUploadGroupTitle(title);
     setUploadState('configuring');
+  };
+
+  const handleTitleCancel = () => {
+    setUploadState('idle');
+    setSelectedFiles([]);
+  };
+
+  const removeFile = (index) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+    if (selectedFiles.length <= 1) {
+      resetUploadPage();
+    }
   };
 
   const executeUpload = async () => {
     setUploadState('uploading');
     setProgress(0);
-    setSpeed(0);
-    setEta(0);
-
-    const ext = fileName.split('.').pop().toLowerCase();
-    const isVideo = allowedVideoExtensions.includes(ext) || (selectedFileRef.current && selectedFileRef.current.type && selectedFileRef.current.type.startsWith('video/'));
+    setCompletedCount(0);
 
     try {
-      let progressInterval;
-      if (!isVideo) {
-        progressInterval = setInterval(() => {
-          setProgress((prev) => {
-            if (prev >= 90) {
-              clearInterval(progressInterval);
-              return 90;
-            }
-            return prev + 10;
-          });
-        }, 120);
+      // Create the upload group first
+      const group = await createUploadGroup(uploadGroupTitle);
+      const groupId = group?.id;
+
+      const totalFiles = selectedFiles.length;
+
+      for (let i = 0; i < totalFiles; i++) {
+        const file = selectedFiles[i];
+        setCurrentFileName(file.name);
+        setProgress(Math.round((i / totalFiles) * 100));
+        setCompletedCount(i);
+
+        await uploadFile({
+          file: file,
+          name: file.name,
+          type: file.name.split('.').pop().toLowerCase(),
+          size: file.size,
+          folderId: selectedFolderId || null,
+          upload_group_id: groupId
+        });
       }
 
-      await uploadFile({
-        file: selectedFileRef.current,
-        name: fileName,
-        type: fileType,
-        size: fileSize,
-        folderId: selectedFolderId || null
-      }, (progInfo) => {
-        if (isVideo) {
-          setProgress(progInfo.progress);
-          if (progInfo.speed) setSpeed(progInfo.speed);
-          if (progInfo.eta) setEta(progInfo.eta);
-        }
-      });
+      // Refresh upload groups to get updated counts
+      await fetchUploadGroups();
 
-      if (progressInterval) {
-        clearInterval(progressInterval);
-      }
       setProgress(100);
+      setCompletedCount(totalFiles);
       setUploadState('success');
     } catch (error) {
       console.error('Upload failed:', error);
       setUploadState('idle');
       setProgress(0);
-      setSpeed(0);
-      setEta(0);
       showNotification('Upload failed: ' + (error?.message || 'Unknown error'), 'error');
     }
   };
@@ -145,34 +169,20 @@ export default function UploadFiles() {
   const formatSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    return (bytes / (k * k)).toFixed(2) + ' MB';
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const formatSpeed = (bytesPerSec) => {
-    if (!bytesPerSec || bytesPerSec <= 0) return '';
-    const k = 1024;
-    const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
-    const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
-    return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-  };
-
-  const formatETA = (seconds) => {
-    if (!seconds || seconds <= 0) return 'estimating...';
-    if (seconds < 60) return `${seconds}s remaining`;
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}m ${secs}s remaining`;
-  };
+  const totalSelectedSize = selectedFiles.reduce((sum, f) => sum + f.size, 0);
 
   const resetUploadPage = () => {
-    selectedFileRef.current = null;
-    setFileName('');
-    setFileSize(0);
-    setFileType('');
+    setSelectedFiles([]);
     setSelectedFolderId('');
     setProgress(0);
-    setSpeed(0);
-    setEta(0);
+    setCompletedCount(0);
+    setCurrentFileName('');
+    setUploadGroupTitle('');
     setUploadState('idle');
   };
 
@@ -183,6 +193,13 @@ export default function UploadFiles() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-left">
       
+      {/* Upload Title Modal */}
+      <UploadTitleModal
+        isOpen={uploadState === 'title'}
+        onConfirm={handleTitleConfirm}
+        onCancel={handleTitleCancel}
+      />
+
       {/* Primary Upload Actions Panel */}
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm">
@@ -199,7 +216,6 @@ export default function UploadFiles() {
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
                 className={`
                   border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[320px]
                   ${dragActive 
@@ -211,22 +227,43 @@ export default function UploadFiles() {
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   onChange={handleFileSelect}
+                  className="hidden"
+                />
+                <input
+                  ref={folderInputRef}
+                  type="file"
+                  webkitdirectory="true"
+                  directory="true"
+                  multiple
+                  onChange={handleFolderSelect}
                   className="hidden"
                 />
                 <div className="bg-brand-cream-dark p-4 rounded-full text-brand-olive mb-4">
                   <UploadCloud className="w-12 h-12 stroke-[1.4]" />
                 </div>
-                <h3 className="font-serif text-lg font-bold text-brand-charcoal">Drag and drop file to upload</h3>
+                <h3 className="font-serif text-lg font-bold text-brand-charcoal">Drag and drop files to upload</h3>
                 <p className="text-xs text-gray-400 mt-1.5 max-w-sm">
                   Select your academic or placement assets: documents, images, videos, zip project codes, or certificates.
                 </p>
-                <button
-                  type="button"
-                  className="mt-6 bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all"
-                >
-                  Browse local files
-                </button>
+                <div className="flex space-x-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-brand-olive hover:bg-brand-olive-dark text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
+                  >
+                    Browse Files
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => folderInputRef.current?.click()}
+                    className="bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal px-5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center space-x-1.5"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    <span>Upload Folder</span>
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -238,24 +275,60 @@ export default function UploadFiles() {
                 exit={{ opacity: 0 }}
                 className="space-y-5"
               >
-                <div className="bg-brand-cream border border-brand-sand rounded-2xl p-4 flex justify-between items-center text-xs">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-white p-2 rounded-lg border border-brand-sand/60">
-                      <FileText className="w-5 h-5 text-brand-olive" />
-                    </div>
-                    <div>
-                      <span className="font-bold text-brand-charcoal block truncate max-w-xs sm:max-w-md">{fileName}</span>
-                      <span className="text-[10px] text-gray-500">{formatSize(fileSize)}</span>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={resetUploadPage}
-                    className="text-xs text-red-500 hover:underline font-semibold"
-                  >
-                    Cancel
-                  </button>
+                {/* Upload title badge */}
+                <div className="bg-brand-olive/5 border border-brand-olive/20 rounded-xl px-4 py-2.5 flex items-center space-x-2">
+                  <Package className="w-4 h-4 text-brand-olive" />
+                  <span className="text-xs font-bold text-brand-olive">{uploadGroupTitle}</span>
+                  <span className="text-[10px] text-gray-400 ml-auto">{selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} · {formatSize(totalSelectedSize)}</span>
                 </div>
 
+                {/* File list */}
+                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+                  {selectedFiles.map((file, idx) => (
+                    <div key={idx} className="bg-brand-cream border border-brand-sand/60 rounded-xl p-3 flex justify-between items-center text-xs">
+                      <div className="flex items-center space-x-2 min-w-0 flex-1">
+                        <div className="bg-white p-1.5 rounded-lg border border-brand-sand/60 shrink-0">
+                          <FileText className="w-4 h-4 text-brand-olive" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-brand-charcoal block truncate">{file.name}</span>
+                          <span className="text-[10px] text-gray-400">{formatSize(file.size)}</span>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => removeFile(idx)}
+                        className="text-gray-400 hover:text-red-500 transition-all cursor-pointer ml-2 shrink-0"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add more files */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center space-x-1.5 text-xs text-brand-olive font-semibold hover:underline cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Add more files</span>
+                </button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const newFiles = Array.from(e.target.files).filter(f => validateFile(f));
+                      setSelectedFiles(prev => [...prev, ...newFiles]);
+                    }
+                    e.target.value = '';
+                  }}
+                  className="hidden"
+                />
+
+                {/* Folder selector */}
                 <div className="max-w-md">
                   <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1.5 flex items-center space-x-1.5">
                     <FolderOpen className="w-3.5 h-3.5 text-brand-olive" />
@@ -279,13 +352,14 @@ export default function UploadFiles() {
                 <div className="flex space-x-3 mt-6 pt-4 border-t border-brand-sand">
                   <button
                     onClick={resetUploadPage}
-                    className="flex-1 bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal text-xs font-semibold py-2.5 rounded-xl transition-all"
+                    className="flex-1 bg-brand-cream border border-brand-sand hover:bg-brand-sand/40 text-brand-charcoal text-xs font-semibold py-2.5 rounded-xl transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={executeUpload}
-                    className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white text-xs font-semibold py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center space-x-1 cursor-pointer"
+                    disabled={selectedFiles.length === 0}
+                    className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white text-xs font-semibold py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>Store to Locker Vault</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -301,8 +375,11 @@ export default function UploadFiles() {
               >
                 <div className="w-12 h-12 rounded-full border-2 border-brand-sand border-t-brand-olive animate-spin mb-4" />
                 <h3 className="font-serif text-lg font-bold text-brand-charcoal truncate max-w-sm">
-                  Transferring "{fileName}" to Secure Sandbox...
+                  Uploading "{uploadGroupTitle}"
                 </h3>
+                <p className="text-xs text-gray-400 mt-1">
+                  {currentFileName && `Transferring: ${currentFileName}`}
+                </p>
                 
                 <div className="w-full max-w-xs bg-brand-cream-dark h-2 rounded-full overflow-hidden mt-6 mb-2">
                   <div 
@@ -312,11 +389,9 @@ export default function UploadFiles() {
                 </div>
                 <div className="flex flex-col space-y-1 text-center font-sans font-medium text-xs text-gray-500">
                   <span className="font-mono text-xs text-gray-600 font-bold">{progress}% COMPLETE</span>
-                  <div className="flex justify-center space-x-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
-                    <span>Size: {formatSize(fileSize)}</span>
-                    {speed > 0 && <span>Speed: {formatSpeed(speed)}</span>}
-                    {eta > 0 && <span>{formatETA(eta)}</span>}
-                  </div>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                    {completedCount} of {selectedFiles.length} files uploaded
+                  </span>
                 </div>
               </motion.div>
             )}
@@ -331,14 +406,14 @@ export default function UploadFiles() {
                 </div>
                 <h3 className="font-serif text-2xl font-bold text-brand-charcoal">Secure Upload Completed</h3>
                 <p className="text-xs text-gray-400 mt-2 max-w-sm leading-normal">
-                  Your asset <span className="font-semibold text-brand-charcoal">"{fileName}"</span> has been encrypted and saved successfully.
+                  Upload group <span className="font-semibold text-brand-charcoal">"{uploadGroupTitle}"</span> with {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} has been encrypted and saved successfully.
                 </p>
 
                 <button
                   onClick={resetUploadPage}
                   className="mt-8 bg-brand-olive hover:bg-brand-olive-dark text-white px-6 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
                 >
-                  Upload another asset
+                  Upload another batch
                 </button>
               </motion.div>
             )}
@@ -354,6 +429,12 @@ export default function UploadFiles() {
             <span>Vault Upload Standards</span>
           </h3>
           <ul className="text-xs text-gray-500 space-y-2.5 leading-relaxed font-sans">
+            <li>
+              <strong>Upload Groups:</strong> Every upload is organized under a title. Name your uploads meaningfully — e.g. "Semester 6 Notes" or "AWS Project".
+            </li>
+            <li>
+              <strong>Multi-file Support:</strong> Select multiple files or an entire folder to upload them as one group.
+            </li>
             <li>
               <strong>Document Privacy:</strong> By default, all uploaded locker assets are 100% private. Use Share/Link to toggle collaborative view.
             </li>
