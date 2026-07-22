@@ -230,4 +230,54 @@ export const api = {
     const res = await fetch(`${API_URL}/health`);
     return handleResponse(res);
   },
+
+  // ─── UPLOAD GROUPS ─────────────────────────────────────────────────────────
+  createUploadGroup: async (title) => {
+    const res = await fetch(`${API_URL}/upload-groups`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ title }),
+    });
+    return handleResponse(res);
+  },
+
+  getUploadGroups: async () => {
+    const res = await fetch(`${API_URL}/upload-groups`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  getUploadGroup: async (id) => {
+    const res = await fetch(`${API_URL}/upload-groups/${id}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  renameUploadGroup: async (id, title) => {
+    const res = await fetch(`${API_URL}/upload-groups/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify({ title }),
+    });
+    return handleResponse(res);
+  },
+
+  deleteUploadGroup: async (id) => {
+    const res = await fetch(`${API_URL}/upload-groups/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  shareUploadGroup: async (id, permission = 'read', expiryHours = 24) => {
+    const res = await fetch(`${API_URL}/upload-groups/${id}/share`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ permission, expiry_hours: expiryHours }),
+    });
+    return handleResponse(res);
+  },
 };

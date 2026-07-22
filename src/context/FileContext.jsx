@@ -37,6 +37,7 @@ export const FileProvider = ({ children }) => {
 
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
+  const [uploadGroups, setUploadGroups] = useState([]);
   const [activities, setActivities] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const isFetchingFiles = useRef(false);
@@ -153,6 +154,7 @@ export const FileProvider = ({ children }) => {
       fetchUserProfile();
       fetchAllFiles();
       fetchAllFolders();
+      fetchUploadGroups();
     }
   }, [isAuthenticated]);
 
@@ -371,6 +373,7 @@ export const FileProvider = ({ children }) => {
     try {
       const file = fileData.file;
       const batchId = fileData.uploadBatchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const uploadGroupId = fileData.upload_group_id || null;
       const ext = file.name.split('.').pop().toLowerCase();
       const allowedVideoExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'm4v', 'mpeg', '3gp', 'ogv'];
       const isVideo = allowedVideoExtensions.includes(ext) || (file.type && file.type.startsWith('video/'));
@@ -435,6 +438,9 @@ export const FileProvider = ({ children }) => {
           formData.append('folder_id', fileData.folderId);
         }
         formData.append('uploadBatchId', batchId);
+        if (uploadGroupId) {
+          formData.append('upload_group_id', uploadGroupId);
+        }
 
         const res = await api.uploadFile(formData);
         const fileData2 = res.data?.file || res.data;
@@ -896,6 +902,75 @@ export const FileProvider = ({ children }) => {
     }
   };
 
+  // ─── Upload Groups ────────────────────────────────────────────────────────
+  const fetchUploadGroups = async () => {
+    try {
+      const res = await api.getUploadGroups();
+      const groups = res.data?.groups || res.data;
+      if (Array.isArray(groups)) {
+        setUploadGroups(groups);
+      }
+    } catch (err) {
+      console.error('Failed to fetch upload groups:', err.message);
+    }
+  };
+
+  const createUploadGroup = async (title) => {
+    try {
+      const res = await api.createUploadGroup(title);
+      const group = res.data?.group || res.data;
+      if (group) {
+        setUploadGroups(prev => [group, ...prev]);
+        return group;
+      }
+    } catch (err) {
+      console.error('Failed to create upload group:', err.message);
+      showNotification('Failed to create upload group', 'error');
+      throw err;
+    }
+  };
+
+  const renameUploadGroup = async (id, newTitle) => {
+    try {
+      await api.renameUploadGroup(id, newTitle);
+      setUploadGroups(prev => prev.map(g => g.id === id ? { ...g, title: newTitle } : g));
+      showNotification('Upload title renamed successfully', 'success');
+    } catch (err) {
+      console.error('Failed to rename upload group:', err.message);
+      showNotification('Failed to rename upload title', 'error');
+      throw err;
+    }
+  };
+
+  const deleteUploadGroup = async (id) => {
+    try {
+      await api.deleteUploadGroup(id);
+      setUploadGroups(prev => prev.filter(g => g.id !== id));
+      await fetchAllFiles();
+      showNotification('Upload group deleted successfully', 'success');
+    } catch (err) {
+      console.error('Failed to delete upload group:', err.message);
+      showNotification('Failed to delete upload group', 'error');
+      throw err;
+    }
+  };
+
+  const shareUploadGroup = async (id, permission = 'read', expiryHours = 24) => {
+    try {
+      const res = await api.shareUploadGroup(id, permission, expiryHours);
+      const data = res.data;
+      if (data && data.token) {
+        const link = `${window.location.origin}/share/${data.token}`;
+        showNotification('Share link generated!', 'success');
+        return link;
+      }
+    } catch (err) {
+      console.error('Failed to share upload group:', err.message);
+      showNotification('Failed to share upload group', 'error');
+      throw err;
+    }
+  };
+
   // ─── Global Video Upload Queue ─────────────────────────────────────────────
   const [isUploadProgressOpen, setIsUploadProgressOpen] = useState(true);
 
@@ -1009,6 +1084,7 @@ export const FileProvider = ({ children }) => {
       value={{
         files,
         folders,
+        uploadGroups,
         activities,
         user,
         notifications,
@@ -1037,11 +1113,16 @@ export const FileProvider = ({ children }) => {
         fetchAllFolders,
         fetchTrashFiles,
         fetchUserProfile,
+        fetchUploadGroups,
         showNotification,
         createFolder,
         getOrCreateWorkFolder,
         renameFolder,
         deleteFolder,
+        createUploadGroup,
+        renameUploadGroup,
+        deleteUploadGroup,
+        shareUploadGroup,
         uploadQueue,
         addFilesToUploadQueue,
         cancelVideoUpload,
