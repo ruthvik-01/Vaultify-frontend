@@ -107,16 +107,21 @@ export const adminService = {
   },
 
   deleteUpload: async (id, fileType) => {
-    const query = fileType ? `?type=${fileType}` : '';
-    return await fetchAdmin(`${API_URL}/admin/uploads/${id}${query}`, {
+    const safeType = (fileType || '').toLowerCase() === 'video' ? 'video' : 'file';
+    const query = `?type=${safeType}`;
+    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}${query}`, {
       method: 'DELETE'
     });
+    cache.clear();
+    return res;
   },
 
   deleteTeamUploads: async (teamName) => {
-    return await fetchAdmin(`${API_URL}/admin/teams/${encodeURIComponent(teamName)}/uploads`, {
+    const res = await fetchAdmin(`${API_URL}/admin/teams/${encodeURIComponent(teamName)}/uploads`, {
       method: 'DELETE'
     });
+    cache.clear();
+    return res;
   },
 
   getActivity: async () => {
@@ -181,9 +186,17 @@ export const adminService = {
     link.parentNode.removeChild(link);
   },
 
-  getPreviewUrl: async (id, fileType) => {
-    const type = fileType === 'video' ? 'video' : 'file';
-    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}/preview?type=${type}`);
+  getPreviewUrl: async (id, fileType, disposition = 'inline') => {
+    const type = (fileType || '').toLowerCase() === 'video' ? 'video' : 'file';
+    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}/preview?type=${type}&disposition=${disposition}`);
     return res.download_url;
+  },
+
+  generateShareLink: async (id, fileType) => {
+    const type = (fileType || '').toLowerCase() === 'video' ? 'video' : 'file';
+    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}/share?type=${type}`, {
+      method: 'POST'
+    });
+    return res.shareToken;
   }
 };

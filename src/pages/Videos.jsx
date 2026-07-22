@@ -362,7 +362,7 @@ export default function Videos() {
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onUpload={(filesList) => {
-          addFilesToQueue(filesList, currentFolderId);
+          addFilesToQueue(filesList, currentFolderId, null, 'video');
           setIsUploadProgressOpen(true);
         }}
       />

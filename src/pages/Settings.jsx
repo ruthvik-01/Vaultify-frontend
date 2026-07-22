@@ -27,6 +27,11 @@ export default function Settings() {
   const [accentColor, setAccentColor] = useState(user.accent_color || 'green');
   const [fontSize, setFontSize] = useState(user.font_size || 'medium');
 
+  // Form Validation & Saving states
+  const [nameError, setNameError] = useState(false);
+  const [universityError, setUniversityError] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
     setName(user.name || '');
     setEmail(user.email || '');
@@ -47,12 +52,27 @@ export default function Settings() {
 
   const handleAccountSave = (e) => {
     e.preventDefault();
+    setNameError(!name.trim());
+    setUniversityError(!university.trim());
+
+    if (!name.trim() || !university.trim()) {
+      showNotification('Please fill in all required fields.', 'error');
+      return;
+    }
+
+    if (isSaving) return;
+    setIsSaving(true);
+
     updateProfile({
-      name
+      name: name.trim(),
+      university: university.trim(),
+      organization: university.trim()
     }).then(() => {
       showNotification('Account credentials saved successfully!', 'success');
     }).catch(err => {
-      showNotification('Failed to save credentials: ' + err.message, 'error');
+      showNotification('Failed to save credentials: ' + (err.message || err), 'error');
+    }).finally(() => {
+      setIsSaving(false);
     });
   };
 
@@ -132,12 +152,17 @@ export default function Settings() {
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
                   Full Name
                 </label>
-                <input
+                 <input
                   type="text"
                   required
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (e.target.value.trim()) setNameError(false);
+                  }}
+                  className={`w-full px-3 py-2.5 bg-brand-cream border rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive ${
+                    nameError ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30' : 'border-brand-sand'
+                  }`}
                 />
               </div>
 
@@ -158,21 +183,29 @@ export default function Settings() {
                 <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block mb-1">
                   Organization / University
                 </label>
-                <input
+                 <input
                   type="text"
                   required
                   value={university}
-                  onChange={(e) => setUniversity(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                  onChange={(e) => {
+                    setUniversity(e.target.value);
+                    if (e.target.value.trim()) setUniversityError(false);
+                  }}
+                  className={`w-full px-3 py-2.5 bg-brand-cream border rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive ${
+                    universityError ? 'border-rose-500 ring-1 ring-rose-500 bg-rose-50/30' : 'border-brand-sand'
+                  }`}
                 />
               </div>
 
-              <button
+               <button
                 type="submit"
-                className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2"
+                disabled={isSaving}
+                className={`bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2 ${
+                  isSaving ? 'opacity-50 pointer-events-none' : ''
+                }`}
               >
                 <Save className="w-4 h-4" />
-                <span>Save Credentials</span>
+                <span>{isSaving ? 'Saving...' : 'Save Credentials'}</span>
               </button>
             </form>
           </div>

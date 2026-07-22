@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Video, FileText, Image as ImageIcon, Eye, Download, HardDrive, Share2, Check, User, FolderClosed, Calendar, ExternalLink, Maximize, Gauge, Music } from 'lucide-react';
+import { X, Video, FileText, Image as ImageIcon, Eye, Download, HardDrive, Share2, Check, User, FolderClosed, Calendar, ExternalLink, Maximize, Gauge, Music, FileSpreadsheet, Presentation, FileCode } from 'lucide-react';
 
 const formatSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 B';
@@ -18,11 +18,17 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
 
   const url = playbackUrl || video.publicUrl || video.url || '';
   const ext = (video.name || video.fileName || '').split('.').pop().toLowerCase();
-  const isVideo = ['mp4', 'mov', 'mkv', 'avi', 'webm', 'flv', 'wmv'].includes(ext) || (video.mimeType && video.mimeType.startsWith('video/'));
-  const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext) || (video.mimeType && video.mimeType.startsWith('image/'));
-  const isPdf = ext === 'pdf' || (video.mimeType && video.mimeType === 'application/pdf');
-  const isText = ['txt', 'log', 'json', 'js', 'html', 'css'].includes(ext) || (video.mimeType && video.mimeType.startsWith('text/'));
-  const isAudio = ['mp3', 'wav', 'aac', 'ogg', 'm4a', 'flac'].includes(ext) || (video.mimeType && video.mimeType.startsWith('audio/'));
+  const mime = (video.mimeType || '').toLowerCase();
+
+  const isVideo = ['mp4', 'mov', 'mkv', 'avi', 'webm'].includes(ext) || mime.startsWith('video/');
+  const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) || mime.startsWith('image/');
+  const isPdf = ext === 'pdf' || mime === 'application/pdf';
+  const isAudio = ['mp3', 'wav', 'aac'].includes(ext) || mime.startsWith('audio/');
+  const isWord = ['doc', 'docx'].includes(ext) || mime.includes('word') || mime.includes('officedocument.wordprocessingml');
+  const isExcel = ['xls', 'xlsx'].includes(ext) || mime.includes('excel') || mime.includes('spreadsheet') || mime.includes('csv');
+  const isPowerPoint = ['ppt', 'pptx'].includes(ext) || mime.includes('presentation') || mime.includes('powerpoint');
+  const isZip = ['zip', 'rar', '7z'].includes(ext) || mime.includes('zip') || mime.includes('x-rar') || mime.includes('x-7z') || mime.includes('archive') || mime.includes('compressed');
+  const isText = ['txt', 'log', 'json', 'js', 'html', 'css'].includes(ext) || mime.startsWith('text/');
 
   const handleDownload = () => {
     if (url) window.open(url, '_blank');
@@ -84,7 +90,7 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
       );
     }
 
-    if ((isPdf || isText) && url) {
+    if (isPdf && url) {
       return (
         <iframe
           src={url}
@@ -110,16 +116,127 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
       );
     }
 
+    if (isWord) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center select-text">
+          <div className="bg-blue-50 p-5 rounded-full mb-4 text-blue-600 border border-blue-100 shadow-inner">
+            <FileText className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 leading-relaxed font-sans">
+            Document Viewer: Word preview (.docx/.doc) is not directly viewable inline. Please download to edit or view.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Document</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isExcel) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center select-text">
+          <div className="bg-emerald-50 p-5 rounded-full mb-4 text-emerald-600 border border-emerald-100 shadow-inner">
+            <FileSpreadsheet className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 leading-relaxed font-sans">
+            Spreadsheet Viewer: Excel preview (.xlsx/.xls) is not directly viewable inline. Please download to edit or view.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Spreadsheet</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isPowerPoint) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center select-text">
+          <div className="bg-orange-50 p-5 rounded-full mb-4 text-orange-600 border border-orange-100 shadow-inner">
+            <Presentation className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 leading-relaxed font-sans">
+            Presentation Viewer: PowerPoint preview (.pptx/.ppt) is not viewable inline. Please download to view.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Presentation</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isZip) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center select-text">
+          <div className="bg-purple-50 p-5 rounded-full mb-4 text-purple-600 border border-purple-100 shadow-inner">
+            <FileCode className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 leading-relaxed font-sans">
+            Archive Package: Compressed file metadata details ({ext.toUpperCase()}). Please download to extract contents.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Archive</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isText && url) {
+      return (
+        <iframe
+          src={url}
+          className="w-full h-[65vh] border-0 rounded-b-2xl bg-white"
+          title={video.name || video.fileName}
+        />
+      );
+    }
+
+    // Default/Unknown types
     return (
-      <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
+      <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center select-text">
         <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-brand-olive border border-brand-sand">
           <FileText className="w-12 h-12 stroke-[1.2]" />
         </div>
         <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
           {video.name || video.fileName}
         </h3>
-        <p className="text-xs text-gray-500 max-w-sm mb-5">
-          {url ? `File type (${ext.toUpperCase()}) cannot be directly previewed.` : 'Preview stream is initializing or hosted on secure locker storage.'}
+        <p className="text-xs text-gray-500 max-w-sm mb-5 font-sans">
+          No preview available for this file type ({ext.toUpperCase() || 'Unknown'}).
         </p>
         {url && (
           <button
@@ -138,6 +255,11 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
     if (isVideo) return <Video className="w-5 h-5 text-brand-olive shrink-0" />;
     if (isImage) return <ImageIcon className="w-5 h-5 text-brand-olive shrink-0" />;
     if (isAudio) return <Music className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isPdf) return <Eye className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isWord) return <FileText className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isExcel) return <FileSpreadsheet className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isPowerPoint) return <Presentation className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isZip) return <FileCode className="w-5 h-5 text-brand-olive shrink-0" />;
     return <Eye className="w-5 h-5 text-brand-olive shrink-0" />;
   };
 

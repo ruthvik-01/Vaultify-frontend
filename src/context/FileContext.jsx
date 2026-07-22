@@ -212,6 +212,7 @@ export const FileProvider = ({ children }) => {
           email: userData.email || '',
           studentId: userData.studentId || '',
           university: userData.university || '',
+          organization: userData.organization || '',
           major: userData.major || '',
           phone: userData.phone || '',
           bio: userData.bio || '',
@@ -898,9 +899,14 @@ export const FileProvider = ({ children }) => {
   // ─── Global Video Upload Queue ─────────────────────────────────────────────
   const [isUploadProgressOpen, setIsUploadProgressOpen] = useState(true);
 
-  const handleUploadComplete = async (fileData, folderId) => {
-    if (folderId) {
-      await videoService.moveVideo(fileData.id, folderId);
+  const handleUploadComplete = async (fileData, folderId, type) => {
+    const isVideo = type === 'video' || (fileData && (fileData.mimeType?.startsWith('video/') || fileData.file_type?.startsWith('video/')));
+    if (folderId && isVideo) {
+      try {
+        await videoService.moveVideo(fileData.id || fileData._id, folderId);
+      } catch (err) {
+        console.warn('Failed to move video to folder on completion:', err);
+      }
     }
     await fetchAllFiles();
   };

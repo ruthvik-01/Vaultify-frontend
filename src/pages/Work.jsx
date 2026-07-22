@@ -124,7 +124,7 @@ export default function Work() {
 
     try {
       if (addFilesToUploadQueue) {
-        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId);
+        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId, 'work');
         showNotification(`${filesArray.length} file(s) queued for upload to Work folder`, 'success');
       } else {
         for (const f of filesArray) {
