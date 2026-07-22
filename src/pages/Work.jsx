@@ -30,7 +30,9 @@ export default function Work() {
     renameFolder,
     deleteFolder,
     showNotification,
-    createUploadGroup
+    createUploadGroup,
+    showConfirm,
+    showPrompt
   } = useFiles();
 
   const [workFolder, setWorkFolder] = useState(null);
@@ -195,7 +197,7 @@ export default function Work() {
   const handleFolderDelete = async (target) => {
     const folderId = typeof target === 'object' ? (target?.id || target?._id) : target;
     if (!folderId) return;
-    if (window.confirm('Deleting this folder will delete all subfolders. Are you sure you want to proceed?')) {
+    if (await showConfirm('Delete Folder', 'Deleting this folder will delete all subfolders. Are you sure you want to proceed?', { type: 'danger', confirmText: 'Delete' })) {
       try {
         await deleteFolder(folderId);
         await fetchAllFolders();
@@ -203,6 +205,19 @@ export default function Work() {
       } catch (_) {
         showNotification('Failed to delete folder', 'error');
       }
+    }
+  };
+
+  const handleRenameFolder = async (f) => {
+    const folder = typeof f === 'object' ? f : folders.find(fd => fd.id === f);
+    if (!folder) return;
+    const currentName = folder.name || folder.folder_name || '';
+    const name = await showPrompt('Rename Folder', currentName, { placeholder: 'Enter new folder name...' });
+    if (name && name.trim() && name.trim() !== currentName) {
+      try {
+        await renameFolder(folder.id || folder._id, name.trim());
+        await fetchAllFolders();
+      } catch (_) {}
     }
   };
 
@@ -296,7 +311,7 @@ export default function Work() {
     const fileId = typeof target === 'object' ? (target?.id || target?._id) : target;
     if (!fileId) return;
 
-    if (window.confirm('Move this item to trash?')) {
+    if (await showConfirm('Move to Trash', 'Are you sure you want to move this item to trash?', { type: 'warning', confirmText: 'Trash' })) {
       try {
         await deleteFile(fileId);
         await fetchAllFiles();
@@ -313,7 +328,7 @@ export default function Work() {
     if (!file) return;
 
     const currentName = file.name || file.filename || '';
-    const newName = window.prompt('Enter new file name:', currentName);
+    const newName = await showPrompt('Rename File', currentName, { placeholder: 'Enter new file name...' });
     if (newName && newName.trim() && newName !== currentName) {
       try {
         await renameFile(file.id, newName.trim());
@@ -537,10 +552,7 @@ export default function Work() {
           folders={currentFolders}
           videos={currentFiles}
           onFolderEnter={(f) => setCurrentFolderId(typeof f === 'object' ? f.id : f)}
-          onFolderRename={(f) => {
-            const name = window.prompt('Rename folder:', f.name || f.folder_name);
-            if (name && name.trim()) renameFolder(f.id, name.trim());
-          }}
+          onFolderRename={handleRenameFolder}
           onFolderMove={handleFolderMove}
           onFolderShare={handleFolderShare}
           onFolderDelete={handleFolderDelete}
@@ -556,10 +568,7 @@ export default function Work() {
           folders={currentFolders}
           videos={currentFiles}
           onFolderEnter={(f) => setCurrentFolderId(typeof f === 'object' ? f.id : f)}
-          onFolderRename={(f) => {
-            const name = window.prompt('Rename folder:', f?.name || f?.folder_name);
-            if (name && name.trim()) renameFolder(typeof f === 'object' ? f.id : f, name.trim());
-          }}
+          onFolderRename={handleRenameFolder}
           onFolderMove={handleFolderMove}
           onFolderShare={handleFolderShare}
           onFolderDelete={handleFolderDelete}

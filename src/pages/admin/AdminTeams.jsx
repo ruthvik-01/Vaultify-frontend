@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import { useFiles } from '../../context/FileContext';
 import { 
   FolderKanban, 
   Clock, 
@@ -25,6 +26,7 @@ function formatSize(bytes) {
 }
 
 export default function AdminTeams() {
+  const { showConfirm, showNotification } = useFiles();
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedTeamId, setExpandedTeamId] = useState(null);
@@ -54,15 +56,15 @@ export default function AdminTeams() {
 
   const handlePurgeTeamUploads = async (teamName, e) => {
     if (e) e.stopPropagation();
-    if (!window.confirm(`Are you sure you want to purge ALL uploads for Team "${teamName}"? This will permanently delete all files and videos for all students in this team.`)) {
+    if (!(await showConfirm('Purge Team Uploads', `Are you sure you want to purge ALL uploads for Team "${teamName}"? This will permanently delete all files and videos for all students in this team.`, { type: 'danger', confirmText: 'Purge All' }))) {
       return;
     }
     try {
       const res = await adminService.deleteTeamUploads(teamName);
-      alert(res.message || `Uploads for team "${teamName}" purged successfully.`);
+      showNotification(res.message || `Uploads for team "${teamName}" purged successfully.`, 'success');
       fetchTeams();
     } catch (err) {
-      alert(err.message || 'Failed to purge team uploads.');
+      showNotification(err.message || 'Failed to purge team uploads.', 'error');
     }
   };
 

@@ -155,10 +155,10 @@ export default function UploadModal({ isOpen, onClose }) {
             {/* Backdrop blur overlay */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.6 }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={resetModal}
-              className="absolute inset-0 bg-brand-charcoal"
+              className="absolute inset-0 bg-brand-charcoal/40 dark:bg-black/60 backdrop-blur-sm transition-opacity"
             />
 
             {/* Modal Box */}
@@ -166,17 +166,19 @@ export default function UploadModal({ isOpen, onClose }) {
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-white border border-brand-sand rounded-3xl p-6 shadow-xl w-full max-w-lg relative z-10 overflow-hidden"
+              className="bg-white/80 dark:bg-brand-charcoal/90 border border-white/40 dark:border-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl w-full max-w-lg relative z-10 overflow-hidden font-sans"
             >
               {/* Top Header */}
-              <div className="flex justify-between items-center pb-4 border-b border-brand-sand mb-5">
+              <div className="flex justify-between items-center pb-4 border-b border-brand-sand dark:border-white/10 mb-5">
                 <div className="flex items-center space-x-2">
-                  <FileUp className="w-5 h-5 text-brand-olive" />
-                  <h3 className="font-serif text-lg font-bold text-brand-charcoal">Upload Document Locker</h3>
+                  <div className="bg-brand-sage-light/35 p-2 rounded-xl">
+                    <FileUp className="w-5 h-5 text-brand-olive" />
+                  </div>
+                  <h3 className="font-serif text-lg font-bold text-brand-charcoal dark:text-white">Upload Document Locker</h3>
                 </div>
                 <button
                   onClick={resetModal}
-                  className="p-1.5 text-gray-400 hover:text-brand-charcoal hover:bg-brand-cream rounded-full transition-all cursor-pointer"
+                  className="p-1.5 text-gray-400 hover:text-brand-charcoal dark:hover:text-white hover:bg-brand-cream/50 dark:hover:bg-white/5 rounded-full transition-all cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -194,8 +196,8 @@ export default function UploadModal({ isOpen, onClose }) {
                     className={`
                       border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center h-52
                       ${dragActive 
-                        ? 'border-brand-olive bg-brand-sage-light/20 scale-[0.99]' 
-                        : 'border-brand-sand hover:border-brand-olive hover:bg-brand-cream/50'
+                        ? 'border-brand-olive bg-brand-sage-light/20 scale-[0.99] dark:bg-brand-charcoal/40' 
+                        : 'border-brand-sand dark:border-white/10 hover:border-brand-olive dark:hover:border-brand-olive bg-brand-cream/20 dark:bg-brand-charcoal/30 hover:bg-brand-cream/50 dark:hover:bg-brand-charcoal/50'
                       }
                     `}
                   >
@@ -206,11 +208,11 @@ export default function UploadModal({ isOpen, onClose }) {
                       onChange={handleFileSelect}
                       className="hidden"
                     />
-                    <div className="bg-brand-cream-dark p-3 rounded-full text-brand-olive mb-3">
+                    <div className="bg-brand-cream-dark dark:bg-brand-charcoal/60 p-3 rounded-full text-brand-olive mb-3">
                       <UploadCloud className="w-8 h-8 stroke-[1.5]" />
                     </div>
-                    <h4 className="text-xs font-bold text-brand-charcoal">Drag and drop files here, or browse</h4>
-                    <p className="text-[10px] text-gray-400 mt-1 max-w-[240px]">
+                    <h4 className="text-xs font-bold text-brand-charcoal dark:text-white">Drag and drop files here, or browse</h4>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-400 mt-1 max-w-[240px]">
                       Supports documents, images, videos, and zip files up to 10 MB
                     </p>
                   </div>
@@ -219,22 +221,22 @@ export default function UploadModal({ isOpen, onClose }) {
 
               {uploadState === 'uploading' && (
                 <div className="py-8 text-center flex flex-col items-center justify-center">
-                  <div className="w-12 h-12 rounded-full border-2 border-brand-sand border-t-brand-olive animate-spin mb-4" />
-                  <h4 className="text-xs font-bold text-brand-charcoal truncate max-w-[320px]">
+                  <div className="w-12 h-12 rounded-full border-2 border-brand-sand dark:border-white/10 border-t-brand-olive dark:border-t-brand-olive animate-spin mb-4" />
+                  <h4 className="text-xs font-bold text-brand-charcoal dark:text-white truncate max-w-[320px]">
                     Uploading "{uploadedName}"
                   </h4>
-                  <p className="text-[10px] text-gray-400 mt-1">
+                  <p className="text-[10px] text-gray-400 dark:text-gray-400 mt-1">
                     {selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'} in this upload group
                   </p>
 
                   {/* Progress Slider */}
-                  <div className="w-full max-w-xs bg-brand-cream-dark h-2 rounded-full overflow-hidden mt-6 mb-2">
+                  <div className="w-full max-w-xs bg-brand-cream-dark dark:bg-brand-charcoal/60 h-2 rounded-full overflow-hidden mt-6 mb-2">
                     <div 
-                      className="bg-brand-olive h-full transition-all duration-300 ease-out" 
+                      className="bg-gradient-to-r from-brand-olive to-emerald-600 h-full transition-all duration-300 ease-out" 
                       style={{ width: `${progress}%` }} 
                     />
                   </div>
-                  <span className="font-mono text-xs text-gray-500 font-semibold">{progress}%</span>
+                  <span className="font-mono text-xs text-gray-500 dark:text-gray-400 font-semibold">{progress}%</span>
                 </div>
               )}
 
@@ -243,12 +245,12 @@ export default function UploadModal({ isOpen, onClose }) {
                   <motion.div
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="bg-emerald-50 text-emerald-600 p-4 rounded-full mb-4 border border-emerald-100"
+                    className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 p-4 rounded-full mb-4 border border-emerald-100 dark:border-emerald-900/30"
                   >
                     <CheckCircle2 className="w-12 h-12" />
                   </motion.div>
-                  <h4 className="text-sm font-bold text-brand-charcoal">Upload Successful!</h4>
-                  <p className="text-xs text-gray-400 mt-1.5 truncate max-w-[320px]">
+                  <h4 className="text-sm font-bold text-brand-charcoal dark:text-white">Upload Successful!</h4>
+                  <p className="text-xs text-gray-400 dark:text-gray-400 mt-1.5 truncate max-w-[320px]">
                     "{uploadedName}" ({selectedFiles.length} {selectedFiles.length === 1 ? 'file' : 'files'}) is now stored in your folder.
                   </p>
 
@@ -259,13 +261,13 @@ export default function UploadModal({ isOpen, onClose }) {
                         setSelectedFiles([]);
                         setUploadGroupTitle('');
                       }}
-                      className="flex-1 bg-brand-cream border border-brand-sand hover:bg-brand-sand/30 text-brand-charcoal text-xs font-semibold py-2.5 rounded-xl transition-all cursor-pointer"
+                      className="flex-1 bg-brand-cream/60 dark:bg-white/5 border border-brand-sand dark:border-white/10 hover:bg-brand-cream dark:hover:bg-white/10 text-brand-charcoal dark:text-gray-300 text-xs font-semibold py-2.5 rounded-xl transition-all cursor-pointer"
                     >
                       Upload Another
                     </button>
                     <button
                       onClick={resetModal}
-                      className="flex-1 bg-brand-olive hover:bg-brand-olive-dark text-white text-xs font-semibold py-2.5 rounded-xl transition-all shadow-sm cursor-pointer"
+                      className="flex-1 bg-gradient-to-r from-brand-olive to-emerald-600 hover:brightness-105 text-white text-xs font-semibold py-2.5 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
                     >
                       Go to Locker
                     </button>

@@ -22,7 +22,8 @@ export default function Videos() {
     addFilesToUploadQueue: addFilesToQueue,
     isUploadProgressOpen,
     setIsUploadProgressOpen,
-    showNotification
+    showNotification,
+    showConfirm
   } = useFiles();
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState('grid');
@@ -116,7 +117,7 @@ export default function Videos() {
   const handleVideoDelete = async (target) => {
     const fileId = typeof target === 'object' ? (target?.id || target?._id) : target;
     if (!fileId) return;
-    if (window.confirm('Are you sure you want to move this file to trash?')) {
+    if (await showConfirm('Move to Trash', 'Are you sure you want to move this file to trash?', { type: 'warning', confirmText: 'Trash' })) {
       try {
         await deleteFile(fileId);
         await fetchAllFiles();
@@ -132,7 +133,7 @@ export default function Videos() {
   const handleFolderDelete = async (target) => {
     const folderId = typeof target === 'object' ? (target?.id || target?._id) : target;
     if (!folderId) return;
-    if (window.confirm('Deleting this folder will delete all subfolders. Are you sure you want to proceed?')) {
+    if (await showConfirm('Delete Folder', 'Deleting this folder will delete all subfolders. Are you sure you want to proceed?', { type: 'danger', confirmText: 'Delete' })) {
       try {
         const deletedIds = await deleteFolder(folderId);
         
