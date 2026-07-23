@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import FileCard from '../components/FileCard';
 import { 
   Sparkles, Upload, FileText, ArrowRight,
-  Plus, Calendar, HardDrive, Share2
+  Plus, Calendar, HardDrive, Share2, Trash2,
+  RefreshCcw, Download, Edit3, FolderPlus, Folder
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -22,6 +23,19 @@ export default function Dashboard() {
       .slice(0, 6),
     [activeFiles]
   );
+
+  const getActivityMeta = (action) => {
+    const act = (action || '').toUpperCase();
+    if (act.includes('UPLOAD')) return { text: 'Uploaded', Icon: Upload, color: 'text-emerald-700 bg-emerald-100 border-emerald-300' };
+    if (act.includes('DELETE') || act.includes('TRASH') || act.includes('PURGE')) return { text: 'Deleted', Icon: Trash2, color: 'text-rose-700 bg-rose-100 border-rose-300' };
+    if (act.includes('RESTORE')) return { text: 'Restored', Icon: RefreshCcw, color: 'text-teal-700 bg-teal-100 border-teal-300' };
+    if (act.includes('DOWNLOAD')) return { text: 'Downloaded', Icon: Download, color: 'text-blue-700 bg-blue-100 border-blue-300' };
+    if (act.includes('SHARE')) return { text: 'Shared', Icon: Share2, color: 'text-purple-700 bg-purple-100 border-purple-300' };
+    if (act.includes('RENAME')) return { text: 'Renamed', Icon: Edit3, color: 'text-amber-700 bg-amber-100 border-amber-300' };
+    if (act.includes('CREATE')) return { text: 'Created Folder', Icon: FolderPlus, color: 'text-indigo-700 bg-indigo-100 border-indigo-300' };
+    if (act.includes('MOVE')) return { text: 'Moved', Icon: ArrowRight, color: 'text-gray-700 bg-gray-100 border-gray-300' };
+    return { text: action || 'Activity', Icon: FileText, color: 'text-brand-olive bg-brand-cream border-brand-sand' };
+  };
 
   // Calculate stats
   const totalFiles = activeFiles.length;
@@ -208,30 +222,38 @@ export default function Dashboard() {
         <h3 className="font-serif text-base font-bold text-brand-charcoal">Activity Log</h3>
         
         {activities.length > 0 ? (
-          <div className="relative border-l border-brand-sand pl-4 ml-2.5 space-y-5 py-2">
-            {activities.slice(0, 8).map(act => (
-              <div key={act.id} className="relative">
-                <span className="absolute -left-[22.5px] top-1 w-3.5 h-3.5 rounded-full bg-brand-cream border border-brand-olive flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-olive" />
-                </span>
-                
-                <div>
-                  <p className="text-xs text-brand-charcoal">
-                    <span className="capitalize font-semibold text-brand-olive-dark">
-                      {act.action === 'clear_trash' ? 'cleared trash' : act.action}
-                    </span>{' '}
-                    <span className="font-semibold">{act.fileName}</span>
-                  </p>
-                  <span className="text-[9px] text-gray-400 font-sans block mt-1 flex items-center space-x-1">
-                    <Calendar className="w-3 h-3 text-gray-300" />
-                    <span>{timeAgo(act.timestamp)}</span>
+          <div className="relative border-l border-brand-sand/60 pl-5 ml-3 space-y-4 py-2">
+            {activities.slice(0, 10).map(act => {
+              const { text, Icon, color } = getActivityMeta(act.action);
+              const resourceName = act.resourceName || act.fileName || act.name || 'Item';
+              return (
+                <div key={act.id} className="relative flex items-start space-x-3">
+                  <span className={`absolute -left-[31px] top-0.5 p-1 rounded-full border shadow-sm ${color}`}>
+                    <Icon className="w-3 h-3 stroke-[2.2]" />
                   </span>
+                  
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-brand-charcoal font-medium leading-tight">
+                      <span className="font-bold text-brand-olive-dark mr-1">{text}</span>
+                      <span className="font-semibold text-brand-charcoal">{resourceName}</span>
+                      {act.folderName && (
+                        <span className="text-gray-400 font-normal text-[11px] ml-1.5 inline-flex items-center">
+                          <Folder className="w-3 h-3 inline mr-0.5 text-gray-300" />
+                          {act.folderName}
+                        </span>
+                      )}
+                    </p>
+                    <span className="text-[10px] text-gray-400 font-sans mt-0.5 flex items-center space-x-1">
+                      <Calendar className="w-3 h-3 text-gray-300" />
+                      <span>{timeAgo(act.timestamp)}</span>
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
-          <div className="text-center text-xs text-gray-400 py-6">
+          <div className="text-center text-xs text-gray-400 py-6 font-medium">
             No recent activity.
           </div>
         )}

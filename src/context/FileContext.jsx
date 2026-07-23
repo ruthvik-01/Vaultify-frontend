@@ -1,9 +1,11 @@
 import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { api } from '../services/api';
 import { videoService } from '../services/videoService';
 import { videoUploadService } from '../services/videoUploadService';
 import { useVideoUpload } from '../hooks/useVideoUpload';
 import UploadProgress from '../components/video/UploadProgress';
+import SaasNotification from '../components/SaasNotification';
 
 const FileContext = createContext(null);
 
@@ -22,16 +24,32 @@ export const FileProvider = ({ children }) => {
   });
   const [toast, setToast] = useState(null);
 
-  const showNotification = (message, type = 'success') => {
-    setToast({ message, type, id: Date.now() });
-  };
+  const showNotification = useCallback((message, type = 'success') => {
+    setToast((prev) => {
+      if (prev && prev.message === message && prev.type === type) {
+        return prev;
+      }
+      return { message, type, id: Date.now() };
+    });
+  }, []);
 
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => {
         setToast(null);
       }, 3000);
-      return () => clearTimeout(timer);
+
+      const handleKeyDown = (e) => {
+        if (e.key === 'Escape') {
+          setToast(null);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     }
   }, [toast]);
 
@@ -1054,46 +1072,12 @@ export const FileProvider = ({ children }) => {
       }}
     >
       {children}
-      {/* Centered Modern Toast Notification overlay */}
-      {toast && (
-        <div 
-          style={{ animation: 'toast-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
-          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center space-x-3 px-4.5 py-3 rounded-2xl border shadow-xl backdrop-blur-md pointer-events-auto max-w-sm sm:max-w-md w-auto ${
-            toast.type === 'error'
-              ? 'bg-rose-50/95 border-rose-200 text-rose-800 dark:bg-rose-950/95 dark:border-rose-900/50 dark:text-rose-200'
-              : toast.type === 'info'
-              ? 'bg-blue-50/95 border-blue-200 text-blue-800 dark:bg-blue-950/95 dark:border-blue-900/50 dark:text-blue-200'
-              : 'bg-emerald-50/95 border-emerald-200 text-emerald-800 dark:bg-emerald-950/95 dark:border-emerald-900/50 dark:text-emerald-200'
-          }`}
-        >
-          {toast.type === 'error' ? (
-            <div className="bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 p-1.5 rounded-xl border border-rose-200/30 shrink-0">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </div>
-          ) : toast.type === 'info' ? (
-            <div className="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 p-1.5 rounded-xl border border-blue-200/30 shrink-0">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
-              </svg>
-            </div>
-          ) : (
-            <div className="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 p-1.5 rounded-xl border border-emerald-200/30 shrink-0">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          )}
-          
-          <div className="flex-1 min-w-0 pr-1 text-left">
-            <span className="text-[12px] font-bold tracking-tight leading-normal block">
-              {toast.message}
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Centered Modern SaaS Notification overlay */}
+      <AnimatePresence>
+        {toast && (
+          <SaasNotification toast={toast} onClose={() => setToast(null)} />
+        )}
+      </AnimatePresence>
       {/* Global Upload Queue Progress Dock */}
       {uploadQueue && uploadQueue.length > 0 && isUploadProgressOpen && (
         <UploadProgress

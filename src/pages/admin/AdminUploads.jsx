@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import VideoPlayer from '../../components/video/VideoPlayer';
+import SaasNotification from '../../components/SaasNotification';
 import { 
   Eye, 
   Search, 
@@ -639,15 +641,11 @@ export default function AdminUploads() {
         />
       )}
 
-      {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-lg border text-xs font-semibold flex items-center space-x-2 transition-all duration-300 transform translate-y-0 ${
-          toast.type === 'error' 
-            ? 'bg-rose-50 border-rose-200 text-rose-800' 
-            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
-        }`}>
-          <span>{toast.message}</span>
-        </div>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <SaasNotification toast={toast} onClose={() => setToast(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
