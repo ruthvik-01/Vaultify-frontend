@@ -249,17 +249,16 @@ export default function Videos() {
     if (activeFilter === 'document') {
       return v.category === 'Documents' || getFileCategoryType(v.name) === 'document';
     }
-    if (activeFilter === 'project') {
-      return v.category === 'Projects';
-    }
-    if (activeFilter === 'certificate') {
-      return v.category === 'Certificates';
+    if (activeFilter === 'image') {
+      return v.category === 'Images' || getFileCategoryType(v.name) === 'image';
     }
     if (activeFilter === 'media') {
       return getFileCategoryType(v.name) === 'video' || 
-             getFileCategoryType(v.name) === 'image' || 
              getFileCategoryType(v.name) === 'audio' || 
              v.category === 'Media';
+    }
+    if (activeFilter === 'other') {
+      return getFileCategoryType(v.name) === 'other';
     }
 
     return getFileCategoryType(v.name) === activeFilter;
@@ -316,8 +315,7 @@ export default function Videos() {
         {[
           { id: 'all', label: 'All Files' },
           { id: 'document', label: 'Documents' },
-          { id: 'project', label: 'Projects' },
-          { id: 'certificate', label: 'Certificates' },
+          { id: 'image', label: 'Images' },
           { id: 'media', label: 'Media Files' },
           { id: 'other', label: 'Others' }
         ].map(tab => (

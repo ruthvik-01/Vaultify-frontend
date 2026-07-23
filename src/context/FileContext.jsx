@@ -141,15 +141,12 @@ export const FileProvider = ({ children }) => {
     used: 0,
     breakdown: {
       Documents: 0,
-      Projects: 0,
-      Certificates: 0,
+      Images: 0,
       Media: 0,
-      Others: 0,
     },
     counts: {
       Documents: 0,
-      Projects: 0,
-      Certificates: 0,
+      Images: 0,
       Media: 0,
     }
   });
@@ -163,22 +160,29 @@ export const FileProvider = ({ children }) => {
           totalCapacity: (stats.plan === '1 TB' ? 1000 : 500) * 1024 * 1024 * 1024,
           used: stats.usedStorage,
           breakdown: {
-            Documents: stats.documents.size,
-            Projects: stats.projects.size,
-            Certificates: stats.certificates.size,
-            Media: stats.media.size,
-            Others: 0
+            Documents: stats.documents?.size || 0,
+            Images: stats.images?.size || 0,
+            Media: stats.media?.size || 0
           },
           counts: {
-            Documents: stats.documents.files,
-            Projects: stats.projects.files,
-            Certificates: stats.certificates.files,
-            Media: stats.media.files
+            Documents: stats.documents?.files || 0,
+            Images: stats.images?.files || 0,
+            Media: stats.media?.files || 0
           }
         });
       }
     } catch (err) {
       console.error('Failed to fetch storage stats:', err.message);
+    }
+  }, []);
+
+  const fetchActivities = useCallback(async () => {
+    try {
+      const res = await api.getActivities();
+      const loadedActivities = res.data?.activities || res.data || [];
+      setActivities(loadedActivities);
+    } catch (err) {
+      console.error('Failed to fetch activities:', err.message);
     }
   }, []);
 
@@ -188,15 +192,17 @@ export const FileProvider = ({ children }) => {
       fetchUserProfile();
       fetchAllFiles();
       fetchAllFolders();
+      fetchActivities();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, fetchActivities]);
 
-  // ─── Storage stats derived from database ──────────────────────────────────
+  // ─── Storage stats & activities derived from database ─────────────────────
   useEffect(() => {
     if (isAuthenticated) {
       fetchStorageStats();
+      fetchActivities();
     }
-  }, [files, isAuthenticated, fetchStorageStats]);
+  }, [files, isAuthenticated, fetchStorageStats, fetchActivities]);
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   const fetchUserProfile = async () => {
@@ -355,15 +361,13 @@ export const FileProvider = ({ children }) => {
     // Managed locally via localStorage and merged in fetchAllFiles
   };
 
-  const addActivity = (action, fileName, category = 'System') => {
-    const newActivity = {
-      id: `a_${Date.now()}`,
-      action,
-      fileName,
-      timestamp: new Date().toISOString(),
-      category,
-    };
-    setActivities((prev) => [newActivity, ...prev.slice(0, 49)]);
+  const addActivity = async (action, fileName, category = 'System') => {
+    try {
+      await api.logActivity(action, fileName, { category });
+      await fetchActivities();
+    } catch (err) {
+      console.error('Failed to log activity to backend:', err.message);
+    }
   };
 
   const uploadFile = async (fileData, onProgressCallback = null) => {

@@ -232,6 +232,22 @@ export const api = {
     return handleResponse(res);
   },
 
+  getActivities: async () => {
+    const res = await fetch(`${API_URL}/auth/activities`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  logActivity: async (action, fileName, details = {}) => {
+    const res = await fetch(`${API_URL}/auth/activities`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ action, fileName, details }),
+    });
+    return handleResponse(res);
+  },
+
   // ─── HEALTH ─────────────────────────────────────────────────────────────────
   health: async () => {
     const res = await fetch(`${API_URL}/health`);

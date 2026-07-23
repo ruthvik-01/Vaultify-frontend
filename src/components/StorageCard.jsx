@@ -79,35 +79,21 @@ export default function StorageCard({ isCompact = false }) {
               <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Documents || 0} Files</span>
             </div>
           </div>
-          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Documents)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown?.Documents || 0)}</span>
         </div>
 
         <div 
-          onClick={() => handleCategoryClick('project')}
+          onClick={() => handleCategoryClick('image')}
           className="flex justify-between items-center text-xs cursor-pointer hover:bg-brand-cream/50 p-1.5 rounded-xl transition-colors select-none"
         >
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-full bg-brand-sage" />
             <div className="flex flex-col text-left">
-              <span className="text-brand-charcoal font-semibold">Projects</span>
-              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Projects || 0} Files</span>
+              <span className="text-brand-charcoal font-semibold">Images</span>
+              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Images || 0} Files</span>
             </div>
           </div>
-          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Projects)}</span>
-        </div>
-
-        <div 
-          onClick={() => handleCategoryClick('certificate')}
-          className="flex justify-between items-center text-xs cursor-pointer hover:bg-brand-cream/50 p-1.5 rounded-xl transition-colors select-none"
-        >
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-tan" />
-            <div className="flex flex-col text-left">
-              <span className="text-brand-charcoal font-semibold">Certificates</span>
-              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Certificates || 0} Files</span>
-            </div>
-          </div>
-          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Certificates)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown?.Images || 0)}</span>
         </div>
 
         <div 
@@ -121,7 +107,7 @@ export default function StorageCard({ isCompact = false }) {
               <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Media || 0} Files</span>
             </div>
           </div>
-          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Media)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown?.Media || 0)}</span>
         </div>
       </div>
     </div>

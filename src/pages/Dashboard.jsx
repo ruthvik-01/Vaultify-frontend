@@ -140,10 +140,10 @@ export default function Dashboard() {
             </p>
           </div>
           <button 
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/my-files')}
             className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
           >
-            <span>Manage Storage Plan</span>
+            <span>Open My Files</span>
             <ArrowRight className="w-3 h-3" />
           </button>
         </div>
@@ -171,8 +171,7 @@ export default function Dashboard() {
             onClick={() => navigate('/my-files')}
             className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
           >
-            <span>Browse All Files</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>View All Files →</span>
           </button>
         </div>
 
@@ -196,11 +195,10 @@ export default function Dashboard() {
             </p>
           </div>
           <button 
-            onClick={() => navigate('/upload')}
+            onClick={() => navigate('/work')}
             className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
           >
-            <span>Upload Documents</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>Open Work Folder →</span>
           </button>
         </div>
       </div>
@@ -234,7 +232,7 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="text-center text-xs text-gray-400 py-6">
-            No activity yet. Upload a file to get started.
+            No recent activity.
           </div>
         )}
       </div>
