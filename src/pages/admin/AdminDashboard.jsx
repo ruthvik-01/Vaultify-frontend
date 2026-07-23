@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { adminService } from '../../services/adminService';
 import VideoPlayer from '../../components/video/VideoPlayer';
 import SaasNotification from '../../components/SaasNotification';
@@ -81,6 +82,7 @@ export default function AdminDashboard() {
   const totalUploads = safeStats.totalUploads || 0;
   const totalStorageUsed = safeStats.totalStorageUsed || 0;
   const todayUploads = safeStats.todayUploads || 0;
+  const todayUniqueLogins = safeStats.todayUniqueLogins || safeStats.todayLogins || 0;
   const recentUploads = Array.isArray(safeStats.recentUploads) ? safeStats.recentUploads : [];
 
   const handleOpenPreview = async (file) => {

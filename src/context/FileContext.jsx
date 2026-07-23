@@ -396,7 +396,7 @@ export const FileProvider = ({ children }) => {
     }
   }, [fetchStorageStats, fetchActivities]);
 
-  const addActivity = async (action, fileName, category = 'System') => {
+  const addActivity = async (action, fileName, category = 'General') => {
     try {
       await api.logActivity(action, fileName, { category });
       await fetchActivities();
@@ -896,7 +896,7 @@ export const FileProvider = ({ children }) => {
   const createFolder = async (name, parentId = null) => {
     try {
       const res = await api.createFolder(name, parentId);
-      await fetchAllFolders();
+      await refreshAll();
       showNotification(`Folder "${name}" created successfully`, 'success');
       const folder = res.data?.folder || res.data;
       if (folder) {
@@ -914,7 +914,7 @@ export const FileProvider = ({ children }) => {
   const renameFolder = async (id, newName) => {
     try {
       await api.renameFolder(id, newName);
-      await fetchAllFolders();
+      await refreshAll();
       showNotification('Folder renamed successfully', 'success');
     } catch (err) {
       console.error('Failed to rename folder:', err.message);
@@ -926,8 +926,7 @@ export const FileProvider = ({ children }) => {
   const deleteFolder = async (id) => {
     try {
       await api.deleteFolder(id);
-      await fetchAllFolders();
-      await fetchAllFiles();
+      await refreshAll();
       showNotification('Folder and all its contents deleted', 'success');
     } catch (err) {
       console.error('Failed to delete folder:', err.message);
@@ -940,10 +939,12 @@ export const FileProvider = ({ children }) => {
   const [isUploadProgressOpen, setIsUploadProgressOpen] = useState(true);
 
   const handleUploadComplete = async (fileData, folderId) => {
-    if (folderId) {
-      await videoService.moveVideo(fileData.id, folderId);
+    if (folderId && fileData && fileData.id) {
+      try {
+        await videoService.moveVideo(fileData.id, folderId);
+      } catch (_) {}
     }
-    await fetchAllFiles();
+    await refreshAll();
   };
 
   const {

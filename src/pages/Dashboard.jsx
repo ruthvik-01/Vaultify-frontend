@@ -136,13 +136,23 @@ export default function Dashboard() {
         badgeColor: 'bg-slate-50 text-slate-700 border-slate-200'
       };
     }
-    if (act.includes('PROFILE') || cat === 'PROFILE') {
+    if (act.includes('PROFILE') || cat === 'PROFILE' || act.includes('ORGANIZATION')) {
+      const isOrg = act.includes('ORGANIZATION');
       return { 
-        text: 'Updated Profile', 
+        text: isOrg ? 'Updated Organization' : 'Updated Profile', 
         Icon: User, 
         color: 'text-violet-700 bg-violet-100 border-violet-300',
         badge: 'Profile',
         badgeColor: 'bg-violet-50 text-violet-700 border-violet-200'
+      };
+    }
+    if (act.includes('PREVIEW') || act.includes('VIEW') || cat === 'PREVIEW') {
+      return {
+        text: 'Previewed',
+        Icon: Clock,
+        color: 'text-indigo-700 bg-indigo-100 border-indigo-300',
+        badge: 'Preview',
+        badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200'
       };
     }
     if (act.includes('STORAGE') || cat === 'STORAGE') {

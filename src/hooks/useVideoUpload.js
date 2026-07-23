@@ -25,8 +25,8 @@ export function useVideoUpload(onUploadComplete) {
         setQueue((prev) =>
           prev.map((t) => (t.id === task.id ? { ...t, status: 'success', progress: 100 } : t))
         );
-        if (onUploadComplete && fileData) {
-          onUploadComplete(fileData, task.folderId);
+        if (onUploadComplete) {
+          onUploadComplete(fileData || { id: task.id, name: task.name }, task.folderId);
         }
       },
       onError: (err, isAbort) => {
