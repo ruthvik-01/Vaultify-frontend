@@ -1,9 +1,15 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useFiles } from '../context/FileContext';
 import { HardDrive } from 'lucide-react';
 
 export default function StorageCard({ isCompact = false }) {
   const { storageStats, user } = useFiles();
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (category) => {
+    navigate(`/my-files?filter=${category}`);
+  };
 
   const formatSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
@@ -62,36 +68,60 @@ export default function StorageCard({ isCompact = false }) {
 
       {/* Breakdown */}
       <div className="space-y-2.5 pt-3 border-t border-brand-sand/60">
-        <div className="flex justify-between items-center text-xs">
+        <div 
+          onClick={() => handleCategoryClick('document')}
+          className="flex justify-between items-center text-xs cursor-pointer hover:bg-brand-cream/50 p-1.5 rounded-xl transition-colors select-none"
+        >
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-full bg-brand-olive" />
-            <span className="text-brand-charcoal font-medium">Documents</span>
+            <div className="flex flex-col text-left">
+              <span className="text-brand-charcoal font-semibold">Documents</span>
+              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Documents || 0} Files</span>
+            </div>
           </div>
-          <span className="font-mono text-gray-500">{formatSize(storageStats.breakdown.Documents)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Documents)}</span>
         </div>
 
-        <div className="flex justify-between items-center text-xs">
+        <div 
+          onClick={() => handleCategoryClick('project')}
+          className="flex justify-between items-center text-xs cursor-pointer hover:bg-brand-cream/50 p-1.5 rounded-xl transition-colors select-none"
+        >
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-full bg-brand-sage" />
-            <span className="text-brand-charcoal font-medium">Projects</span>
+            <div className="flex flex-col text-left">
+              <span className="text-brand-charcoal font-semibold">Projects</span>
+              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Projects || 0} Files</span>
+            </div>
           </div>
-          <span className="font-mono text-gray-500">{formatSize(storageStats.breakdown.Projects)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Projects)}</span>
         </div>
 
-        <div className="flex justify-between items-center text-xs">
+        <div 
+          onClick={() => handleCategoryClick('certificate')}
+          className="flex justify-between items-center text-xs cursor-pointer hover:bg-brand-cream/50 p-1.5 rounded-xl transition-colors select-none"
+        >
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-full bg-brand-tan" />
-            <span className="text-brand-charcoal font-medium">Certificates</span>
+            <div className="flex flex-col text-left">
+              <span className="text-brand-charcoal font-semibold">Certificates</span>
+              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Certificates || 0} Files</span>
+            </div>
           </div>
-          <span className="font-mono text-gray-500">{formatSize(storageStats.breakdown.Certificates)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Certificates)}</span>
         </div>
 
-        <div className="flex justify-between items-center text-xs">
+        <div 
+          onClick={() => handleCategoryClick('media')}
+          className="flex justify-between items-center text-xs cursor-pointer hover:bg-brand-cream/50 p-1.5 rounded-xl transition-colors select-none"
+        >
           <div className="flex items-center space-x-2">
             <span className="w-2.5 h-2.5 rounded-full bg-blue-400" />
-            <span className="text-brand-charcoal font-medium">Media Files</span>
+            <div className="flex flex-col text-left">
+              <span className="text-brand-charcoal font-semibold">Media Files</span>
+              <span className="text-[10px] text-gray-400 font-medium">{storageStats.counts?.Media || 0} Files</span>
+            </div>
           </div>
-          <span className="font-mono text-gray-500">{formatSize(storageStats.breakdown.Media)}</span>
+          <span className="font-mono text-gray-500 font-semibold">{formatSize(storageStats.breakdown.Media)}</span>
         </div>
       </div>
     </div>

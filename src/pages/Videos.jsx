@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useFiles } from '../context/FileContext';
 import { videoService } from '../services/videoService';
 import { useVideoFolders } from '../hooks/useVideoFolders';
@@ -28,6 +29,20 @@ export default function Videos() {
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const filterParam = searchParams.get('filter');
+
+  useEffect(() => {
+    if (filterParam) {
+      setActiveFilter(filterParam);
+    }
+  }, [filterParam]);
+
+  const handleFilterClick = (filterId) => {
+    setActiveFilter(filterId);
+    setSearchParams(filterId === 'all' ? {} : { filter: filterId });
+  };
 
   // Dialogs / Modals toggles
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -230,6 +245,23 @@ export default function Videos() {
     const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase());
     if (!matchesSearch) return false;
     if (activeFilter === 'all') return true;
+
+    if (activeFilter === 'document') {
+      return v.category === 'Documents' || getFileCategoryType(v.name) === 'document';
+    }
+    if (activeFilter === 'project') {
+      return v.category === 'Projects';
+    }
+    if (activeFilter === 'certificate') {
+      return v.category === 'Certificates';
+    }
+    if (activeFilter === 'media') {
+      return getFileCategoryType(v.name) === 'video' || 
+             getFileCategoryType(v.name) === 'image' || 
+             getFileCategoryType(v.name) === 'audio' || 
+             v.category === 'Media';
+    }
+
     return getFileCategoryType(v.name) === activeFilter;
   });
 
@@ -284,14 +316,14 @@ export default function Videos() {
         {[
           { id: 'all', label: 'All Files' },
           { id: 'document', label: 'Documents' },
-          { id: 'image', label: 'Images' },
-          { id: 'video', label: 'Videos' },
-          { id: 'audio', label: 'Audio' },
+          { id: 'project', label: 'Projects' },
+          { id: 'certificate', label: 'Certificates' },
+          { id: 'media', label: 'Media Files' },
           { id: 'other', label: 'Others' }
         ].map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveFilter(tab.id)}
+            onClick={() => handleFilterClick(tab.id)}
             className={`px-4 py-2.5 rounded-xl text-xs font-semibold cursor-pointer transition-all ${
               activeFilter === tab.id
                 ? 'bg-brand-olive text-white shadow-sm'

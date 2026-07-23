@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { folderService } from '../services/folderService';
 import { videoUploadService } from '../services/videoUploadService';
+import { api } from '../services/api';
 
 export function useVideoUpload(onUploadComplete) {
   const [queue, setQueue] = useState([]);
@@ -48,7 +49,7 @@ export function useVideoUpload(onUploadComplete) {
   }, [onUploadComplete]);
 
   // Queue files/folders
-  const addFilesToQueue = useCallback(async (filesList, currentFolderId, passedBatchId = null) => {
+  const addFilesToQueue = useCallback(async (filesList, currentFolderId, passedBatchId = null, isWorkFolder = false) => {
     const tasksToAdd = [];
     const folderCache = {};
     const uploadBatchId = passedBatchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -66,7 +67,19 @@ export function useVideoUpload(onUploadComplete) {
         if (folderCache[pathAccum]) {
           parentId = folderCache[pathAccum];
         } else {
-          const localFolders = await folderService.getFolders();
+          let localFolders;
+          if (isWorkFolder) {
+            const res = await api.getFolders();
+            const list = res.data?.folders || res.data || [];
+            localFolders = list.map(f => ({
+              id: f.id || f._id,
+              name: f.name || f.folder_name,
+              parentId: f.parentId || f.parent_folder_id
+            }));
+          } else {
+            localFolders = await folderService.getFolders();
+          }
+
           const existing = localFolders.find(
             (f) => f.name === part && f.parentId === parentId
           );
@@ -74,8 +87,16 @@ export function useVideoUpload(onUploadComplete) {
           if (existing) {
             parentId = existing.id;
           } else {
-            const created = await folderService.createFolder(part, parentId, uploadBatchId);
-            parentId = created.id;
+            let createdId;
+            if (isWorkFolder) {
+              const res = await api.createFolder(part, parentId, uploadBatchId);
+              const folder = res.data?.folder || res.data;
+              createdId = folder.id || folder._id;
+            } else {
+              const created = await folderService.createFolder(part, parentId, uploadBatchId);
+              createdId = created.id;
+            }
+            parentId = createdId;
           }
           folderCache[pathAccum] = parentId;
         }
@@ -97,7 +118,8 @@ export function useVideoUpload(onUploadComplete) {
         speed: 0,
         eta: 0,
         folderId,
-        uploadBatchId
+        uploadBatchId,
+        relativePath: file.webkitRelativePath
       };
 
       tasksToAdd.push(task);

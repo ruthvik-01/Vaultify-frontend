@@ -181,9 +181,16 @@ export const adminService = {
     link.parentNode.removeChild(link);
   },
 
-  getPreviewUrl: async (id, fileType) => {
-    const type = fileType === 'video' ? 'video' : 'file';
-    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}/preview?type=${type}`);
+  getPreviewUrl: async (id, fileType, disposition = 'inline') => {
+    const type = fileType === 'video' ? 'video' : fileType === 'group' ? 'group' : 'file';
+    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}/preview?type=${type}&disposition=${disposition}`);
     return res.download_url;
+  },
+
+  createUploadShare: async (id, fileType) => {
+    const type = fileType === 'video' ? 'video' : fileType === 'group' ? 'group' : 'file';
+    return await fetchAdmin(`${API_URL}/admin/uploads/${id}/share?type=${type}`, {
+      method: 'POST'
+    });
   }
 };

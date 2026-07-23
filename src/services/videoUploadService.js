@@ -85,7 +85,9 @@ export const videoUploadService = {
             mimeType: task.file.type || 'video/mp4',
             size: task.file.size,
             folderId: task.folderId,
-            uploadBatchId: task.uploadBatchId
+            uploadBatchId: task.uploadBatchId,
+            relative_path: task.relativePath || null,
+            upload_group_id: task.uploadGroupId || null
           })
         });
 
@@ -180,7 +182,9 @@ export const videoUploadService = {
           filename: task.file.name,
           mimeType: task.file.type || 'video/mp4',
           size: task.file.size,
-          uploadBatchId: task.uploadBatchId
+          uploadBatchId: task.uploadBatchId,
+          relative_path: task.relativePath || null,
+          upload_group_id: task.uploadGroupId || null
         })
       });
 

@@ -8,6 +8,7 @@ import {
 export default function Settings() {
   const { user, notifications, updateProfile, updateNotifications, showNotification } = useFiles();
   const [activeSubTab, setActiveSubTab] = useState('account'); // account | notifications | preferences
+  const [isSaving, setIsSaving] = useState(false);
 
   // Account Form states
   const [name, setName] = useState(user.name);
@@ -47,12 +48,18 @@ export default function Settings() {
 
   const handleAccountSave = (e) => {
     e.preventDefault();
+    if (isSaving) return;
+    setIsSaving(true);
     updateProfile({
-      name
+      name,
+      university,
+      organization: university
     }).then(() => {
       showNotification('Account credentials saved successfully!', 'success');
     }).catch(err => {
       showNotification('Failed to save credentials: ' + err.message, 'error');
+    }).finally(() => {
+      setIsSaving(false);
     });
   };
 
@@ -169,10 +176,11 @@ export default function Settings() {
 
               <button
                 type="submit"
-                className="bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2"
+                disabled={isSaving}
+                className={`bg-brand-olive hover:bg-brand-olive-dark text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm cursor-pointer pt-2 ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Save className="w-4 h-4" />
-                <span>Save Credentials</span>
+                <span>{isSaving ? 'Saving...' : 'Save Credentials'}</span>
               </button>
             </form>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Video, FileText, Image as ImageIcon, Eye, Download, HardDrive, Share2, Check, User, FolderClosed, Calendar, ExternalLink, Maximize, Gauge, Music } from 'lucide-react';
+import { X, Video, FileText, Image as ImageIcon, Eye, Download, HardDrive, Share2, Check, User, FolderClosed, Calendar, ExternalLink, Maximize, Gauge, Music, FileSpreadsheet, Presentation, FileArchive } from 'lucide-react';
 
 const formatSize = (bytes) => {
   if (!bytes || bytes === 0) return '0 B';
@@ -23,6 +23,10 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
   const isPdf = ext === 'pdf' || (video.mimeType && video.mimeType === 'application/pdf');
   const isText = ['txt', 'log', 'json', 'js', 'html', 'css'].includes(ext) || (video.mimeType && video.mimeType.startsWith('text/'));
   const isAudio = ['mp3', 'wav', 'aac', 'ogg', 'm4a', 'flac'].includes(ext) || (video.mimeType && video.mimeType.startsWith('audio/'));
+  const isWord = ['doc', 'docx'].includes(ext) || (video.mimeType && (video.mimeType.includes('word') || video.mimeType.includes('officedocument.wordprocessingml')));
+  const isExcel = ['xls', 'xlsx'].includes(ext) || (video.mimeType && (video.mimeType.includes('excel') || video.mimeType.includes('spreadsheet') || video.mimeType.includes('csv')));
+  const isPowerPoint = ['ppt', 'pptx'].includes(ext) || (video.mimeType && (video.mimeType.includes('presentation') || video.mimeType.includes('powerpoint')));
+  const isZip = ['zip', 'rar', '7z'].includes(ext) || (video.mimeType && (video.mimeType.includes('zip') || video.mimeType.includes('x-rar') || video.mimeType.includes('x-7z') || video.mimeType.includes('archive') || video.mimeType.includes('compressed')));
 
   const handleDownload = () => {
     if (url) window.open(url, '_blank');
@@ -110,6 +114,111 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
       );
     }
 
+    if (isWord) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
+          <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-blue-600 border border-brand-sand">
+            <FileText className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 font-sans">
+            Word document preview is not directly viewable online. Please download to view.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Document</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isExcel) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
+          <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-emerald-600 border border-brand-sand">
+            <FileSpreadsheet className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 font-sans">
+            Spreadsheet preview is not directly viewable online. Please download to view.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Spreadsheet</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isPowerPoint) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
+          <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-orange-500 border border-brand-sand">
+            <Presentation className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          <p className="text-xs text-gray-500 max-w-sm mb-5 font-sans">
+            Presentation preview is not directly viewable online. Please download to view.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Presentation</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
+    if (isZip) {
+      return (
+        <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
+          <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-purple-600 border border-brand-sand">
+            <FileArchive className="w-12 h-12 stroke-[1.2]" />
+          </div>
+          <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
+            {video.name || video.fileName}
+          </h3>
+          {video.size && (
+            <p className="text-[10px] text-gray-400 font-mono mb-2">
+              Size: {formatSize(video.size)}
+            </p>
+          )}
+          <p className="text-xs text-gray-500 max-w-sm mb-5 font-sans">
+            Archive package contains compressed files. Please download to extract.
+          </p>
+          {url && (
+            <button
+              onClick={handleDownload}
+              className="flex items-center space-x-2 px-5 py-2.5 bg-brand-olive hover:bg-brand-olive-dark text-white rounded-xl text-xs font-semibold cursor-pointer transition-colors shadow-sm"
+            >
+              <Download className="w-4 h-4" />
+              <span>Download Archive</span>
+            </button>
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="w-full min-h-[35vh] flex flex-col items-center justify-center p-8 bg-brand-cream/30 text-center">
         <div className="bg-brand-cream-dark p-5 rounded-full mb-4 shadow-inner text-brand-olive border border-brand-sand">
@@ -118,8 +227,8 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
         <h3 className="font-serif font-bold text-base text-brand-charcoal mb-1">
           {video.name || video.fileName}
         </h3>
-        <p className="text-xs text-gray-500 max-w-sm mb-5">
-          {url ? `File type (${ext.toUpperCase()}) cannot be directly previewed.` : 'Preview stream is initializing or hosted on secure locker storage.'}
+        <p className="text-xs text-gray-500 max-w-sm mb-5 font-sans">
+          No preview available
         </p>
         {url && (
           <button
@@ -138,6 +247,10 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
     if (isVideo) return <Video className="w-5 h-5 text-brand-olive shrink-0" />;
     if (isImage) return <ImageIcon className="w-5 h-5 text-brand-olive shrink-0" />;
     if (isAudio) return <Music className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isWord) return <FileText className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isExcel) return <FileSpreadsheet className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isPowerPoint) return <Presentation className="w-5 h-5 text-brand-olive shrink-0" />;
+    if (isZip) return <FileArchive className="w-5 h-5 text-brand-olive shrink-0" />;
     return <Eye className="w-5 h-5 text-brand-olive shrink-0" />;
   };
 

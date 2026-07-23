@@ -37,6 +37,12 @@ export default function AdminUploads() {
   const [error, setError] = useState(null);
   const [selectedFileForPreview, setSelectedFileForPreview] = useState(null);
   const [playbackUrl, setPlaybackUrl] = useState('');
+  const [toast, setToast] = useState(null);
+
+  const showNotification = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Search input debouncing
   const [searchInput, setSearchInput] = useState('');
@@ -82,21 +88,55 @@ export default function AdminUploads() {
 
   const [copiedId, setCopiedId] = useState(null);
 
-  const handleOpenLink = (file) => {
-    const link = file.publicUrl || file.url || `${window.location.origin}/share/${file.id}`;
-    window.open(link, '_blank');
+  const handleOpenLink = async (file) => {
+    try {
+      const type = file.fileType === 'video' ? 'video' : file.fileType === 'group' ? 'group' : 'file';
+      const url = await adminService.getPreviewUrl(file.id, type, 'inline');
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        showNotification('Unable to open file: URL not found.', 'error');
+      }
+    } catch (err) {
+      showNotification(err.message || 'Failed to open file.', 'error');
+    }
   };
 
-  const handleCopyShareLink = (file) => {
-    const link = file.publicUrl || file.url || `${window.location.origin}/share/${file.id}`;
-    navigator.clipboard.writeText(link);
-    setCopiedId(file.id);
-    setTimeout(() => setCopiedId(null), 2000);
+  const handleCopyShareLink = async (file) => {
+    try {
+      const res = await adminService.createUploadShare(file.id, file.fileType);
+      const link = res.shareUrl;
+      if (link) {
+        await navigator.clipboard.writeText(link);
+        setCopiedId(file.id);
+        setTimeout(() => setCopiedId(null), 2000);
+        showNotification('Share link copied.', 'success');
+      } else {
+        showNotification('Unable to copy link.', 'error');
+      }
+    } catch (err) {
+      showNotification('Unable to copy link.', 'error');
+    }
   };
 
-  const handleDownload = (file) => {
-    const link = file.publicUrl || file.url || '';
-    if (link) window.open(link, '_blank');
+  const handleDownload = async (file) => {
+    try {
+      const type = file.fileType === 'video' ? 'video' : file.fileType === 'group' ? 'group' : 'file';
+      const url = await adminService.getPreviewUrl(file.id, type, 'attachment');
+      if (url) {
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', file.fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.parentNode.removeChild(link);
+        showNotification('Download started successfully!', 'success');
+      } else {
+        showNotification('Unable to download file: URL not found.', 'error');
+      }
+    } catch (err) {
+      showNotification(err.message || 'Failed to download file.', 'error');
+    }
   };
 
   // Debounce search input
@@ -178,7 +218,7 @@ export default function AdminUploads() {
       setSelectedFileForPreview({
         name: file.fileName,
         size: file.size,
-        mimeType: file.fileType === 'video' ? 'video/mp4' : file.fileType === 'image' ? 'image/png' : 'application/pdf',
+        mimeType: file.mimeType || (file.fileType === 'video' ? 'video/mp4' : file.fileType === 'image' ? 'image/png' : 'application/pdf'),
         ...file
       });
       setPlaybackUrl(url);
@@ -192,10 +232,17 @@ export default function AdminUploads() {
       return;
     }
     try {
-      await adminService.deleteUpload(id, fileType);
+      // Optimistic delete: remove from UI state immediately
+      setUploads(prev => prev.filter(item => item.id !== id));
+      setPagination(prev => ({ ...prev, total: Math.max(0, prev.total - 1) }));
+
+      const type = fileType === 'video' ? 'video' : fileType === 'group' ? 'group' : 'file';
+      await adminService.deleteUpload(id, type);
+      showNotification(`Upload "${fileName}" successfully deleted.`, 'success');
       fetchUploads();
     } catch (err) {
-      alert(err.message || 'Failed to delete upload.');
+      showNotification(err.message || 'Failed to delete upload.', 'error');
+      fetchUploads();
     }
   };
 
@@ -590,6 +637,16 @@ export default function AdminUploads() {
             setPlaybackUrl('');
           }}
         />
+      )}
+
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-lg border text-xs font-semibold flex items-center space-x-2 transition-all duration-300 transform translate-y-0 ${
+          toast.type === 'error' 
+            ? 'bg-rose-50 border-rose-200 text-rose-800' 
+            : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+        }`}>
+          <span>{toast.message}</span>
+        </div>
       )}
     </div>
   );

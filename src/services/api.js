@@ -225,6 +225,13 @@ export const api = {
     return handleResponse(res);
   },
 
+  getStorageSummary: async () => {
+    const res = await fetch(`${API_URL}/storage/summary`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
   // ─── HEALTH ─────────────────────────────────────────────────────────────────
   health: async () => {
     const res = await fetch(`${API_URL}/health`);

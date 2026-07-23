@@ -45,6 +45,7 @@ export const FileProvider = ({ children }) => {
     email: '',
     studentId: '',
     university: '',
+    organization: '',
     major: '',
     phone: '',
     bio: '',
@@ -145,7 +146,41 @@ export const FileProvider = ({ children }) => {
       Media: 0,
       Others: 0,
     },
+    counts: {
+      Documents: 0,
+      Projects: 0,
+      Certificates: 0,
+      Media: 0,
+    }
   });
+
+  const fetchStorageStats = useCallback(async () => {
+    try {
+      const res = await api.getStorageSummary();
+      const stats = res.data?.data || res.data;
+      if (stats) {
+        setStorageStats({
+          totalCapacity: (stats.plan === '1 TB' ? 1000 : 500) * 1024 * 1024 * 1024,
+          used: stats.usedStorage,
+          breakdown: {
+            Documents: stats.documents.size,
+            Projects: stats.projects.size,
+            Certificates: stats.certificates.size,
+            Media: stats.media.size,
+            Others: 0
+          },
+          counts: {
+            Documents: stats.documents.files,
+            Projects: stats.projects.files,
+            Certificates: stats.certificates.files,
+            Media: stats.media.files
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Failed to fetch storage stats:', err.message);
+    }
+  }, []);
 
   // ─── Bootstrap on auth ───────────────────────────────────────────────────
   useEffect(() => {
@@ -156,48 +191,12 @@ export const FileProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  // ─── Storage stats derived from files ────────────────────────────────────
+  // ─── Storage stats derived from database ──────────────────────────────────
   useEffect(() => {
-    let used = 0;
-    const breakdown = {
-      Documents: 0,
-      Projects: 0,
-      Certificates: 0,
-      Media: 0,
-      Others: 0,
-    };
-
-    files
-      .filter((f) => !f.inTrash)
-      .forEach((f) => {
-        used += f.size || 0;
-        if (f.category === 'Projects') breakdown.Projects += f.size || 0;
-        else if (f.category === 'Certificates') breakdown.Certificates += f.size || 0;
-        else if (
-          f.type === 'video' ||
-          f.type === 'png' ||
-          f.type === 'jpg' ||
-          f.type === 'jpeg' ||
-          f.type === 'webp'
-        )
-          breakdown.Media += f.size || 0;
-        else if (
-          ['Resumes', 'Notes', 'Assignments', 'Placement Documents'].includes(f.category)
-        )
-          breakdown.Documents += f.size || 0;
-        else breakdown.Others += f.size || 0;
-      });
-
-    const capacity = user.storage_plan === 'pro'
-      ? 1000 * 1024 * 1024 * 1024 // 1 TB
-      : 500 * 1024 * 1024 * 1024; // 500 GB
-
-    setStorageStats({
-      totalCapacity: capacity,
-      used,
-      breakdown,
-    });
-  }, [files, user.storage_plan]);
+    if (isAuthenticated) {
+      fetchStorageStats();
+    }
+  }, [files, isAuthenticated, fetchStorageStats]);
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   const fetchUserProfile = async () => {
@@ -212,6 +211,7 @@ export const FileProvider = ({ children }) => {
           email: userData.email || '',
           studentId: userData.studentId || '',
           university: userData.university || '',
+          organization: userData.organization || '',
           major: userData.major || '',
           phone: userData.phone || '',
           bio: userData.bio || '',
