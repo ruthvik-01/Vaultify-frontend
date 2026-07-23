@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import SaasNotification from '../../components/SaasNotification';
 import { 
   Lock, 
   User, 
@@ -17,6 +19,7 @@ import { adminService } from '../../services/adminService';
 
 export default function AdminSettings() {
   const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'security'
+  const [toast, setToast] = useState(null);
 
   // Change Password States
   const [oldPassword, setOldPassword] = useState('');
@@ -159,8 +162,9 @@ export default function AdminSettings() {
   const handleExportData = async () => {
     try {
       await adminService.exportMonitoringData();
+      setToast({ message: 'Monitoring data exported successfully.', type: 'success' });
     } catch (err) {
-      alert(err.message || 'Failed to export data.');
+      setToast({ message: err.message || 'Failed to export data.', type: 'error' });
     }
   };
 
@@ -468,6 +472,12 @@ export default function AdminSettings() {
           </div>
         </div>
       )}
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {toast && (
+          <SaasNotification toast={toast} onClose={() => setToast(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminService } from '../../services/adminService';
 import VideoPlayer from '../../components/video/VideoPlayer';
+import SaasNotification from '../../components/SaasNotification';
 import { 
   Users, 
   FolderKanban, 
@@ -33,6 +34,7 @@ export default function AdminDashboard() {
   const [selectedFileForPreview, setSelectedFileForPreview] = useState(null);
   const [playbackUrl, setPlaybackUrl] = useState('');
   const [copiedId, setCopiedId] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const handleOpenLink = (file) => {
     const link = file.publicUrl || file.url || `${window.location.origin}/share/${file.id}`;
@@ -92,7 +94,7 @@ export default function AdminDashboard() {
       });
       setPlaybackUrl(url);
     } catch (err) {
-      alert(err.message || 'Failed to retrieve preview.');
+      setToast({ message: err.message || 'Failed to retrieve preview.', type: 'error' });
     }
   };
 
@@ -275,6 +277,13 @@ export default function AdminDashboard() {
           }}
         />
       )}
+
+      {/* Notification Toast */}
+      <AnimatePresence>
+        {toast && (
+          <SaasNotification toast={toast} onClose={() => setToast(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

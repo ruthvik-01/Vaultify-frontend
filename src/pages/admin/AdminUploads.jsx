@@ -225,7 +225,7 @@ export default function AdminUploads() {
       });
       setPlaybackUrl(url);
     } catch (err) {
-      alert(err.message || 'Failed to retrieve preview.');
+      showNotification(err.message || 'Failed to retrieve preview.', 'error');
     }
   };
 
@@ -251,7 +251,7 @@ export default function AdminUploads() {
   const handlePurgeTeamUploads = async (targetTeam) => {
     const teamToPurge = targetTeam || team;
     if (!teamToPurge || teamToPurge === 'All') {
-      alert('Please select a specific team to purge team uploads.');
+      showNotification('Please select a specific team to purge team uploads.', 'warning');
       return;
     }
     if (!window.confirm(`Are you sure you want to purge ALL uploads for Team "${teamToPurge}"? This will permanently delete all files and videos for this team.`)) {
@@ -259,10 +259,10 @@ export default function AdminUploads() {
     }
     try {
       const res = await adminService.deleteTeamUploads(teamToPurge);
-      alert(res.message || `Uploads for team "${teamToPurge}" purged.`);
+      showNotification(res.message || `Uploads for team "${teamToPurge}" purged.`, 'success');
       fetchUploads();
     } catch (err) {
-      alert(err.message || 'Failed to purge team uploads.');
+      showNotification(err.message || 'Failed to purge team uploads.', 'error');
     }
   };
 

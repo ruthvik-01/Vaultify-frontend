@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import SaasNotification from '../../components/SaasNotification';
 import { 
   FolderKanban, 
   Clock, 
@@ -28,11 +30,10 @@ export default function AdminTeams() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedTeamId, setExpandedTeamId] = useState(null);
-  const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const fetchTeams = async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await adminService.getTeams();
       if (res && res.teams) {
@@ -42,7 +43,7 @@ export default function AdminTeams() {
       }
     } catch (err) {
       console.error('Failed to fetch teams:', err);
-      setError(err.message || 'Failed to load teams.');
+      setToast({ message: err.message || 'Failed to load teams.', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -59,10 +60,10 @@ export default function AdminTeams() {
     }
     try {
       const res = await adminService.deleteTeamUploads(teamName);
-      alert(res.message || `Uploads for team "${teamName}" purged successfully.`);
+      setToast({ message: res.message || `Uploads for team "${teamName}" purged successfully.`, type: 'success' });
       fetchTeams();
     } catch (err) {
-      alert(err.message || 'Failed to purge team uploads.');
+      setToast({ message: err.message || 'Failed to purge team uploads.', type: 'error' });
     }
   };
 
@@ -243,6 +244,11 @@ export default function AdminTeams() {
           })}
         </div>
       )}
+      <AnimatePresence>
+        {toast && (
+          <SaasNotification toast={toast} onClose={() => setToast(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

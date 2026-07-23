@@ -24,20 +24,23 @@ export const FileProvider = ({ children }) => {
   });
   const [toast, setToast] = useState(null);
 
-  const showNotification = useCallback((message, type = 'success') => {
+  const showNotification = useCallback((message, type = 'success', title = null) => {
     setToast((prev) => {
       if (prev && prev.message === message && prev.type === type) {
         return prev;
       }
-      return { message, type, id: Date.now() };
+      return { message, type, title, id: Date.now() };
     });
   }, []);
 
   useEffect(() => {
     if (toast) {
+      const type = toast.type || 'success';
+      const duration = type === 'error' ? 6000 : (type === 'info' || type === 'warning' ? 4000 : 3000);
+
       const timer = setTimeout(() => {
         setToast(null);
-      }, 3000);
+      }, duration);
 
       const handleKeyDown = (e) => {
         if (e.key === 'Escape') {

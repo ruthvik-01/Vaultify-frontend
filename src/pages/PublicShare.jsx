@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { shareService } from '../services/shareService';
+import SaasNotification from '../components/SaasNotification';
 import { 
   Download, Film, Folder, AlertTriangle, Loader2, ShieldCheck, Lock, HardDrive, User, Calendar,
   FileText, FileCode, File, Music, Image as ImageIcon, FileSpreadsheet, Presentation, Video, Eye, X, Play 
@@ -21,6 +23,7 @@ export default function PublicShare() {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     async function loadSharedItem() {
@@ -60,7 +63,7 @@ export default function PublicShare() {
       }
     } catch (err) {
       console.error(err);
-      alert('Could not download file: ' + err.message);
+      setToast({ message: 'Could not download file: ' + err.message, type: 'error' });
     }
   };
 
@@ -433,6 +436,11 @@ export default function PublicShare() {
           </div>
         </div>
       )}
+      <AnimatePresence>
+        {toast && (
+          <SaasNotification toast={toast} onClose={() => setToast(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

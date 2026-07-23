@@ -1,48 +1,36 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, AlertCircle, AlertTriangle, Info, X } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 export default function SaasNotification({ toast, onClose }) {
   if (!toast) return null;
 
-  const { message, type = 'success' } = toast;
+  const { message, type = 'success', title } = toast;
 
   const typeConfig = {
     success: {
-      bgColor: 'bg-white/95 dark:bg-emerald-950/95',
-      borderColor: 'border-emerald-500/30',
-      iconBg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-      textColor: 'text-emerald-950 dark:text-emerald-100',
-      accentBar: 'bg-emerald-500',
-      Icon: CheckCircle2,
-      label: 'Success'
+      title: title || 'Success',
+      iconColor: 'text-emerald-500',
+      iconBg: 'bg-emerald-500/10 border-emerald-500/20',
+      Icon: CheckCircle2
     },
     error: {
-      bgColor: 'bg-white/95 dark:bg-rose-950/95',
-      borderColor: 'border-rose-500/30',
-      iconBg: 'bg-rose-500/15 text-rose-600 dark:text-rose-400',
-      textColor: 'text-rose-950 dark:text-rose-100',
-      accentBar: 'bg-rose-500',
-      Icon: AlertCircle,
-      label: 'Error'
+      title: title || 'Error',
+      iconColor: 'text-rose-500',
+      iconBg: 'bg-rose-500/10 border-rose-500/20',
+      Icon: XCircle
     },
     warning: {
-      bgColor: 'bg-white/95 dark:bg-amber-950/95',
-      borderColor: 'border-amber-500/30',
-      iconBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-      textColor: 'text-amber-950 dark:text-amber-100',
-      accentBar: 'bg-amber-500',
-      Icon: AlertTriangle,
-      label: 'Warning'
+      title: title || 'Warning',
+      iconColor: 'text-amber-500',
+      iconBg: 'bg-amber-500/10 border-amber-500/20',
+      Icon: AlertTriangle
     },
     info: {
-      bgColor: 'bg-white/95 dark:bg-blue-950/95',
-      borderColor: 'border-blue-500/30',
-      iconBg: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
-      textColor: 'text-blue-950 dark:text-blue-100',
-      accentBar: 'bg-blue-500',
-      Icon: Info,
-      label: 'Notice'
+      title: title || 'Information',
+      iconColor: 'text-blue-500',
+      iconBg: 'bg-blue-500/10 border-blue-500/20',
+      Icon: Info
     }
   };
 
@@ -50,53 +38,37 @@ export default function SaasNotification({ toast, onClose }) {
   const { Icon } = config;
 
   return (
-    <>
-      {/* Backdrop blur overlay */}
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] pointer-events-auto select-none px-4 w-full max-w-[420px] flex justify-center">
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={onClose}
-        className="fixed inset-0 z-[9998] bg-black/25 backdrop-blur-sm pointer-events-auto"
-      />
+        initial={{ opacity: 0, y: -16, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -16, scale: 0.96 }}
+        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-[400px] bg-white/75 dark:bg-zinc-900/80 backdrop-blur-2xl border border-white/50 dark:border-white/10 rounded-2xl p-4 shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.4)] relative flex items-start space-x-3.5"
+      >
+        {/* Modern Icon Badge */}
+        <div className={`p-2 rounded-xl border ${config.iconBg} ${config.iconColor} shrink-0 mt-0.5 shadow-sm`}>
+          <Icon className="w-5 h-5 stroke-[2.2]" />
+        </div>
 
-      {/* Centered notification dialog modal */}
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pointer-events-none select-none">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.88, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.94, y: -10 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 380 }}
-          className={`pointer-events-auto max-w-sm sm:max-w-md w-full ${config.bgColor} border ${config.borderColor} rounded-2xl shadow-2xl backdrop-blur-xl p-5 relative overflow-hidden flex items-start space-x-3.5`}
+        {/* Text Body */}
+        <div className="flex-1 min-w-0 pr-5 text-left">
+          <h4 className="text-[15px] font-semibold text-zinc-900 dark:text-zinc-100 leading-tight">
+            {config.title}
+          </h4>
+          <p className="text-[13px] text-zinc-600 dark:text-zinc-300 font-normal leading-snug mt-0.5">
+            {message}
+          </p>
+        </div>
+
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-3.5 right-3.5 p-1 rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/5 dark:hover:bg-white/10 transition-all cursor-pointer"
         >
-          {/* Left vertical accent indicator */}
-          <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${config.accentBar}`} />
-
-          {/* Animated Icon badge */}
-          <div className={`p-2.5 rounded-xl border border-current/10 ${config.iconBg} shrink-0 mt-0.5`}>
-            <Icon className="w-5 h-5 stroke-[2.2]" />
-          </div>
-
-          {/* Text Message */}
-          <div className="flex-1 min-w-0 pr-6 text-left">
-            <span className="text-[10px] font-extrabold uppercase tracking-wider block opacity-70 mb-0.5">
-              {config.label}
-            </span>
-            <p className={`text-xs font-semibold leading-relaxed ${config.textColor}`}>
-              {message}
-            </p>
-          </div>
-
-          {/* Manual close X button */}
-          <button
-            onClick={onClose}
-            className="absolute top-3.5 right-3.5 p-1 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </motion.div>
-      </div>
-    </>
+          <X className="w-4 h-4" />
+        </button>
+      </motion.div>
+    </div>
   );
 }
