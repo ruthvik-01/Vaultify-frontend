@@ -37,7 +37,7 @@ export default function AdminSettings() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newStudentName, setNewStudentName] = useState('');
   const [newStudentEmail, setNewStudentEmail] = useState('');
-  const [newStudentTeam, setNewStudentTeam] = useState('Cloud');
+  const [newStudentTeam, setNewStudentTeam] = useState('');
 
   // Feedback Messages
   const [passwordMessage, setPasswordMessage] = useState('');
@@ -97,7 +97,7 @@ export default function AdminSettings() {
       setRosterMessage(`Successfully added "${newStudentName}" to monitored roster.`);
       setNewStudentName('');
       setNewStudentEmail('');
-      setNewStudentTeam('Cloud');
+      setNewStudentTeam('');
       setShowAddModal(false);
       loadRoster();
     } catch (err) {

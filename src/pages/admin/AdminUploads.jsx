@@ -533,7 +533,7 @@ export default function AdminUploads() {
                       {file.student}
                     </td>
                     <td className="py-4 px-4 text-gray-500 font-medium truncate max-w-[160px]">
-                      {file.studentEmail || `${(file.student || 'student').toLowerCase().replace(/\s+/g, '.')}@student.edu`}
+                      {file.studentEmail || '-'}
                     </td>
                     <td className="py-4 px-4 text-brand-olive font-semibold">{file.team}</td>
                     <td className="py-4 px-4 text-gray-500 font-medium">

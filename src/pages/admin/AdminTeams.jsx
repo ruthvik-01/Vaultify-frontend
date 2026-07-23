@@ -14,7 +14,10 @@ import {
   Database,
   Trash2,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatDate';
 
@@ -29,11 +32,20 @@ function formatSize(bytes) {
 export default function AdminTeams() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [expandedTeamId, setExpandedTeamId] = useState(null);
   const [toast, setToast] = useState(null);
 
+  // Client-side search, sorting, filtering, and pagination states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('name-asc');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
+
   const fetchTeams = async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await adminService.getTeams();
       if (res && res.teams) {
@@ -43,6 +55,7 @@ export default function AdminTeams() {
       }
     } catch (err) {
       console.error('Failed to fetch teams:', err);
+      setError(err.message || 'Failed to load teams.');
       setToast({ message: err.message || 'Failed to load teams.', type: 'error' });
     } finally {
       setLoading(false);
@@ -88,6 +101,28 @@ export default function AdminTeams() {
     setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
   };
 
+  // Derive creation date for a team (earliest student's createdAt)
+  const getTeamCreatedDate = (team) => {
+    if (team.students && team.students.length > 0) {
+      const dates = team.students
+        .map(s => s.createdAt || s.uploadDate)
+        .filter(Boolean)
+        .map(d => new Date(d).getTime());
+      if (dates.length > 0) {
+        return formatDate(new Date(Math.min(...dates)));
+      }
+    }
+    return formatDate(team.latestUpload || new Date());
+  };
+
+  // Derive active status of a team (active if any student is active)
+  const isTeamActive = (team) => {
+    if (team.students && team.students.length > 0) {
+      return team.students.some(s => s.active !== false);
+    }
+    return true;
+  };
+
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -116,6 +151,41 @@ export default function AdminTeams() {
 
   const safeTeams = Array.isArray(teams) ? teams : [];
 
+  // Filter & Sort Teams List
+  const filteredTeams = safeTeams
+    .filter(team => {
+      const matchesSearch = (team.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const active = isTeamActive(team);
+      const matchesStatus = statusFilter === 'All' || 
+                            (statusFilter === 'Active' && active) || 
+                            (statusFilter === 'Inactive' && !active);
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'name-asc') {
+        return (a.name || '').localeCompare(b.name || '');
+      }
+      if (sortBy === 'name-desc') {
+        return (b.name || '').localeCompare(a.name || '');
+      }
+      if (sortBy === 'students-desc') {
+        return (b.studentCount || 0) - (a.studentCount || 0);
+      }
+      if (sortBy === 'students-asc') {
+        return (a.studentCount || 0) - (b.studentCount || 0);
+      }
+      if (sortBy === 'storage-desc') {
+        return (b.storageUsed || 0) - (a.storageUsed || 0);
+      }
+      if (sortBy === 'storage-asc') {
+        return (a.storageUsed || 0) - (b.storageUsed || 0);
+      }
+      return 0;
+    });
+
+  const totalPages = Math.ceil(filteredTeams.length / pageSize) || 1;
+  const paginatedTeams = filteredTeams.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -131,18 +201,66 @@ export default function AdminTeams() {
         </div>
       </div>
 
+      {/* Filter and Control Panel */}
+      <div className="bg-white border border-brand-sand/70 rounded-3xl p-5 shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+          {/* Search Input */}
+          <div className="relative w-full md:flex-1">
+            <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search teams by name..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              className="w-full pl-11 pr-4 py-2.5 bg-brand-cream/40 border border-brand-sand/80 rounded-2xl text-xs text-brand-charcoal font-medium focus:outline-none focus:border-brand-olive transition-colors"
+            />
+          </div>
+
+          {/* Sort & Filter Selectors */}
+          <div className="flex items-center space-x-3 w-full md:w-auto shrink-0">
+            <div className="flex-1 md:flex-none">
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Active">Active Teams</option>
+                <option value="Inactive">Inactive Teams</option>
+              </select>
+            </div>
+
+            <div className="flex-1 md:flex-none">
+              <select
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+                className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
+              >
+                <option value="name-asc">Team Name (A-Z)</option>
+                <option value="name-desc">Team Name (Z-A)</option>
+                <option value="students-desc">Students (High-Low)</option>
+                <option value="students-asc">Students (Low-High)</option>
+                <option value="storage-desc">Storage Used (High-Low)</option>
+                <option value="storage-asc">Storage Used (Low-High)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Teams Grid / List */}
-      {safeTeams.length === 0 ? (
+      {paginatedTeams.length === 0 ? (
         <div className="bg-white border border-brand-sand/70 rounded-3xl p-16 text-center text-gray-400 font-medium space-y-2">
           <FolderKanban className="w-12 h-12 mx-auto text-brand-sage mb-2" />
-          <p className="font-serif font-bold text-base text-brand-charcoal">No teams available.</p>
-          <p className="text-xs text-gray-400">Add monitored student emails in Settings to organize teams.</p>
+          <p className="font-serif font-bold text-base text-brand-charcoal">No teams match your criteria.</p>
+          <p className="text-xs text-gray-400">Try modifying your search or filter settings.</p>
         </div>
       ) : (
         <div className="space-y-4">
-          {safeTeams.map((team) => {
+          {paginatedTeams.map((team) => {
             const teamId = team.id || team.name;
             const isExpanded = expandedTeamId === teamId;
+            const active = isTeamActive(team);
 
             return (
               <div 
@@ -164,6 +282,13 @@ export default function AdminTeams() {
                         <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-olive/10 text-brand-olive">
                           {team.studentCount || (team.students ? team.students.length : 0)} Students
                         </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                          active 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : 'bg-gray-50 text-gray-500 border-gray-200'
+                        }`}>
+                          {active ? 'Active' : 'Inactive'}
+                        </span>
                       </div>
                       <p className="text-xs text-gray-400 font-medium mt-0.5">
                         Storage Used: <span className="font-semibold text-gray-700">{formatSize(team.storageUsed)}</span> • Uploads: <span className="font-semibold text-brand-olive">{team.totalUploads || 0} files</span>
@@ -172,11 +297,14 @@ export default function AdminTeams() {
                   </div>
 
                   <div className="flex items-center space-x-3 self-end sm:self-auto">
-                    <div className="text-right text-xs text-gray-400 font-medium hidden md:block">
-                      <div className="flex items-center space-x-1">
+                    <div className="text-right text-xs text-gray-400 font-medium hidden md:block space-y-0.5">
+                      <div className="flex items-center space-x-1 justify-end">
                         <Clock className="w-3.5 h-3.5 text-brand-olive" />
                         <span>Latest: {team.latestUpload ? formatDate(team.latestUpload) : 'No uploads'}</span>
                       </div>
+                      <p className="text-[10px] text-gray-400 font-normal">
+                        Created: {getTeamCreatedDate(team)}
+                      </p>
                     </div>
                     <button
                       onClick={(e) => handlePurgeTeamUploads(team.name, e)}
@@ -244,6 +372,34 @@ export default function AdminTeams() {
           })}
         </div>
       )}
+
+      {/* Pagination Footer */}
+      {filteredTeams.length > pageSize && (
+        <div className="bg-white border border-brand-sand/70 rounded-3xl p-4 flex items-center justify-between shadow-sm">
+          <p className="text-xs text-gray-500 font-medium">
+            Showing Page <span className="font-bold text-brand-charcoal">{page}</span> of{' '}
+            <span className="font-bold text-brand-charcoal">{totalPages}</span> ({filteredTeams.length} total teams)
+          </p>
+
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-2 rounded-xl bg-white border border-brand-sand/80 text-gray-600 hover:bg-brand-sand/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+              className="p-2 rounded-xl bg-white border border-brand-sand/80 text-gray-600 hover:bg-brand-sand/30 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <AnimatePresence>
         {toast && (
           <SaasNotification toast={toast} onClose={() => setToast(null)} />
