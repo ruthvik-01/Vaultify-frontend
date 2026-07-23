@@ -394,7 +394,8 @@ export const FileProvider = ({ children }) => {
     } catch (e) {
       console.error('refreshAll failed:', e.message);
     }
-  }, [fetchAllFiles, fetchAllFolders, fetchStorageStats, fetchActivities]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fetchStorageStats, fetchActivities]);
 
   const uploadFile = async (fileData, onProgressCallback = null) => {
     try {
