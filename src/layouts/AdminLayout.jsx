@@ -29,6 +29,7 @@ export default function AdminLayout() {
   // Get dynamic page title from pathname
   const getPageTitle = () => {
     const path = location.pathname;
+    if (path.includes('/admin/monitoring')) return 'Student Monitoring';
     if (path.includes('/admin/teams')) return 'Monitored Teams';
     if (path.includes('/admin/uploads')) return 'Student Uploads';
     if (path.includes('/admin/settings')) return 'Admin Settings';

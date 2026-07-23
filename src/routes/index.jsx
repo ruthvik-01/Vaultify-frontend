@@ -29,6 +29,7 @@ import AdminTeams from '../pages/admin/AdminTeams';
 import AdminUploads from '../pages/admin/AdminUploads';
 import AdminAnalytics from '../pages/admin/AdminAnalytics';
 import AdminSettings from '../pages/admin/AdminSettings';
+import AdminMonitoring from '../pages/admin/AdminMonitoring';
 
 // Protected Route wrapper
 function ProtectedRoute() {
@@ -77,6 +78,7 @@ export default function AppRoutes() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/teams" element={<AdminTeams />} />
           <Route path="/admin/uploads" element={<AdminUploads />} />
+          <Route path="/admin/monitoring" element={<AdminMonitoring />} />
           <Route path="/admin/analytics" element={<AdminAnalytics />} />
           <Route path="/admin/settings" element={<AdminSettings />} />
         </Route>

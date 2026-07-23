@@ -192,5 +192,9 @@ export const adminService = {
     return await fetchAdmin(`${API_URL}/admin/uploads/${id}/share?type=${type}`, {
       method: 'POST'
     });
+  },
+
+  getMonitoringData: async () => {
+    return await fetchWithDeduplication(`${API_URL}/admin/monitoring`);
   }
 };

@@ -20,6 +20,7 @@ export default function AdminSidebar({ onClose }) {
 
   const navItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Monitoring', path: '/admin/monitoring', icon: BarChart3 },
     { name: 'Teams', path: '/admin/teams', icon: FolderKanban },
     { name: 'Uploads', path: '/admin/uploads', icon: UploadCloud },
     { name: 'Settings', path: '/admin/settings', icon: Settings },
