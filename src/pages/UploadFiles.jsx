@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function UploadFiles() {
-  const { uploadFile, folders, files, showNotification } = useFiles();
+  const { uploadFile, folders, files, showNotification, refreshAll } = useFiles();
   const [dragActive, setDragActive] = useState(false);
   const [uploadState, setUploadState] = useState('idle'); // idle | configuring | uploading | success
   
@@ -34,21 +34,42 @@ export default function UploadFiles() {
     }
   };
 
-  const handleDrop = (e) => {
+  const handleDrop = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      setupFileDetails(file);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (e.dataTransfer.files.length === 1) {
+        setupFileDetails(e.dataTransfer.files[0]);
+      } else {
+        const filesArray = Array.from(e.dataTransfer.files);
+        setUploadState('uploading');
+        for (const file of filesArray) {
+          try {
+            await uploadFile({
+              file,
+              name: file.name,
+              type: file.name.split('.').pop().toLowerCase(),
+              size: file.size,
+              folderId: selectedFolderId || null
+            });
+          } catch (_) {}
+        }
+        if (refreshAll) await refreshAll();
+        showNotification(`Uploaded ${filesArray.length} items successfully`, 'success');
+        setUploadState('success');
+      }
     }
   };
 
   const handleFileSelect = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setupFileDetails(file);
+    if (e.target.files && e.target.files.length > 0) {
+      if (e.target.files.length === 1) {
+        setupFileDetails(e.target.files[0]);
+      } else {
+        handleDrop({ preventDefault: () => {}, stopPropagation: () => {}, dataTransfer: { files: e.target.files } });
+      }
     }
   };
 
@@ -132,6 +153,7 @@ export default function UploadFiles() {
       }
       setProgress(100);
       setUploadState('success');
+      if (refreshAll) await refreshAll();
     } catch (error) {
       console.error('Upload failed:', error);
       setUploadState('idle');

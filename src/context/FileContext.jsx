@@ -383,6 +383,19 @@ export const FileProvider = ({ children }) => {
     // Managed locally via localStorage and merged in fetchAllFiles
   };
 
+  const refreshAll = useCallback(async () => {
+    try {
+      await Promise.all([
+        fetchAllFiles(true),
+        fetchAllFolders(),
+        fetchStorageStats(),
+        fetchActivities()
+      ]);
+    } catch (e) {
+      console.error('refreshAll failed:', e.message);
+    }
+  }, [fetchStorageStats, fetchActivities]);
+
   const addActivity = async (action, fileName, category = 'System') => {
     try {
       await api.logActivity(action, fileName, { category });
@@ -421,7 +434,7 @@ export const FileProvider = ({ children }) => {
                 onProgressCallback({ progress, speed, eta });
               }
             },
-            onComplete: (videoData) => {
+            onComplete: async (videoData) => {
               const name = videoData.filename || videoData.originalName;
               const videoExt = name.split('.').pop().toLowerCase();
               const newVideoFile = {
@@ -443,6 +456,7 @@ export const FileProvider = ({ children }) => {
               };
               setFiles((prev) => [newVideoFile, ...prev]);
               addActivity('uploaded', newVideoFile.name, 'Media');
+              await refreshAll();
               resolve(newVideoFile);
             },
             onError: (err) => {
@@ -467,6 +481,7 @@ export const FileProvider = ({ children }) => {
           const newFile = mapBackendFile(fileData2);
           setFiles((prev) => [newFile, ...prev]);
           addActivity('uploaded', newFile.name, newFile.category);
+          await refreshAll();
           return newFile;
         }
       }
@@ -1056,7 +1071,8 @@ export const FileProvider = ({ children }) => {
         googleLogin,
         register,
         logout,
-         fetchAllFiles,
+        refreshAll,
+        fetchAllFiles,
         fetchAllFolders,
         fetchTrashFiles,
         fetchUserProfile,

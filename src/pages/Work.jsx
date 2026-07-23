@@ -15,6 +15,7 @@ export default function Work() {
   const { 
     files, 
     folders, 
+    refreshAll,
     fetchAllFiles, 
     fetchAllFolders,
     getOrCreateWorkFolder, 
@@ -125,6 +126,7 @@ export default function Work() {
     try {
       if (addFilesToUploadQueue) {
         await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId, true);
+        if (refreshAll) await refreshAll();
         showNotification(`${filesArray.length} file(s) queued for upload to Work folder`, 'success');
       } else {
         for (const f of filesArray) {
@@ -136,7 +138,7 @@ export default function Work() {
             uploadBatchId
           });
         }
-        await fetchAllFiles();
+        if (refreshAll) await refreshAll();
         showNotification(`Uploaded to Work folder`, 'success');
       }
     } catch (err) {
