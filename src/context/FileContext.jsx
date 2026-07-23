@@ -394,16 +394,7 @@ export const FileProvider = ({ children }) => {
     } catch (e) {
       console.error('refreshAll failed:', e.message);
     }
-  }, [fetchStorageStats, fetchActivities]);
-
-  const addActivity = async (action, fileName, category = 'General') => {
-    try {
-      await api.logActivity(action, fileName, { category });
-      await fetchActivities();
-    } catch (err) {
-      console.error('Failed to log activity to backend:', err.message);
-    }
-  };
+  }, [fetchAllFiles, fetchAllFolders, fetchStorageStats, fetchActivities]);
 
   const uploadFile = async (fileData, onProgressCallback = null) => {
     try {
@@ -455,7 +446,7 @@ export const FileProvider = ({ children }) => {
                 status: videoData.status || 'Active',
               };
               setFiles((prev) => [newVideoFile, ...prev]);
-              addActivity('uploaded', newVideoFile.name, 'Media');
+              // Backend already logs the upload; just refresh state
               await refreshAll();
               resolve(newVideoFile);
             },
@@ -480,7 +471,7 @@ export const FileProvider = ({ children }) => {
         if (fileData2) {
           const newFile = mapBackendFile(fileData2);
           setFiles((prev) => [newFile, ...prev]);
-          addActivity('uploaded', newFile.name, newFile.category);
+          // Backend already logs the upload; just refresh state
           await refreshAll();
           return newFile;
         }
@@ -491,28 +482,35 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  // Soft-delete: marks file as trashed in local state (file stays on server)
+  // Delete file: removes file from backend (S3 + DB) and logs the action server-side
   const moveToTrash = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
       if (!file) return;
 
-      // Add to localTrash in localStorage
-      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
-      const updatedFile = { ...file, inTrash: true };
-      if (!localTrash.some(t => t.id === id)) {
-        localTrash.push(updatedFile);
-        localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash));
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase()));
+
+      // Perform actual backend deletion so server logs the Delete action
+      try {
+        if (isVideo) {
+          await videoService.deleteVideo(id);
+        } else {
+          await api.deleteFile(id);
+        }
+      } catch (apiErr) {
+        console.warn('Backend delete failed:', apiErr.message);
       }
 
-      // Update files state immediately
-      setFiles(prev => {
-        const remaining = prev.filter(f => f.id !== id);
-        return [...remaining, updatedFile];
-      });
+      // Remove from files state immediately
+      setFiles(prev => prev.filter(f => f.id !== id));
 
-      addActivity('trashed', file.name, file.category);
-      showNotification(`"${file.name}" moved to trash`, 'success');
+      // Also clean up any localStorage trash / starred references
+      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
+      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash.filter(t => t.id !== id)));
+
+      showNotification(`"${file.name}" deleted`, 'success');
+      // Refresh activities so dashboard picks up the Delete log
+      await fetchActivities();
     } catch (err) {
       console.error('Delete failed:', err.message);
       showNotification('Failed to delete file', 'error');
@@ -522,35 +520,34 @@ export const FileProvider = ({ children }) => {
   // Keep the old name as alias for backward compat (some components still call deleteFile)
   const deleteFile = moveToTrash;
 
-  // Restore: moves file back from trash to active state
-  const restoreFile = (id) => {
+  // Restore: re-fetches files from backend (file was never actually deleted server-side in old soft-delete flow)
+  const restoreFile = async (id) => {
     const file = files.find((f) => f.id === id);
     if (file) {
       // Remove from localTrash
       const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
-      const filteredTrash = localTrash.filter(t => t.id !== id);
-      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(filteredTrash));
+      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash.filter(t => t.id !== id)));
 
-      // Update files state
+      // Update files state locally
       const updatedFile = { ...file, inTrash: false };
       setFiles(prev => {
         const remaining = prev.filter(f => f.id !== id);
         return [...remaining, updatedFile];
       });
 
-      addActivity('restored', file.name, file.category);
       showNotification(`"${file.name}" restored from trash`, 'success');
+      await fetchActivities();
     }
   };
 
-  // Permanent delete: actually removes file from backend (S3 + DB)
+  // Permanent delete: removes file from backend (S3 + DB) — backend already logs 'Delete'
   const permanentlyDeleteFile = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
       
-      // Try calling backend delete API just in case it wasn't deleted during soft-delete
+      // Call backend delete
       try {
-        const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+        const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase()));
         if (isVideo) {
           await videoService.deleteVideo(id);
         } else {
@@ -560,21 +557,18 @@ export const FileProvider = ({ children }) => {
         // Silently ignore if already deleted on server
       }
 
-      // Remove from localTrash and localRestored in localStorage
+      // Remove from localStorage
       const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
-      const filteredTrash = localTrash.filter(t => t.id !== id);
-      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(filteredTrash));
-
+      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash.filter(t => t.id !== id)));
       const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
-      const filteredRestored = localRestored.filter(t => t.id !== id);
-      localStorage.setItem('vaultify_local_restored_files', JSON.stringify(filteredRestored));
+      localStorage.setItem('vaultify_local_restored_files', JSON.stringify(localRestored.filter(t => t.id !== id)));
 
       // Remove from files state
       setFiles((prev) => prev.filter((f) => f.id !== id));
       if (file) {
-        addActivity('purged', file.name, file.category);
         showNotification(`"${file.name}" permanently deleted`, 'success');
       }
+      await fetchActivities();
     } catch (err) {
       console.error('Permanent delete failed:', err.message);
       showNotification('Failed to permanently delete file', 'error');
@@ -585,8 +579,8 @@ export const FileProvider = ({ children }) => {
     const trashFiles = files.filter((f) => f.inTrash);
     if (trashFiles.length === 0) return;
     await Promise.all(trashFiles.map((f) => permanentlyDeleteFile(f.id)));
-    addActivity('cleared_trash', 'Trash Bin Emptied');
     showNotification('Trash emptied successfully', 'success');
+    await fetchActivities();
   };
 
   const moveFile = async (id, folderId) => {
@@ -598,6 +592,7 @@ export const FileProvider = ({ children }) => {
         setFiles(prev => prev.map(f => f.id === id ? mapped : f));
         showNotification('File moved successfully', 'success');
       }
+      await fetchActivities();
     } catch (err) {
       console.error('Failed to move file:', err.message);
       showNotification('Failed to move file', 'error');
@@ -610,7 +605,7 @@ export const FileProvider = ({ children }) => {
       const file = files.find((f) => f.id === id);
       if (!file) return;
       const nextStarred = !file.isStarred;
-      const isVideo = file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase());
+      const isVideo = file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase());
       
       if (!isVideo) {
         await api.favoriteFile(id, nextStarred);
@@ -628,10 +623,7 @@ export const FileProvider = ({ children }) => {
 
       setFiles((prev) =>
         prev.map((f) => {
-          if (f.id === id) {
-            addActivity(nextStarred ? 'starred' : 'unstarred', f.name, f.category);
-            return { ...f, isStarred: nextStarred };
-          }
+          if (f.id === id) return { ...f, isStarred: nextStarred };
           return f;
         })
       );
@@ -643,7 +635,7 @@ export const FileProvider = ({ children }) => {
   const renameFile = async (id, newName) => {
     try {
       const file = files.find((f) => f.id === id);
-      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase()));
       
       if (isVideo) {
         await videoService.renameVideo(id, newName);
@@ -653,12 +645,12 @@ export const FileProvider = ({ children }) => {
 
       setFiles((prev) =>
         prev.map((f) => {
-          if (f.id === id) {
-            return { ...f, name: newName };
-          }
+          if (f.id === id) return { ...f, name: newName };
           return f;
         })
       );
+      // Backend logs the Rename; refresh activities immediately
+      await fetchActivities();
     } catch (err) {
       console.error('Rename failed:', err.message);
     }
@@ -667,7 +659,7 @@ export const FileProvider = ({ children }) => {
   const downloadFile = async (id, name) => {
     try {
       const file = files.find((f) => f.id === id);
-      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase()));
       let url;
       
       if (isVideo) {
@@ -679,7 +671,8 @@ export const FileProvider = ({ children }) => {
 
       if (url) {
         window.open(url, '_blank');
-        addActivity('downloaded', name, isVideo ? 'Media' : 'System');
+        // Backend already logs the Download; refresh activities
+        await fetchActivities();
       }
     } catch (err) {
       console.error('Download failed:', err.message);
@@ -689,13 +682,16 @@ export const FileProvider = ({ children }) => {
   const getPreviewUrl = async (id) => {
     try {
       const file = files.find((f) => f.id === id);
-      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes(file.name.split('.').pop().toLowerCase()));
+      const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase()));
       
       if (isVideo) {
         return await videoService.getPlaybackUrl(id);
       } else {
         const res = await api.getPreviewUrl(id);
-        return res.download_url || (res.data && res.data.download_url) || null;
+        const url = res.download_url || (res.data && res.data.download_url) || null;
+        // Backend logs this as a Download/Preview; refresh activities
+        if (url) fetchActivities().catch(() => {});
+        return url;
       }
     } catch (err) {
       console.error('Failed to obtain preview link:', err.message);
@@ -803,12 +799,9 @@ export const FileProvider = ({ children }) => {
 
           // Update files array locally to reflect shared status
           setFiles(prev => prev.map(f => f.id === id ? { ...f, sharedWith: [...(f.sharedWith || []), 'recruiter@company.com'] } : f));
-          addActivity('shared', file.name, file.category);
-        } else {
-          // Folder shared
-          const folder = folders.find(f => f.id === folderId);
-          addActivity('shared', folder ? folder.folder_name : 'Folder', 'Folder');
         }
+        // Backend logs the Share; refresh activities
+        await fetchActivities();
         return link;
       }
     } catch (err) {
@@ -853,8 +846,8 @@ export const FileProvider = ({ children }) => {
 
       // Update files state
       setFiles(prev => prev.map(f => f.id === fileId ? { ...f, sharedWith: [] } : f));
-      addActivity('unshared', file.name, file.category);
       showNotification('Sharing revoked successfully', 'success');
+      await fetchActivities();
     } catch (err) {
       console.error('Revoke share failed:', err.message);
     }
@@ -1033,6 +1026,8 @@ export const FileProvider = ({ children }) => {
           return nextUser;
         });
       }
+      // Backend logs Profile/Settings/Organization updates; refresh activities immediately
+      await fetchActivities();
     } catch (err) {
       console.error('Update profile failed:', err.message);
       throw err;
@@ -1075,6 +1070,7 @@ export const FileProvider = ({ children }) => {
         refreshAll,
         fetchAllFiles,
         fetchAllFolders,
+        fetchActivities,
         fetchTrashFiles,
         fetchUserProfile,
         showNotification,

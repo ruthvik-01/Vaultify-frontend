@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useFiles } from '../context/FileContext';
 import { useNavigate } from 'react-router-dom';
 import FileCard from '../components/FileCard';
@@ -35,9 +35,17 @@ function formatActivityTime(timestamp) {
 }
 
 export default function Dashboard() {
-  const { files, activities, user, uploadFile, storageStats, showNotification } = useFiles();
+  const { files, activities, user, uploadFile, storageStats, showNotification, fetchActivities } = useFiles();
   const navigate = useNavigate();
   const [dragActive, setDragActive] = useState(false);
+
+  // Poll for new activities every 30 seconds for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchActivities();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchActivities]);
 
   // Get active files
   const activeFiles = useMemo(() => files.filter(f => !f.inTrash), [files]);
@@ -71,6 +79,18 @@ export default function Dashboard() {
         color: 'text-emerald-700 bg-emerald-100 border-emerald-300',
         badge: 'Upload',
         badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200'
+      };
+    }
+    // Check FOLDER actions BEFORE generic DELETE/RENAME so DELETE_FOLDER & RENAME_FOLDER are matched correctly
+    if (act.includes('FOLDER') || cat === 'FOLDER') {
+      const isDel = act.includes('DELETE');
+      const isRen = act.includes('RENAME');
+      return { 
+        text: isDel ? 'Deleted Folder' : isRen ? 'Renamed Folder' : 'Created Folder', 
+        Icon: isDel ? Trash2 : isRen ? Edit3 : FolderPlus, 
+        color: isDel ? 'text-rose-700 bg-rose-100 border-rose-300' : isRen ? 'text-amber-700 bg-amber-100 border-amber-300' : 'text-indigo-700 bg-indigo-100 border-indigo-300',
+        badge: 'Folder',
+        badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200'
       };
     }
     if (act.includes('DELETE') || act.includes('TRASH') || act.includes('PURGE') || cat === 'DELETE') {
@@ -116,15 +136,6 @@ export default function Dashboard() {
         color: 'text-amber-700 bg-amber-100 border-amber-300',
         badge: 'Edit',
         badgeColor: 'bg-amber-50 text-amber-700 border-amber-200'
-      };
-    }
-    if (act.includes('CREATE') || cat === 'FOLDER') {
-      return { 
-        text: 'Created Folder', 
-        Icon: FolderPlus, 
-        color: 'text-indigo-700 bg-indigo-100 border-indigo-300',
-        badge: 'Folder',
-        badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200'
       };
     }
     if (act.includes('SETTING') || cat === 'SETTINGS') {
