@@ -79,7 +79,7 @@ export const adminService = {
   },
 
   isAuthenticated: () => {
-    return !!localStorage.getItem('vaultify_admin_token');
+    return !!(localStorage.getItem('vaultify_admin_token') || localStorage.getItem('vaultify_token'));
   },
 
   getStats: async () => {
