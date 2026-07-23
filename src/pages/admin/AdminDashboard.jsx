@@ -135,7 +135,8 @@ export default function AdminDashboard() {
     { title: 'Total Teams', value: totalTeams, icon: FolderKanban, color: 'text-purple-600', bg: 'bg-purple-50', link: '/admin/teams' },
     { title: 'Total Uploads', value: totalUploads, icon: UploadCloud, color: 'text-emerald-600', bg: 'bg-emerald-50', link: '/admin/uploads' },
     { title: 'Total Storage Used', value: formatSize(totalStorageUsed), icon: HardDrive, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/admin/uploads' },
-    { title: "Today's Uploads", value: todayUploads, icon: RefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', link: '/admin/uploads' }
+    { title: "Today's Uploads", value: todayUploads, icon: RefreshCw, color: 'text-amber-600', bg: 'bg-amber-50', link: '/admin/uploads' },
+    { title: "Daily Unique Logins (Today)", value: todayUniqueLogins, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50', link: '/admin/settings' }
   ];
 
   return (
@@ -155,8 +156,8 @@ export default function AdminDashboard() {
         </button>
       </div>
 
-      {/* 5 Simple Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* 6 Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {metricCards.map((card, idx) => {
           const Icon = card.icon;
           return (
