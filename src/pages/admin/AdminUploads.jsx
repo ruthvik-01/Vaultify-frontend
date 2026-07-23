@@ -50,10 +50,6 @@ export default function AdminUploads() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
 
-  // Folder input debouncing
-  const [folderInput, setFolderInput] = useState('');
-  const [folder, setFolder] = useState('All');
-
   // Filter States
   const [team, setTeam] = useState('All');
   const [student, setStudent] = useState('All');
@@ -66,7 +62,6 @@ export default function AdminUploads() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
-  const [sizeCategory, setSizeCategory] = useState('All');
   const [sortBy, setSortBy] = useState('newest');
 
   // Dynamic Roster lists from backend
@@ -150,15 +145,6 @@ export default function AdminUploads() {
     return () => clearTimeout(handler);
   }, [searchInput]);
 
-  // Debounce folder input
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setFolder(folderInput.trim() || 'All');
-      setPage(1);
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [folderInput]);
-
   // Fetch dynamic Team and Student lists from database
   useEffect(() => {
     const loadDynamicOptions = async () => {
@@ -188,12 +174,10 @@ export default function AdminUploads() {
         search,
         team,
         student,
-        folder,
         fileType,
         dateRange,
         dateFrom: dateRange === 'custom' ? dateFrom : '',
         dateTo: dateRange === 'custom' ? dateTo : '',
-        sizeCategory,
         sortBy,
         page,
         limit
@@ -208,7 +192,7 @@ export default function AdminUploads() {
     } finally {
       setLoading(false);
     }
-  }, [search, team, student, folder, fileType, dateRange, dateFrom, dateTo, sizeCategory, sortBy, page, limit]);
+  }, [search, team, student, fileType, dateRange, dateFrom, dateTo, sortBy, page, limit]);
 
   useEffect(() => {
     fetchUploads();
@@ -306,9 +290,6 @@ export default function AdminUploads() {
           <p className="text-xs text-gray-500 font-medium">View and manage all real student file and video uploads across teams.</p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-brand-olive/10 text-brand-olive border border-brand-olive/20">
-            Total Uploads: {pagination.total || uploads.length}
-          </span>
           {team !== 'All' && (
             <button
               onClick={() => handlePurgeTeamUploads(team)}
@@ -344,7 +325,7 @@ export default function AdminUploads() {
         </div>
 
         {/* Multi-Select Filters Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 pt-1">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-1">
           <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Team</label>
             <select
@@ -376,17 +357,6 @@ export default function AdminUploads() {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Folder Name</label>
-            <input
-              type="text"
-              placeholder="e.g. Labs"
-              value={folderInput}
-              onChange={(e) => setFolderInput(e.target.value)}
-              className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs text-brand-charcoal focus:outline-none focus:border-brand-olive"
-            />
-          </div>
-
-          <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">File Type</label>
             <select
               value={fileType}
@@ -414,20 +384,6 @@ export default function AdminUploads() {
               <option value="7days">Last 7 Days</option>
               <option value="30days">Last 30 Days</option>
               <option value="custom">Custom Range</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">File Size</label>
-            <select
-              value={sizeCategory}
-              onChange={(e) => { setSizeCategory(e.target.value); setPage(1); }}
-              className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
-            >
-              <option value="All">All Sizes</option>
-              <option value="small">&lt; 10 MB</option>
-              <option value="medium">10 MB - 100 MB</option>
-              <option value="large">&gt; 100 MB</option>
             </select>
           </div>
 
@@ -492,7 +448,6 @@ export default function AdminUploads() {
             <thead>
               <tr className="border-b border-brand-sand/60 bg-brand-cream/40 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
                 <th className="py-3.5 px-4">Student</th>
-                <th className="py-3.5 px-4">Email</th>
                 <th className="py-3.5 px-4">Team</th>
                 <th className="py-3.5 px-4">Folder</th>
                 <th className="py-3.5 px-4">File Name</th>
@@ -508,7 +463,6 @@ export default function AdminUploads() {
                 [...Array(5)].map((_, i) => (
                   <tr key={i} className="animate-pulse">
                     <td className="py-4 px-4"><div className="h-4 bg-brand-sand/50 rounded w-24"></div></td>
-                    <td className="py-4 px-4"><div className="h-4 bg-brand-sand/50 rounded w-28"></div></td>
                     <td className="py-4 px-4"><div className="h-4 bg-brand-sand/50 rounded w-16"></div></td>
                     <td className="py-4 px-4"><div className="h-4 bg-brand-sand/50 rounded w-16"></div></td>
                     <td className="py-4 px-4"><div className="h-4 bg-brand-sand/50 rounded w-32"></div></td>
@@ -521,7 +475,7 @@ export default function AdminUploads() {
                 ))
               ) : (Array.isArray(uploads) ? uploads : []).length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-16 text-center text-gray-400 font-medium">
+                  <td colSpan={9} className="py-16 text-center text-gray-400 font-medium">
                     <FileCheck className="w-12 h-12 mx-auto mb-3 text-brand-sage" />
                     <p className="font-serif font-bold text-sm text-brand-charcoal">No uploads available.</p>
                   </td>
@@ -531,9 +485,6 @@ export default function AdminUploads() {
                   <tr key={file.id} className="hover:bg-brand-cream/30 transition-colors">
                     <td className="py-4 px-4 font-bold text-brand-charcoal truncate max-w-[140px]">
                       {file.student}
-                    </td>
-                    <td className="py-4 px-4 text-gray-500 font-medium truncate max-w-[160px]">
-                      {file.studentEmail || '-'}
                     </td>
                     <td className="py-4 px-4 text-brand-olive font-semibold">{file.team}</td>
                     <td className="py-4 px-4 text-gray-500 font-medium">
@@ -565,20 +516,6 @@ export default function AdminUploads() {
                           title="Preview File"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => handleOpenLink(file)}
-                          className="p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer"
-                          title="Open Link in New Tab"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-brand-olive" />
-                        </button>
-                        <button
-                          onClick={() => handleCopyShareLink(file)}
-                          className="p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer"
-                          title="Copy Share Link"
-                        >
-                          {copiedId === file.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-brand-olive" />}
                         </button>
                         <button
                           onClick={() => handleDownload(file)}
