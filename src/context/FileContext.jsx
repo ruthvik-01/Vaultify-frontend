@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, useCallback } from 'react';
 import { api } from '../services/api';
 import { videoService } from '../services/videoService';
 import { videoUploadService } from '../services/videoUploadService';
