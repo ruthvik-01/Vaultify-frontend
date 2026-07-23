@@ -1,13 +1,13 @@
 import React from 'react';
 import { useFiles } from '../context/FileContext';
-import { Mail, Calendar, HardDrive, ShieldCheck } from 'lucide-react';
+import { Mail, Calendar, HardDrive, ShieldCheck, GraduationCap } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function Profile() {
   const { user, storageStats } = useFiles();
 
   const formatDate = (isoString) => {
-    if (!isoString) return 'June 16, 2026'; // fallback
+    if (!isoString) return 'June 16, 2026';
     return new Date(isoString).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
@@ -16,17 +16,16 @@ export default function Profile() {
   };
 
   const formatSize = (bytes) => {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === undefined || bytes === null || isNaN(bytes) || bytes <= 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
-  const percent = Math.min(
-    ((storageStats.used / storageStats.totalCapacity) * 100),
-    100
-  );
+  const used = storageStats?.used || 0;
+  const total = storageStats?.totalCapacity || (500 * 1024 * 1024 * 1024);
+  const percent = total > 0 ? Math.min(((used / total) * 100), 100) : 0;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -42,24 +41,31 @@ export default function Profile() {
         {/* Avatar */}
         <div className="relative mt-12 mb-4">
           <img
-            src={user.avatar}
-            alt={user.name}
+            src={user?.avatar}
+            alt={user?.name || 'User Avatar'}
             className="w-28 h-28 rounded-full border-4 border-white shadow-md object-cover relative z-10 bg-white"
           />
         </div>
 
         {/* Profile Info */}
         <div className="space-y-1.5 z-10">
-          <h2 className="font-serif text-2xl font-bold text-brand-charcoal">{user.name}</h2>
+          <h2 className="font-serif text-2xl font-bold text-brand-charcoal">{user?.name}</h2>
           
           <div className="flex items-center justify-center space-x-1.5 text-xs text-gray-500">
             <Mail className="w-3.5 h-3.5 text-brand-olive" />
-            <span>{user.email}</span>
+            <span>{user?.email}</span>
           </div>
+
+          {(user?.organization || user?.university) && (
+            <div className="flex items-center justify-center space-x-1.5 text-xs text-gray-700 font-semibold">
+              <GraduationCap className="w-3.5 h-3.5 text-brand-olive" />
+              <span>{user.organization || user.university}</span>
+            </div>
+          )}
 
           <div className="flex items-center justify-center space-x-1.5 text-xs text-gray-400">
             <Calendar className="w-3.5 h-3.5 text-brand-olive" />
-            <span>Joined on {formatDate(user.created_at)}</span>
+            <span>Joined on {formatDate(user?.created_at)}</span>
           </div>
         </div>
 
@@ -91,45 +97,41 @@ export default function Profile() {
           </div>
 
           <div className="flex justify-between items-center text-xs text-brand-charcoal font-semibold">
-            <span>{formatSize(storageStats.used)} used</span>
+            <span>{formatSize(used)} used</span>
             <span className="text-brand-olive bg-brand-sage-light/35 px-2.5 py-0.5 rounded-full text-[10px]">
-              {percent.toFixed(1)}% Capacity Filled
+              {percent.toFixed(2)}% Capacity Filled
             </span>
-            <span>{formatSize(storageStats.totalCapacity)} limit</span>
+            <span>{formatSize(total)} limit</span>
           </div>
         </div>
 
         {/* Breakdown details */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-4 border-t border-brand-sand/40">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-brand-sand/40">
           <div className="p-3 bg-brand-cream border border-brand-sand/40 rounded-2xl flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Documents</span>
-            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">{formatSize(storageStats.breakdown.Documents)}</span>
+            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">
+              {formatSize(storageStats?.breakdown?.Documents)}
+            </span>
           </div>
 
           <div className="p-3 bg-brand-cream border border-brand-sand/40 rounded-2xl flex flex-col justify-between">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Projects</span>
-            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">{formatSize(storageStats.breakdown.Projects)}</span>
-          </div>
-
-          <div className="p-3 bg-brand-cream border border-brand-sand/40 rounded-2xl flex flex-col justify-between">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Certificates</span>
-            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">{formatSize(storageStats.breakdown.Certificates)}</span>
+            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Images</span>
+            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">
+              {formatSize(storageStats?.breakdown?.Images)}
+            </span>
           </div>
 
           <div className="p-3 bg-brand-cream border border-brand-sand/40 rounded-2xl flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Media Files</span>
-            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">{formatSize(storageStats.breakdown.Media)}</span>
-          </div>
-
-          <div className="p-3 bg-brand-cream border border-brand-sand/40 rounded-2xl flex flex-col justify-between">
-            <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Other Items</span>
-            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">{formatSize(storageStats.breakdown.Others)}</span>
+            <span className="text-sm font-bold text-brand-charcoal mt-1 font-mono">
+              {formatSize(storageStats?.breakdown?.Media)}
+            </span>
           </div>
 
           <div className="p-3 bg-brand-cream border border-brand-sand/40 rounded-2xl flex flex-col justify-between">
             <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Locker Plan</span>
             <span className="text-xs font-bold text-brand-olive mt-1 uppercase tracking-wide">
-              {user.storage_plan === 'pro' ? 'Pro Scholar' : 'Free Scholar'}
+              {user?.storage_plan === 'pro' ? 'PRO SCHOLAR' : 'FREE SCHOLAR'}
             </span>
           </div>
         </div>
