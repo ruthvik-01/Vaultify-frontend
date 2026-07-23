@@ -296,9 +296,9 @@ export const FileProvider = ({ children }) => {
   });
 
   // ─── Files ────────────────────────────────────────────────────────────────
-  const fetchAllFiles = async () => {
-    // Prevent duplicate concurrent fetches (fixes 429 Too Many Requests)
-    if (isFetchingFiles.current) return;
+  const fetchAllFiles = async (force = false) => {
+    // Prevent duplicate concurrent fetches (fixes 429 Too Many Requests) unless explicitly forced
+    if (isFetchingFiles.current && !force) return;
     isFetchingFiles.current = true;
     try {
       const [filesRes, videosList] = await Promise.all([
