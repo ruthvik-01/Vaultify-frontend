@@ -5,14 +5,14 @@ import EmptyState from '../components/EmptyState';
 import { Trash2, RefreshCcw, ShieldAlert, ArchiveRestore } from 'lucide-react';
 
 export default function Trash() {
-  const { files, clearTrash, restoreFile, showNotification } = useFiles();
+  const { files, clearTrash, restoreFile, showNotification, showConfirm } = useFiles();
 
   // Filter files that ARE in trash
   const trashFiles = files.filter(f => f.inTrash);
 
-  const handleEmptyTrash = () => {
+  const handleEmptyTrash = async () => {
     if (trashFiles.length === 0) return;
-    if (confirm('Are you sure you want to empty the Trash Bin? All files in trash will be permanently lost and space quota cleared.')) {
+    if (await showConfirm('Empty Trash Bin', 'Are you sure you want to empty the Trash Bin? All files in trash will be permanently lost.', { type: 'danger', confirmText: 'Empty Trash' })) {
       clearTrash();
     }
   };

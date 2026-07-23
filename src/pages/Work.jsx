@@ -10,6 +10,7 @@ import VideoPlayer from '../components/video/VideoPlayer';
 import ShareVideoModal from '../components/video/ShareVideoModal';
 import { videoService } from '../services/videoService';
 import { useVideoShare } from '../hooks/useVideoShare';
+import UploadTitleModal from '../components/UploadTitleModal';
 
 export default function Work() {
   const { 
@@ -28,7 +29,10 @@ export default function Work() {
     createFolder,
     renameFolder,
     deleteFolder,
-    showNotification 
+    showNotification,
+    createUploadGroup,
+    showConfirm,
+    showPrompt
   } = useFiles();
 
   const [workFolder, setWorkFolder] = useState(null);
@@ -37,6 +41,10 @@ export default function Work() {
   const [viewMode, setViewMode] = useState('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  
+  // Title Modal states
+  const [isTitleModalOpen, setIsTitleModalOpen] = useState(false);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState(null);
 
   // Modals / dialogs
   const [isUploading, setIsUploading] = useState(false);
@@ -113,7 +121,7 @@ export default function Work() {
   }, [files, activeFolderId, workFolder, searchQuery, activeFilter]);
 
   // Actions
-  const processUploadFiles = async (fileList) => {
+  const processUploadFiles = async (fileList, uploadGroupId) => {
     if (!fileList || fileList.length === 0) return;
     const filesArray = Array.from(fileList);
     const targetFolderId = activeFolderId;
@@ -124,7 +132,7 @@ export default function Work() {
 
     try {
       if (addFilesToUploadQueue) {
-        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId, 'work');
+        await addFilesToUploadQueue(filesArray, targetFolderId, uploadBatchId, uploadGroupId, 'work');
         showNotification(`${filesArray.length} file(s) queued for upload to Work folder`, 'success');
       } else {
         for (const f of filesArray) {
@@ -133,7 +141,8 @@ export default function Work() {
             name: f.name,
             size: f.size,
             folderId: targetFolderId,
-            uploadBatchId
+            uploadBatchId,
+            upload_group_id: uploadGroupId
           });
         }
         await fetchAllFiles();
@@ -148,8 +157,27 @@ export default function Work() {
 
   const handleUploadSelect = async (e) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    await processUploadFiles(e.target.files);
+    setPendingUploadFiles(e.target.files);
+    setIsTitleModalOpen(true);
     e.target.value = '';
+  };
+
+  const handleConfirmTitleUpload = async (title) => {
+    setIsTitleModalOpen(false);
+    if (!pendingUploadFiles) return;
+    try {
+      const group = await createUploadGroup(title);
+      await processUploadFiles(pendingUploadFiles, group?.id);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPendingUploadFiles(null);
+    }
+  };
+
+  const handleCancelTitleUpload = () => {
+    setIsTitleModalOpen(false);
+    setPendingUploadFiles(null);
   };
 
   const handleCreateSubFolder = async (e) => {
@@ -169,7 +197,7 @@ export default function Work() {
   const handleFolderDelete = async (target) => {
     const folderId = typeof target === 'object' ? (target?.id || target?._id) : target;
     if (!folderId) return;
-    if (window.confirm('Deleting this folder will delete all subfolders. Are you sure you want to proceed?')) {
+    if (await showConfirm('Delete Folder', 'Deleting this folder will delete all subfolders. Are you sure you want to proceed?', { type: 'danger', confirmText: 'Delete' })) {
       try {
         await deleteFolder(folderId);
         await fetchAllFolders();
@@ -177,6 +205,19 @@ export default function Work() {
       } catch (_) {
         showNotification('Failed to delete folder', 'error');
       }
+    }
+  };
+
+  const handleRenameFolder = async (f) => {
+    const folder = typeof f === 'object' ? f : folders.find(fd => fd.id === f);
+    if (!folder) return;
+    const currentName = folder.name || folder.folder_name || '';
+    const name = await showPrompt('Rename Folder', currentName, { placeholder: 'Enter new folder name...' });
+    if (name && name.trim() && name.trim() !== currentName) {
+      try {
+        await renameFolder(folder.id || folder._id, name.trim());
+        await fetchAllFolders();
+      } catch (_) {}
     }
   };
 
@@ -270,7 +311,7 @@ export default function Work() {
     const fileId = typeof target === 'object' ? (target?.id || target?._id) : target;
     if (!fileId) return;
 
-    if (window.confirm('Move this item to trash?')) {
+    if (await showConfirm('Move to Trash', 'Are you sure you want to move this item to trash?', { type: 'warning', confirmText: 'Trash' })) {
       try {
         await deleteFile(fileId);
         await fetchAllFiles();
@@ -287,7 +328,7 @@ export default function Work() {
     if (!file) return;
 
     const currentName = file.name || file.filename || '';
-    const newName = window.prompt('Enter new file name:', currentName);
+    const newName = await showPrompt('Rename File', currentName, { placeholder: 'Enter new file name...' });
     if (newName && newName.trim() && newName !== currentName) {
       try {
         await renameFile(file.id, newName.trim());
@@ -318,7 +359,8 @@ export default function Work() {
     setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      await processUploadFiles(e.dataTransfer.files);
+      setPendingUploadFiles(e.dataTransfer.files);
+      setIsTitleModalOpen(true);
     }
   };
 
@@ -361,6 +403,11 @@ export default function Work() {
       onDrop={handleDrop}
       className={`space-y-6 text-left transition-all rounded-3xl p-1 ${dragActive ? 'bg-brand-sage-light/20 ring-2 ring-brand-olive ring-dashed' : ''}`}
     >
+      <UploadTitleModal
+        isOpen={isTitleModalOpen}
+        onConfirm={handleConfirmTitleUpload}
+        onCancel={handleCancelTitleUpload}
+      />
       {/* Header Banner */}
       <div className="bg-white border border-brand-sand rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center space-x-4">
@@ -505,10 +552,7 @@ export default function Work() {
           folders={currentFolders}
           videos={currentFiles}
           onFolderEnter={(f) => setCurrentFolderId(typeof f === 'object' ? f.id : f)}
-          onFolderRename={(f) => {
-            const name = window.prompt('Rename folder:', f.name || f.folder_name);
-            if (name && name.trim()) renameFolder(f.id, name.trim());
-          }}
+          onFolderRename={handleRenameFolder}
           onFolderMove={handleFolderMove}
           onFolderShare={handleFolderShare}
           onFolderDelete={handleFolderDelete}
@@ -524,10 +568,7 @@ export default function Work() {
           folders={currentFolders}
           videos={currentFiles}
           onFolderEnter={(f) => setCurrentFolderId(typeof f === 'object' ? f.id : f)}
-          onFolderRename={(f) => {
-            const name = window.prompt('Rename folder:', f?.name || f?.folder_name);
-            if (name && name.trim()) renameFolder(typeof f === 'object' ? f.id : f, name.trim());
-          }}
+          onFolderRename={handleRenameFolder}
           onFolderMove={handleFolderMove}
           onFolderShare={handleFolderShare}
           onFolderDelete={handleFolderDelete}

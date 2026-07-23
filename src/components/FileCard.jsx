@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { formatDate } from '../utils/formatDate';
 
 export default function FileCard({ file, viewMode = 'grid', isTrashView = false }) {
-  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl, showNotification, folders, moveFile } = useFiles();
+  const { toggleStar, deleteFile, restoreFile, permanentlyDeleteFile, shareFile, removeShare, downloadFile, getPreviewUrl, showNotification, folders, moveFile, showConfirm } = useFiles();
   const [showMenu, setShowMenu] = useState(false);
   const [showSharePanel, setShowSharePanel] = useState(false);
   const [shareEmail, setShareEmail] = useState('');
@@ -219,8 +219,8 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                           <span>Restore File</span>
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm('Delete forever? This action cannot be undone.')) {
+                          onClick={async () => {
+                            if (await showConfirm('Delete Permanently', 'Delete forever? This action cannot be undone.', { type: 'danger', confirmText: 'Purge' })) {
                               permanentlyDeleteFile(file.id);
                             }
                             setShowMenu(false);
@@ -394,8 +394,8 @@ export default function FileCard({ file, viewMode = 'grid', isTrashView = false 
                   <span>Restore</span>
                 </button>
                 <button
-                  onClick={() => {
-                    if (confirm('Delete forever? This action cannot be undone.')) {
+                  onClick={async () => {
+                    if (await showConfirm('Delete Permanently', 'Delete forever? This action cannot be undone.', { type: 'danger', confirmText: 'Purge' })) {
                       permanentlyDeleteFile(file.id);
                     }
                   }}

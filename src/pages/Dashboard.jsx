@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useFiles } from '../context/FileContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Sparkles, Upload, FileText, ArrowRight,
+  Sparkles, Upload, FileText,
   Plus, Calendar, HardDrive, Share2,
   FolderOpen, MoreHorizontal, Pencil, Trash2,
   ExternalLink, Copy, Check, X, Package
@@ -45,7 +45,7 @@ export default function Dashboard() {
   };
 
   const totalStorageUsed = formatSize(storageStats.used);
-  const totalStorageLimit = formatSize(storageStats.totalCapacity);
+  const totalStorageLimit = 'Unlimited';
   
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
@@ -140,13 +140,13 @@ export default function Dashboard() {
       {/* Bento Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Storage Used Card */}
-        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex justify-between items-start">
             <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
               <HardDrive className="w-5 h-5 stroke-[1.5]" />
             </div>
             <span className="text-[10px] font-bold text-brand-olive uppercase tracking-wider bg-brand-sage-light/25 px-2 py-0.5 rounded-full">
-              {user.storage_plan === 'pro' ? 'Pro 1 TB' : 'Free 500 GB'}
+              Unlimited Storage
             </span>
           </div>
           <div className="mt-4">
@@ -164,17 +164,10 @@ export default function Dashboard() {
               {totalStorageUsed} of {totalStorageLimit} used
             </p>
           </div>
-          <button 
-            onClick={() => navigate('/settings')}
-            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
-          >
-            <span>Manage Storage Plan</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
         </div>
 
         {/* Total Uploads Card */}
-        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex justify-between items-start">
             <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
               <Package className="w-5 h-5 stroke-[1.5]" />
@@ -192,17 +185,10 @@ export default function Dashboard() {
               Grouped uploads &amp; collections
             </p>
           </div>
-          <button 
-            onClick={() => navigate('/my-files')}
-            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
-          >
-            <span>Browse All Files</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
         </div>
 
         {/* Recent Uploads Card */}
-        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div className="bg-white border border-brand-sand rounded-3xl p-5 shadow-sm flex flex-col hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
           <div className="flex justify-between items-start">
             <div className="bg-brand-sage-light/30 p-2.5 rounded-2xl text-brand-olive">
               <Sparkles className="w-5 h-5 stroke-[1.5]" />
@@ -220,13 +206,6 @@ export default function Dashboard() {
               Archived in the past 7 days
             </p>
           </div>
-          <button 
-            onClick={() => navigate('/upload')}
-            className="text-[10px] font-bold text-brand-olive mt-4 hover:underline flex items-center space-x-0.5 text-left border-t border-brand-sand/50 pt-3 cursor-pointer w-full"
-          >
-            <span>Upload Documents</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
         </div>
       </div>
 

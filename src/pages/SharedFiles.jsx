@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import EmptyState from '../components/EmptyState';
 
 export default function SharedFiles() {
-  const { files, removeShare, getPreviewUrl, showNotification } = useFiles();
+  const { files, removeShare, getPreviewUrl, showNotification, showConfirm } = useFiles();
   const [activeTab, setActiveTab] = useState('by-me'); // by-me | with-me
 
   // Preview panel states
@@ -49,7 +49,7 @@ export default function SharedFiles() {
   }, [files]);
 
   const handleRevokeShare = async (item) => {
-    if (confirm(`Revoke all shared access for "${item.name}"?`)) {
+    if (await showConfirm('Revoke Share', `Revoke all shared access for "${item.name}"?`, { type: 'warning', confirmText: 'Revoke' })) {
       if (item.isFolder) {
         // Delete folder share
         const sharedFolders = JSON.parse(localStorage.getItem('vaultify_video_shared_folders') || '{}');

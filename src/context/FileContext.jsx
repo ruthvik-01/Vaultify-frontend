@@ -4,6 +4,7 @@ import { videoService } from '../services/videoService';
 import { videoUploadService } from '../services/videoUploadService';
 import { useVideoUpload } from '../hooks/useVideoUpload';
 import UploadProgress from '../components/video/UploadProgress';
+import { Check, X, AlertTriangle, Info, HelpCircle } from 'lucide-react';
 
 const FileContext = createContext(null);
 
@@ -16,24 +17,138 @@ export const categories = [
   'Placement Documents',
 ];
 
+const PromptDialogModal = ({ modal }) => {
+  const [value, setValue] = useState(modal.defaultValue || '');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (value.trim()) {
+      modal.resolve(value.trim());
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        modal.resolve(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [modal]);
+
+  return (
+    <div className="fixed inset-0 z-[9990] flex items-center justify-center p-4">
+      <div 
+        onClick={() => modal.resolve(null)}
+        className="absolute inset-0 bg-brand-charcoal/40 dark:bg-black/60 backdrop-blur-sm transition-opacity" 
+      />
+      <form 
+        onSubmit={handleSubmit}
+        style={{ animation: 'modal-scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }}
+        className="w-full max-w-md bg-white/80 dark:bg-brand-charcoal/90 border border-white/40 dark:border-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl relative z-10 text-left font-sans"
+      >
+        <h3 className="font-serif text-lg font-bold text-brand-charcoal dark:text-white mb-2 flex items-center space-x-2">
+          <HelpCircle className="w-5 h-5 text-brand-olive shrink-0" />
+          <span>{modal.title}</span>
+        </h3>
+        <div className="mb-6 mt-4">
+          <input
+            type="text"
+            required
+            autoFocus
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder={modal.placeholder}
+            className="w-full px-3 py-2.5 border border-brand-sand dark:border-white/15 bg-brand-cream/65 dark:bg-brand-charcoal/65 rounded-xl text-xs text-brand-charcoal dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-olive focus:border-brand-olive transition-all"
+          />
+        </div>
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => modal.resolve(null)}
+            className="px-4.5 py-2 border border-brand-sand dark:border-white/10 hover:bg-brand-cream/50 dark:hover:bg-white/5 text-brand-charcoal dark:text-gray-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+          >
+            {modal.cancelText}
+          </button>
+          <button
+            type="submit"
+            className="px-4.5 py-2 bg-gradient-to-r from-brand-olive to-emerald-600 hover:brightness-105 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+          >
+            {modal.confirmText}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
 export const FileProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     return !!localStorage.getItem('vaultify_token');
   });
   const [toast, setToast] = useState(null);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [promptModal, setPromptModal] = useState(null);
+  const [toastProgress, setToastProgress] = useState(100);
 
   const showNotification = (message, type = 'success') => {
     setToast({ message, type, id: Date.now() });
+    setToastProgress(100);
   };
 
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => {
-        setToast(null);
-      }, 3000);
-      return () => clearTimeout(timer);
+      const duration = 4000;
+      const intervalTime = 40;
+      const step = (intervalTime / duration) * 100;
+      
+      const timer = setInterval(() => {
+        setToastProgress((prev) => {
+          if (prev <= 0) {
+            clearInterval(timer);
+            setToast(null);
+            return 0;
+          }
+          return prev - step;
+        });
+      }, intervalTime);
+
+      return () => clearInterval(timer);
     }
   }, [toast]);
+
+  const showConfirm = (title, message, options = {}) => {
+    return new Promise((resolve) => {
+      setConfirmModal({
+        title,
+        message,
+        confirmText: options.confirmText || 'Confirm',
+        cancelText: options.cancelText || 'Cancel',
+        type: options.type || 'info',
+        resolve: (val) => {
+          setConfirmModal(null);
+          resolve(val);
+        }
+      });
+    });
+  };
+
+  const showPrompt = (title, defaultValue = '', options = {}) => {
+    return new Promise((resolve) => {
+      setPromptModal({
+        title,
+        defaultValue,
+        placeholder: options.placeholder || 'Type here...',
+        confirmText: options.confirmText || 'Save',
+        cancelText: options.cancelText || 'Cancel',
+        resolve: (val) => {
+          setPromptModal(null);
+          resolve(val);
+        }
+      });
+    });
+  };
 
   const [files, setFiles] = useState([]);
   const [folders, setFolders] = useState([]);
@@ -137,14 +252,13 @@ export const FileProvider = ({ children }) => {
   });
 
   const [storageStats, setStorageStats] = useState({
-    totalCapacity: 500 * 1024 * 1024 * 1024, // 500 GB
+    totalCapacity: 1000 * 1024 * 1024 * 1024, // 1 TB reference capacity
     used: 0,
     breakdown: {
       Documents: 0,
       Projects: 0,
       Certificates: 0,
       Media: 0,
-      Others: 0,
     },
   });
 
@@ -166,40 +280,40 @@ export const FileProvider = ({ children }) => {
       Projects: 0,
       Certificates: 0,
       Media: 0,
-      Others: 0,
     };
 
     files
       .filter((f) => !f.inTrash)
       .forEach((f) => {
-        used += f.size || 0;
-        if (f.category === 'Projects') breakdown.Projects += f.size || 0;
-        else if (f.category === 'Certificates') breakdown.Certificates += f.size || 0;
-        else if (
-          f.type === 'video' ||
-          f.type === 'png' ||
-          f.type === 'jpg' ||
-          f.type === 'jpeg' ||
-          f.type === 'webp'
-        )
-          breakdown.Media += f.size || 0;
-        else if (
-          ['Resumes', 'Notes', 'Assignments', 'Placement Documents'].includes(f.category)
-        )
-          breakdown.Documents += f.size || 0;
-        else breakdown.Others += f.size || 0;
+        const size = f.size || 0;
+        used += size;
+        
+        const ext = (f.name || '').split('.').pop().toLowerCase();
+        const isMedia = f.type === 'video' || 
+                        ['mp4', 'mov', 'avi', 'mkv', 'webm', 'flv', 'wmv', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext) ||
+                        f.mimeType?.startsWith('video/') || 
+                        f.mimeType?.startsWith('image/');
+
+        if (f.category === 'Projects') {
+          breakdown.Projects += size;
+        } else if (f.category === 'Certificates') {
+          breakdown.Certificates += size;
+        } else if (isMedia) {
+          breakdown.Media += size;
+        } else {
+          // Default everything else to Documents category to ensure the sum equals total used
+          breakdown.Documents += size;
+        }
       });
 
-    const capacity = user.storage_plan === 'pro'
-      ? 1000 * 1024 * 1024 * 1024 // 1 TB
-      : 500 * 1024 * 1024 * 1024; // 500 GB
+    const capacity = 1000 * 1024 * 1024 * 1024; // 1 TB reference capacity
 
     setStorageStats({
       totalCapacity: capacity,
       used,
       breakdown,
     });
-  }, [files, user.storage_plan]);
+  }, [files]);
 
   // ─── Profile ──────────────────────────────────────────────────────────────
   const fetchUserProfile = async () => {
@@ -877,6 +991,55 @@ export const FileProvider = ({ children }) => {
     }
   };
 
+  const resolveFolderIdForPath = async (relativePath, rootFolderId, folderCache = {}, uploadGroupId = null) => {
+    if (!relativePath) return rootFolderId;
+    const parts = relativePath.split('/').slice(0, -1);
+    if (parts.length === 0) return rootFolderId;
+
+    let parentId = rootFolderId;
+    let pathAccum = '';
+
+    for (const part of parts) {
+      pathAccum = pathAccum ? `${pathAccum}/${part}` : part;
+      if (folderCache[pathAccum]) {
+        parentId = folderCache[pathAccum];
+      } else {
+        // Check stale state only for folders that preexisted (not created this batch)
+        let existing = folders.find(
+          (f) => (f.name || f.folder_name) === part && (f.parentId || f.parent_folder_id || null) === (parentId || null)
+        );
+
+        // Also check if we created this folder in a previous upload (not current batch)
+        // by looking at cache with root-relative path key including rootFolderId
+        const cacheKey = `${rootFolderId}::${pathAccum}`;
+        if (!existing && folderCache[cacheKey]) {
+          parentId = folderCache[cacheKey];
+          folderCache[pathAccum] = parentId;
+          continue;
+        }
+
+        if (existing) {
+          parentId = existing.id || existing._id;
+        } else {
+          const res = await api.createFolder(part, parentId, null, uploadGroupId);
+          const f = res.data?.folder || res.data;
+          const newFolderObj = {
+            id: f._id || f.id,
+            name: f.folder_name || f.name,
+            parentId: f.parent_folder_id || f.parentId,
+            folder_name: f.folder_name || f.name,
+            parent_folder_id: f.parent_folder_id || f.parentId
+          };
+          setFolders((prev) => [...prev, newFolderObj]);
+          parentId = newFolderObj.id;
+        }
+        folderCache[pathAccum] = parentId;
+        folderCache[cacheKey] = parentId;
+      }
+    }
+    return parentId;
+  };
+
   const renameFolder = async (id, newName) => {
     try {
       await api.renameFolder(id, newName);
@@ -984,6 +1147,7 @@ export const FileProvider = ({ children }) => {
       }
     }
     await fetchAllFiles();
+    await fetchAllFolders();
   };
 
   const {
@@ -1130,49 +1294,132 @@ export const FileProvider = ({ children }) => {
         isUploadProgressOpen,
         setIsUploadProgressOpen,
         moveFile,
+        resolveFolderIdForPath,
+        showConfirm,
+        showPrompt,
       }}
     >
       {children}
-      {/* Centered Modern Toast Notification overlay */}
+
+      {/* Self-contained Premium Styles */}
+      <style>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(120%) translateY(0);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0) translateY(0);
+            opacity: 1;
+          }
+        }
+        @keyframes modal-scale-in {
+          from {
+            transform: scale(0.95);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
+
+      {/* Floating Premium Glassmorphic Toast Notification */}
       {toast && (
         <div 
-          style={{ animation: 'toast-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
-          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center space-x-3 px-4.5 py-3 rounded-2xl border shadow-xl backdrop-blur-md pointer-events-auto max-w-sm sm:max-w-md w-auto ${
-            toast.type === 'error'
-              ? 'bg-rose-50/95 border-rose-200 text-rose-800 dark:bg-rose-950/95 dark:border-rose-900/50 dark:text-rose-200'
-              : toast.type === 'info'
-              ? 'bg-blue-50/95 border-blue-200 text-blue-800 dark:bg-blue-950/95 dark:border-blue-900/50 dark:text-blue-200'
-              : 'bg-emerald-50/95 border-emerald-200 text-emerald-800 dark:bg-emerald-950/95 dark:border-emerald-900/50 dark:text-emerald-200'
-          }`}
+          style={{ animation: 'slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards' }}
+          className="fixed bottom-6 right-6 z-[9999] flex flex-col pointer-events-auto max-w-sm w-full bg-white/75 dark:bg-brand-charcoal/80 border border-white/40 dark:border-white/10 backdrop-blur-lg shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] rounded-2xl overflow-hidden font-sans"
         >
-          {toast.type === 'error' ? (
-            <div className="bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400 p-1.5 rounded-xl border border-rose-200/30 shrink-0">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+          <div className="flex p-4 items-start space-x-3.5">
+            {/* Colored side indicator */}
+            <div className={`w-1.5 h-10 rounded-full shrink-0 ${
+              toast.type === 'error' ? 'bg-rose-500' : toast.type === 'warning' ? 'bg-amber-500' : 'bg-brand-olive'
+            }`} />
+            
+            <div className="flex-1 min-w-0 text-left">
+              <span className="text-xs font-bold text-brand-charcoal dark:text-white capitalize block mb-0.5">
+                {toast.type === 'error' ? 'Error' : toast.type === 'warning' ? 'Warning' : 'Success'}
+              </span>
+              <p className="text-[11px] text-gray-500 dark:text-gray-300 leading-relaxed font-medium">
+                {toast.message}
+              </p>
             </div>
-          ) : toast.type === 'info' ? (
-            <div className="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 p-1.5 rounded-xl border border-blue-200/30 shrink-0">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <circle cx="12" cy="12" r="10" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4m0-4h.01" />
-              </svg>
-            </div>
-          ) : (
-            <div className="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400 p-1.5 rounded-xl border border-emerald-200/30 shrink-0">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-          )}
-          
-          <div className="flex-1 min-w-0 pr-1 text-left">
-            <span className="text-[12px] font-bold tracking-tight leading-normal block">
-              {toast.message}
-            </span>
+            
+            <button 
+              onClick={() => setToast(null)}
+              className="text-gray-400 hover:text-brand-charcoal dark:hover:text-white p-1 rounded-full hover:bg-brand-cream/40 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          {/* Progress Bar indicator */}
+          <div className="w-full bg-gray-200/40 dark:bg-gray-700/30 h-1">
+            <div 
+              style={{ width: `${toastProgress}%` }}
+              className={`h-full transition-all duration-75 ${
+                toast.type === 'error' ? 'bg-rose-500' : toast.type === 'warning' ? 'bg-amber-500' : 'bg-brand-olive'
+              }`}
+            />
           </div>
         </div>
       )}
+
+      {/* Reusable Premium Glassmorphic Confirm Modal */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-[9990] flex items-center justify-center p-4">
+          <div 
+            onClick={() => confirmModal.resolve(false)}
+            className="absolute inset-0 bg-brand-charcoal/40 dark:bg-black/60 backdrop-blur-sm transition-opacity animate-fade-in" 
+          />
+          <div 
+            style={{ animation: 'modal-scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' }}
+            className="w-full max-w-md bg-white/80 dark:bg-brand-charcoal/90 border border-white/40 dark:border-white/10 backdrop-blur-xl rounded-3xl p-6 shadow-2xl relative z-10 text-left font-sans"
+          >
+            <h3 className="font-serif text-lg font-bold text-brand-charcoal dark:text-white mb-2 flex items-center space-x-2">
+              {confirmModal.type === 'danger' ? (
+                <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
+              ) : confirmModal.type === 'warning' ? (
+                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+              ) : (
+                <Info className="w-5 h-5 text-brand-olive shrink-0" />
+              )}
+              <span>{confirmModal.title}</span>
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-300 leading-relaxed mb-6 mt-3">
+              {confirmModal.message}
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => confirmModal.resolve(false)}
+                className="px-4.5 py-2 border border-brand-sand dark:border-white/10 hover:bg-brand-cream/50 dark:hover:bg-white/5 text-brand-charcoal dark:text-gray-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                {confirmModal.cancelText}
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmModal.resolve(true)}
+                className={`px-4.5 py-2 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer hover:brightness-105 ${
+                  confirmModal.type === 'danger'
+                    ? 'bg-gradient-to-r from-rose-500 to-red-600'
+                    : confirmModal.type === 'warning'
+                    ? 'bg-gradient-to-r from-amber-500 to-orange-600'
+                    : 'bg-gradient-to-r from-brand-olive to-emerald-600'
+                }`}
+              >
+                {confirmModal.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reusable Premium Glassmorphic Prompt Modal */}
+      {promptModal && (
+        <PromptDialogModal modal={promptModal} />
+      )}
+
       {/* Global Upload Queue Progress Dock */}
       {uploadQueue && uploadQueue.length > 0 && isUploadProgressOpen && (
         <UploadProgress

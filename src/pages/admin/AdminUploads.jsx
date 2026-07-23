@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
+import { useFiles } from '../../context/FileContext';
 import VideoPlayer from '../../components/video/VideoPlayer';
 import { 
   Eye, 
@@ -32,6 +33,7 @@ function formatSize(bytes) {
 }
 
 export default function AdminUploads() {
+  const { showConfirm, showNotification } = useFiles();
   const [uploads, setUploads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,19 +83,13 @@ export default function AdminUploads() {
   }, [searchParams]);
 
   const [copiedId, setCopiedId] = useState(null);
-  const [toast, setToast] = useState(null);
   const [actionLoadingId, setActionLoadingId] = useState(null);
 
   const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type });
-  }, []);
+    showNotification(message, type);
+  }, [showNotification]);
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
+
 
   const handleOpenLink = async (file) => {
     if (actionLoadingId) return;
@@ -256,13 +252,13 @@ export default function AdminUploads() {
       });
       setPlaybackUrl(url);
     } catch (err) {
-      alert(err.message || 'Failed to retrieve preview.');
+      showNotification(err.message || 'Failed to retrieve preview.', 'error');
     }
   };
 
   const handleDeleteUpload = async (id, fileType, fileName) => {
     if (actionLoadingId) return;
-    if (!window.confirm(`Delete "${fileName}"?`)) {
+    if (!(await showConfirm('Delete Upload', `Delete "${fileName}"? This action cannot be undone.`, { type: 'danger', confirmText: 'Delete' }))) {
       return;
     }
     setActionLoadingId(id);
@@ -286,18 +282,18 @@ export default function AdminUploads() {
   const handlePurgeTeamUploads = async (targetTeam) => {
     const teamToPurge = targetTeam || team;
     if (!teamToPurge || teamToPurge === 'All') {
-      alert('Please select a specific team to purge team uploads.');
+      showNotification('Please select a specific team to purge team uploads.', 'warning');
       return;
     }
-    if (!window.confirm(`Are you sure you want to purge ALL uploads for Team "${teamToPurge}"? This will permanently delete all files and videos for this team.`)) {
+    if (!(await showConfirm('Purge Team Uploads', `Are you sure you want to purge ALL uploads for Team "${teamToPurge}"? This will permanently delete all files and videos for this team.`, { type: 'danger', confirmText: 'Purge All' }))) {
       return;
     }
     try {
       const res = await adminService.deleteTeamUploads(teamToPurge);
-      alert(res.message || `Uploads for team "${teamToPurge}" purged.`);
+      showNotification(res.message || `Uploads for team "${teamToPurge}" purged.`, 'success');
       fetchUploads();
     } catch (err) {
-      alert(err.message || 'Failed to purge team uploads.');
+      showNotification(err.message || 'Failed to purge team uploads.', 'error');
     }
   };
 
@@ -596,17 +592,17 @@ export default function AdminUploads() {
                       <div className="flex items-center justify-center space-x-1.5">
                         <button
                           onClick={() => handleOpenPreview(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-olive text-white hover:bg-brand-olive-dark transition-colors cursor-pointer shadow-sm ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Preview File"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-olive text-white hover:bg-brand-olive-dark transition-colors cursor-pointer shadow-sm ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Preview not available for Group" : "Preview File"}
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleOpenLink(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Open Link in New Tab"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Link not available for Group" : "Open Link in New Tab"}
                         >
                           {actionLoadingId === file.id ? (
                             <div className="w-3.5 h-3.5 border-2 border-brand-olive border-t-transparent rounded-full animate-spin" />
@@ -616,17 +612,17 @@ export default function AdminUploads() {
                         </button>
                         <button
                           onClick={() => handleCopyShareLink(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Copy Share Link"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Sharing not available for Group" : "Copy Share Link"}
                         >
                           {copiedId === file.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-brand-olive" />}
                         </button>
                         <button
                           onClick={() => handleDownload(file)}
-                          disabled={!!actionLoadingId}
-                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${!!actionLoadingId ? 'opacity-50 pointer-events-none' : ''}`}
-                          title="Download File"
+                          disabled={!!actionLoadingId || file.fileType === 'group'}
+                          className={`p-1.5 rounded-xl bg-brand-cream hover:bg-brand-sand/60 border border-brand-sand/80 text-brand-charcoal transition-colors cursor-pointer ${(!!actionLoadingId || file.fileType === 'group') ? 'opacity-40 pointer-events-none' : ''}`}
+                          title={file.fileType === 'group' ? "Download not available for Group" : "Download File"}
                         >
                           <Download className="w-3.5 h-3.5 text-brand-olive" />
                         </button>
@@ -685,23 +681,7 @@ export default function AdminUploads() {
         />
       )}
 
-      {/* Toast Notification overlay */}
-      {toast && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center space-x-2 px-4 py-2.5 rounded-2xl border shadow-xl backdrop-blur-md bg-white border-brand-sand text-brand-charcoal animate-fade-in">
-          <div className={`p-1 rounded-lg ${toast.type === 'error' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
-            {toast.type === 'error' ? (
-              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
-          </div>
-          <span className="text-xs font-bold">{toast.message}</span>
-        </div>
-      )}
+
     </div>
   );
 }

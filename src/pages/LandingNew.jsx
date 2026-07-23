@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   FolderLock, Shield, Award, FolderGit, Search, Share2,
@@ -195,7 +195,7 @@ export default function Landing() {
               </div>
               <div className="flex justify-between text-[9px] text-gray-400 font-mono">
                 <span>2.4 GB Used</span>
-                <span>500 GB Max</span>
+                <span>Unlimited</span>
               </div>
 
               {/* Stacked details */}

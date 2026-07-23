@@ -14,8 +14,10 @@ import {
   X
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
+import { useFiles } from '../../context/FileContext';
 
 export default function AdminSettings() {
+  const { showConfirm } = useFiles();
   const [activeTab, setActiveTab] = useState('roster'); // 'roster' or 'security'
 
   // Change Password States
@@ -106,7 +108,7 @@ export default function AdminSettings() {
 
   // Handle Delete Student Action
   const handleDeleteStudent = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to remove "${name}" from the monitored roster?`)) {
+    if (!(await showConfirm('Remove Student', `Are you sure you want to remove "${name}" from the monitored roster?`, { type: 'danger', confirmText: 'Remove' }))) {
       return;
     }
     setRosterError('');

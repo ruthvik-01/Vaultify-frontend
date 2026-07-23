@@ -73,6 +73,9 @@ const uploadGeneralFile = (task, options = {}) => {
     if (task.uploadBatchId) {
       formData.append('uploadBatchId', task.uploadBatchId);
     }
+    if (task.upload_group_id) {
+      formData.append('upload_group_id', task.upload_group_id);
+    }
     if (task.file.webkitRelativePath) {
       formData.append('relative_path', task.file.webkitRelativePath);
     }
@@ -169,7 +172,7 @@ export function useVideoUpload(onUploadComplete) {
   }, [onUploadComplete]);
 
   // Queue files/folders
-  const addFilesToQueue = useCallback(async (filesList, currentFolderId, passedBatchId = null, folderContext = 'video') => {
+  const addFilesToQueue = useCallback(async (filesList, currentFolderId, passedBatchId = null, uploadGroupId = null, folderContext = 'video') => {
     const tasksToAdd = [];
     const folderCache = {};
     const uploadBatchId = passedBatchId || `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -214,7 +217,7 @@ export function useVideoUpload(onUploadComplete) {
             parentId = existing.id || existing._id;
           } else {
             if (folderContext === 'work') {
-              const res = await api.createFolder(part, parentId, uploadBatchId);
+              const res = await api.createFolder(part, parentId, uploadBatchId, uploadGroupId);
               const f = res.data?.folder || res.data;
               const newFolderObj = {
                 id: f._id || f.id,
@@ -227,7 +230,7 @@ export function useVideoUpload(onUploadComplete) {
               initialFolders.push(newFolderObj);
               parentId = newFolderObj.id;
             } else {
-              const created = await folderService.createFolder(part, parentId, uploadBatchId);
+              const created = await folderService.createFolder(part, parentId, uploadBatchId, uploadGroupId);
               const newFolderObj = {
                 id: created.id,
                 name: created.name,
@@ -257,7 +260,8 @@ export function useVideoUpload(onUploadComplete) {
         speed: 0,
         eta: 0,
         folderId,
-        uploadBatchId
+        uploadBatchId,
+        upload_group_id: uploadGroupId
       };
 
       tasksToAdd.push(task);

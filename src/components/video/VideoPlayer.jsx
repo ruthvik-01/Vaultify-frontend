@@ -264,39 +264,41 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-charcoal/90 backdrop-blur-sm animate-fade-in select-none">
-      <div className="bg-white rounded-3xl overflow-hidden shadow-2xl w-full max-w-4xl border border-brand-sand/55 flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-charcoal/40 dark:bg-black/60 backdrop-blur-sm animate-fade-in select-none">
+      <div className="bg-white/80 dark:bg-brand-charcoal/90 border border-white/40 dark:border-white/10 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh]">
         {/* Header Controls */}
-        <div className="px-6 py-4 border-b border-brand-sand flex items-center justify-between bg-brand-cream">
+        <div className="px-6 py-4 border-b border-brand-sand dark:border-white/10 flex items-center justify-between bg-brand-cream/40 dark:bg-white/5">
           <div className="flex items-center space-x-2.5 min-w-0 text-left">
-            {getHeaderIcon()}
-            <h2 className="font-serif font-bold text-sm text-brand-charcoal truncate">
+            <div className="bg-brand-sage-light/35 p-2 rounded-xl">
+              {getHeaderIcon()}
+            </div>
+            <h2 className="font-serif font-bold text-sm text-brand-charcoal dark:text-white truncate">
               {video.name || video.fileName}
             </h2>
           </div>
           <div className="flex items-center space-x-2">
             {/* Playback Speed Controls for Video */}
             {isVideo && (
-              <div className="flex items-center space-x-1 bg-white border border-brand-sand rounded-xl px-2 py-1 text-xs">
+              <div className="flex items-center space-x-1 bg-white/70 dark:bg-brand-charcoal/60 border border-brand-sand dark:border-white/10 rounded-xl px-2.5 py-1.5 text-xs">
                 <Gauge className="w-3.5 h-3.5 text-brand-olive" />
                 <select
                   value={playbackRate}
                   onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-                  className="bg-transparent font-semibold text-[11px] text-brand-charcoal focus:outline-none cursor-pointer"
+                  className="bg-transparent font-semibold text-[11px] text-brand-charcoal dark:text-white focus:outline-none cursor-pointer border-none p-0"
                   title="Playback Speed"
                 >
-                  <option value={0.5}>0.5x</option>
-                  <option value={1}>1x</option>
-                  <option value={1.25}>1.25x</option>
-                  <option value={1.5}>1.5x</option>
-                  <option value={2}>2x</option>
+                  <option value={0.5} className="dark:bg-brand-charcoal">0.5x</option>
+                  <option value={1} className="dark:bg-brand-charcoal">1x</option>
+                  <option value={1.25} className="dark:bg-brand-charcoal">1.25x</option>
+                  <option value={1.5} className="dark:bg-brand-charcoal">1.5x</option>
+                  <option value={2} className="dark:bg-brand-charcoal">2x</option>
                 </select>
               </div>
             )}
             {isVideo && (
               <button
                 onClick={handleFullscreen}
-                className="p-1.5 rounded-xl bg-white border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-brand-sand dark:border-white/10 hover:bg-brand-sand/50 dark:hover:bg-white/10 text-brand-charcoal dark:text-gray-300 transition-colors cursor-pointer"
                 title="Fullscreen"
               >
                 <Maximize className="w-3.5 h-3.5 text-brand-olive" />
@@ -304,14 +306,14 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
             )}
             <button
               onClick={handleOpenLink}
-              className="p-1.5 rounded-xl bg-white border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-brand-sand dark:border-white/10 hover:bg-brand-sand/50 dark:hover:bg-white/10 text-brand-charcoal dark:text-gray-300 transition-colors cursor-pointer"
               title="Open Share Link in New Tab"
             >
               <ExternalLink className="w-3.5 h-3.5 text-brand-olive" />
             </button>
             <button
               onClick={handleCopyLink}
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal text-xs font-semibold transition-colors cursor-pointer"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-brand-sand dark:border-white/10 hover:bg-brand-sand/50 dark:hover:bg-white/10 text-brand-charcoal dark:text-gray-300 text-xs font-semibold transition-colors cursor-pointer"
               title="Copy Share Link"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-brand-olive" />}
@@ -320,7 +322,7 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
             {url && (
               <button
                 onClick={handleDownload}
-                className="p-1.5 rounded-xl bg-white border border-brand-sand hover:bg-brand-sand/50 text-gray-700 transition-colors cursor-pointer"
+                className="p-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-brand-sand dark:border-white/10 hover:bg-brand-sand/50 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                 title="Download"
               >
                 <Download className="w-4 h-4 text-brand-olive" />
@@ -328,7 +330,7 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-xl bg-white border border-brand-sand hover:bg-brand-sand/50 text-gray-500 hover:text-brand-charcoal transition-colors cursor-pointer"
+              className="p-1.5 rounded-xl bg-white/70 dark:bg-white/5 border border-brand-sand dark:border-white/10 hover:bg-brand-sand/50 dark:hover:bg-white/10 text-gray-500 hover:text-brand-charcoal dark:hover:text-white transition-colors cursor-pointer"
               aria-label="Close preview"
             >
               <X className="w-4.5 h-4.5" />
@@ -337,30 +339,30 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
         </div>
 
         {/* Preview Content */}
-        <div className="flex-grow bg-white relative flex items-center justify-center overflow-hidden">
+        <div className="flex-grow bg-white/30 dark:bg-brand-charcoal/50 relative flex items-center justify-center overflow-hidden">
           {renderPreview()}
         </div>
 
-        {/* Video Metadata Panel Footer */}
-        <div className="px-6 py-3 bg-brand-cream border-t border-brand-sand flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-600 gap-2">
+        {/* Video Metadata Footer */}
+        <div className="px-6 py-3 bg-brand-cream/40 dark:bg-white/5 border-t border-brand-sand dark:border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-600 dark:text-gray-300 gap-2">
           <div className="flex items-center space-x-4">
             {video.student && (
-              <span className="flex items-center space-x-1 font-semibold text-brand-charcoal">
+              <span className="flex items-center space-x-1 font-semibold text-brand-charcoal dark:text-white">
                 <User className="w-3.5 h-3.5 text-brand-olive" />
                 <span>{video.student} ({video.team || 'General'})</span>
               </span>
             )}
             {video.folder && (
-              <span className="flex items-center space-x-1 text-gray-500 font-medium">
+              <span className="flex items-center space-x-1 text-gray-500 dark:text-gray-400 font-medium">
                 <FolderClosed className="w-3.5 h-3.5 text-brand-tan" />
                 <span>{video.folder}</span>
               </span>
             )}
-            <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-brand-sand/40 text-brand-charcoal">
+            <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-brand-sand/40 dark:bg-white/10 text-brand-charcoal dark:text-white">
               {ext.toUpperCase()}
             </span>
           </div>
-          <div className="flex items-center space-x-4 text-[11px] font-medium text-gray-500">
+          <div className="flex items-center space-x-4 text-[11px] font-medium text-gray-500 dark:text-gray-450">
             <span className="flex items-center space-x-1">
               <HardDrive className="w-3.5 h-3.5 text-brand-olive" />
               <span>{formatSize(video.size)}</span>
