@@ -11,9 +11,9 @@ export default function Settings() {
   const [isSaving, setIsSaving] = useState(false);
 
   // Account Form states
-  const [name, setName] = useState(user.name);
-  const [email, setEmail] = useState(user.email);
-  const [university, setUniversity] = useState(user.university);
+  const [name, setName] = useState(user.name || '');
+  const [email, setEmail] = useState(user.email || '');
+  const [university, setUniversity] = useState(user.organization || user.university || '');
   
   // Notification states
   const [emailOnShare, setEmailOnShare] = useState(notifications.emailOnShare);
@@ -31,7 +31,7 @@ export default function Settings() {
   useEffect(() => {
     setName(user.name || '');
     setEmail(user.email || '');
-    setUniversity(user.university || '');
+    setUniversity(user.organization || user.university || '');
     setThemeColor(user.theme_color || 'grid');
     setDarkMode(user.dark_mode || 'light');
     setSidebarColor(user.sidebar_color || 'expanded');
@@ -57,7 +57,7 @@ export default function Settings() {
     }).then(() => {
       showNotification('Account credentials saved successfully!', 'success');
     }).catch(err => {
-      showNotification('Failed to save credentials: ' + err.message, 'error');
+      showNotification('Failed to save credentials: ' + (err?.message || 'Error updating credentials'), 'error');
     }).finally(() => {
       setIsSaving(false);
     });
@@ -154,10 +154,11 @@ export default function Settings() {
                 </label>
                 <input
                   type="email"
-                  required
+                  readOnly
+                  disabled
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
+                  placeholder="Email cannot be changed."
+                  className="w-full px-3 py-2.5 bg-gray-100/70 border border-brand-sand rounded-xl text-xs text-gray-500 cursor-not-allowed opacity-75 focus:outline-none select-none"
                 />
               </div>
 
@@ -167,9 +168,9 @@ export default function Settings() {
                 </label>
                 <input
                   type="text"
-                  required
                   value={university}
                   onChange={(e) => setUniversity(e.target.value)}
+                  placeholder="e.g. Andhra University, JNTU, Stanford"
                   className="w-full px-3 py-2.5 bg-brand-cream border border-brand-sand rounded-xl text-xs text-brand-charcoal focus:outline-none focus:ring-1 focus:ring-brand-olive"
                 />
               </div>

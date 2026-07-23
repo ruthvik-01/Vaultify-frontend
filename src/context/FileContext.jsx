@@ -211,13 +211,14 @@ export const FileProvider = ({ children }) => {
       // Backend returns: { status, data: { user: { id, name, email, ... } } }
       const userData = res.data?.user || res.data;
       if (userData) {
+        const orgVal = userData.organization || userData.university || '';
         const loadedUser = {
           id: userData.id,
           name: userData.name || '',
           email: userData.email || '',
           studentId: userData.studentId || '',
-          university: userData.university || '',
-          organization: userData.organization || '',
+          university: orgVal,
+          organization: orgVal,
           major: userData.major || '',
           phone: userData.phone || '',
           bio: userData.bio || '',
@@ -980,9 +981,12 @@ export const FileProvider = ({ children }) => {
       const updatedUser = res.data?.user || res.data;
       if (updatedUser) {
         setUser((prev) => {
+          const orgVal = updatedUser.organization !== undefined ? updatedUser.organization : (updatedUser.university !== undefined ? updatedUser.university : prev.organization);
           const nextUser = { 
             ...prev, 
             ...updatedUser,
+            university: orgVal,
+            organization: orgVal,
             avatar: updatedUser.profile_image || prev.avatar,
             theme_color: ['grid', 'list'].includes(updatedUser.theme_color) ? updatedUser.theme_color : prev.theme_color,
             dark_mode: ['light', 'dark', 'system'].includes(updatedUser.dark_mode) ? updatedUser.dark_mode : prev.dark_mode,
