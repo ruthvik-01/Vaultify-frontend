@@ -552,13 +552,6 @@ export default function AdminUploads() {
                         >
                           <Download className="w-3.5 h-3.5 text-brand-olive" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteUpload(file.id, file.fileType, file.fileName)}
-                          className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 transition-colors cursor-pointer"
-                          title="Delete Upload"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
                     </td>
                   </tr>
