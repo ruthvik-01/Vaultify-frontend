@@ -80,12 +80,15 @@ export function useVideoUpload(onUploadComplete) {
             localFolders = await folderService.getFolders();
           }
 
-          const existing = localFolders.find(
-            (f) => f.name === part && f.parentId === parentId
-          );
+          const targetParentStr = (parentId || null)?.toString() || null;
+          const existing = (localFolders || []).find((f) => {
+            const fName = f.name || f.folder_name;
+            const fParentStr = (f.parentId || f.parent_folder_id || null)?.toString() || null;
+            return fName === part && fParentStr === targetParentStr;
+          });
 
           if (existing) {
-            parentId = existing.id;
+            parentId = existing.id || existing._id;
           } else {
             let createdId;
             if (isWorkFolder) {
@@ -94,7 +97,7 @@ export function useVideoUpload(onUploadComplete) {
               createdId = folder.id || folder._id;
             } else {
               const created = await folderService.createFolder(part, parentId, uploadBatchId);
-              createdId = created.id;
+              createdId = created.id || created._id;
             }
             parentId = createdId;
           }
