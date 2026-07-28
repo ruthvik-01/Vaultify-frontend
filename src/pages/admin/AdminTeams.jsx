@@ -17,7 +17,13 @@ import {
   ExternalLink,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users,
+  HardDrive,
+  UploadCloud,
+  FileCheck,
+  CheckCircle2,
+  AlertTriangle
 } from 'lucide-react';
 import { formatDate } from '../../utils/formatDate';
 
@@ -41,7 +47,7 @@ export default function AdminTeams() {
   const [sortBy, setSortBy] = useState('name-asc');
   const [statusFilter, setStatusFilter] = useState('All');
   const [page, setPage] = useState(1);
-  const pageSize = 5;
+  const pageSize = 6;
 
   const fetchTeams = async () => {
     setLoading(true);
@@ -82,52 +88,29 @@ export default function AdminTeams() {
 
   const getTeamIcon = (name) => {
     const safeName = (name || '').toLowerCase();
-    switch (safeName) {
-      case 'cloud':
-        return <Cloud className="w-7 h-7 text-blue-600" />;
-      case 'node js':
-      case 'node':
-        return <Code className="w-7 h-7 text-emerald-600" />;
-      case 'python':
-        return <Terminal className="w-7 h-7 text-amber-600" />;
-      case 'salesforce':
-        return <Database className="w-7 h-7 text-purple-600" />;
-      default:
-        return <FolderKanban className="w-7 h-7 text-brand-olive" />;
-    }
+    if (safeName.includes('cloud')) return <Cloud className="w-7 h-7 text-blue-600" />;
+    if (safeName.includes('node')) return <Code className="w-7 h-7 text-emerald-600" />;
+    if (safeName.includes('python')) return <Terminal className="w-7 h-7 text-amber-600" />;
+    if (safeName.includes('salesforce')) return <Database className="w-7 h-7 text-purple-600" />;
+    return <FolderKanban className="w-7 h-7 text-brand-olive" />;
   };
 
   const toggleExpandTeam = (teamId) => {
     setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
   };
 
-  // Derive creation date for a team (earliest student's createdAt)
-  const getTeamCreatedDate = (team) => {
-    if (team.students && team.students.length > 0) {
-      const dates = team.students
-        .map(s => s.createdAt || s.uploadDate)
-        .filter(Boolean)
-        .map(d => new Date(d).getTime());
-      if (dates.length > 0) {
-        return formatDate(new Date(Math.min(...dates)));
-      }
-    }
-    return formatDate(team.latestUpload || new Date());
-  };
-
-  // Derive active status of a team (active if any student is active)
   const isTeamActive = (team) => {
     if (team.students && team.students.length > 0) {
       return team.students.some(s => s.active !== false);
     }
-    return true;
+    return team.studentCount > 0;
   };
 
   if (loading) {
     return (
       <div className="space-y-4 animate-pulse">
         {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-28 bg-white border border-brand-sand/60 rounded-3xl p-6"></div>
+          <div key={i} className="h-32 bg-white border border-brand-sand/60 rounded-3xl p-6"></div>
         ))}
       </div>
     );
@@ -135,7 +118,7 @@ export default function AdminTeams() {
 
   if (error) {
     return (
-      <div className="p-8 text-center bg-white border border-rose-200 rounded-3xl space-y-3">
+      <div className="p-8 text-center bg-white border border-rose-200 rounded-3xl space-y-3 shadow-sm select-none">
         <AlertCircle className="w-10 h-10 text-rose-500 mx-auto" />
         <h3 className="font-serif font-bold text-lg text-rose-800">Teams Loading Error</h3>
         <p className="text-xs text-gray-500">{error}</p>
@@ -174,11 +157,22 @@ export default function AdminTeams() {
       if (sortBy === 'students-asc') {
         return (a.studentCount || 0) - (b.studentCount || 0);
       }
+      if (sortBy === 'uploads-desc') {
+        return (b.totalUploads || 0) - (a.totalUploads || 0);
+      }
+      if (sortBy === 'uploads-asc') {
+        return (a.totalUploads || 0) - (b.totalUploads || 0);
+      }
       if (sortBy === 'storage-desc') {
         return (b.storageUsed || 0) - (a.storageUsed || 0);
       }
       if (sortBy === 'storage-asc') {
         return (a.storageUsed || 0) - (b.storageUsed || 0);
+      }
+      if (sortBy === 'activity-desc') {
+        const dateA = a.latestUpload ? new Date(a.latestUpload).getTime() : 0;
+        const dateB = b.latestUpload ? new Date(b.latestUpload).getTime() : 0;
+        return dateB - dateA;
       }
       return 0;
     });
@@ -187,12 +181,12 @@ export default function AdminTeams() {
   const paginatedTeams = filteredTeams.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 select-none">
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="font-serif font-bold text-2xl text-brand-charcoal">Monitored Teams</h2>
-          <p className="text-xs text-gray-500 font-medium">Real team oversight across student training programs.</p>
+          <p className="text-xs text-gray-500 font-medium">Real-time database statistics and roster drilldown across student teams.</p>
         </div>
         <div className="flex items-center space-x-3">
           <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-brand-olive/10 text-brand-olive border border-brand-olive/20">
@@ -222,7 +216,7 @@ export default function AdminTeams() {
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-                className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
+                className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-3 py-2 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
               >
                 <option value="All">All Statuses</option>
                 <option value="Active">Active Teams</option>
@@ -234,21 +228,24 @@ export default function AdminTeams() {
               <select
                 value={sortBy}
                 onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
-                className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
+                className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-3 py-2 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
               >
                 <option value="name-asc">Team Name (A-Z)</option>
                 <option value="name-desc">Team Name (Z-A)</option>
                 <option value="students-desc">Students (High-Low)</option>
                 <option value="students-asc">Students (Low-High)</option>
+                <option value="uploads-desc">Upload Count (High-Low)</option>
+                <option value="uploads-asc">Upload Count (Low-High)</option>
                 <option value="storage-desc">Storage Used (High-Low)</option>
                 <option value="storage-asc">Storage Used (Low-High)</option>
+                <option value="activity-desc">Latest Activity (Newest First)</option>
               </select>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Teams Grid / List */}
+      {/* Teams List */}
       {paginatedTeams.length === 0 ? (
         <div className="bg-white border border-brand-sand/70 rounded-3xl p-16 text-center text-gray-400 font-medium space-y-2">
           <FolderKanban className="w-12 h-12 mx-auto text-brand-sage mb-2" />
@@ -261,11 +258,16 @@ export default function AdminTeams() {
             const teamId = team.id || team.name;
             const isExpanded = expandedTeamId === teamId;
             const active = isTeamActive(team);
+            const totalStudents = team.studentCount || (team.students ? team.students.length : 0);
+            const uploadedStudents = typeof team.studentsUploadedCount === 'number'
+              ? team.studentsUploadedCount
+              : (team.students || []).filter(s => (s.totalUploads || (s.uploadedFilesCount + s.uploadedVideosCount) || 0) > 0).length;
+            const pendingStudents = Math.max(0, totalStudents - uploadedStudents);
 
             return (
               <div 
                 key={teamId}
-                className="bg-white border border-brand-sand/70 rounded-3xl overflow-hidden shadow-sm transition-all"
+                className="bg-white border border-brand-sand/70 rounded-3xl overflow-hidden shadow-sm transition-all duration-200 hover:border-brand-sand"
               >
                 {/* Team Card Header */}
                 <div 
@@ -277,10 +279,10 @@ export default function AdminTeams() {
                       {getTeamIcon(team.name)}
                     </div>
                     <div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h3 className="font-serif font-bold text-xl text-brand-charcoal">{team.name} Team</h3>
-                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-olive/10 text-brand-olive">
-                          {team.studentCount || (team.students ? team.students.length : 0)} Students
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-olive/10 text-brand-olive border border-brand-olive/20">
+                          {totalStudents} Students
                         </span>
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
                           active 
@@ -290,81 +292,153 @@ export default function AdminTeams() {
                           {active ? 'Active' : 'Inactive'}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-400 font-medium mt-0.5">
-                        Storage Used: <span className="font-semibold text-gray-700">{formatSize(team.storageUsed)}</span> • Uploads: <span className="font-semibold text-brand-olive">{team.totalUploads || 0} files</span>
+                      <p className="text-xs text-gray-500 font-medium mt-1 flex flex-wrap items-center gap-2">
+                        <span>Storage: <strong className="text-brand-charcoal">{formatSize(team.storageUsed)}</strong></span>
+                        <span>•</span>
+                        <span>Uploads: <strong className="text-brand-olive">{team.totalUploads || 0} files</strong></span>
+                        <span>•</span>
+                        <span>Uploaded: <strong className="text-emerald-700">{uploadedStudents}/{totalStudents} students</strong></span>
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-3 self-end sm:self-auto">
-                    <div className="text-right text-xs text-gray-400 font-medium hidden md:block space-y-0.5">
+                  <div className="flex items-center space-x-3 self-end sm:self-auto shrink-0">
+                    <div className="text-right text-xs text-gray-400 font-medium hidden lg:block space-y-0.5">
                       <div className="flex items-center space-x-1 justify-end">
                         <Clock className="w-3.5 h-3.5 text-brand-olive" />
-                        <span>Latest: {team.latestUpload ? formatDate(team.latestUpload) : 'No uploads'}</span>
+                        <span>Latest: {team.latestUpload ? formatDate(team.latestUpload) : 'No uploads yet'}</span>
                       </div>
-                      <p className="text-[10px] text-gray-400 font-normal">
-                        Created: {getTeamCreatedDate(team)}
-                      </p>
                     </div>
+
                     <button
                       onClick={(e) => handlePurgeTeamUploads(team.name, e)}
-                      className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 transition-colors"
+                      className="p-2 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
                       title={`Purge all uploads for ${team.name} Team`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-                    <button className="p-2 rounded-xl bg-brand-cream text-brand-charcoal hover:bg-brand-sand/50 transition-colors">
+
+                    <button className="p-2 rounded-xl bg-brand-cream border border-brand-sand/70 text-brand-charcoal hover:bg-brand-sand/50 transition-colors cursor-pointer">
                       {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
                     </button>
                   </div>
                 </div>
 
-                {/* Expanded Student Roster List */}
+                {/* Expanded Details Section */}
                 {isExpanded && (
-                  <div className="border-t border-brand-sand/60 bg-brand-cream/30 p-6 space-y-3">
-                    <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                      Students in {team.name} Team
-                    </h4>
-
-                    {team.students && team.students.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {team.students.map((student) => (
-                          <div
-                            key={student.id || student.email}
-                            className="p-4 bg-white border border-brand-sand/70 rounded-2xl flex flex-col justify-between space-y-3"
-                          >
-                            <div className="flex items-center space-x-3 min-w-0">
-                              <div className="w-9 h-9 rounded-full bg-brand-olive/10 text-brand-olive font-bold flex items-center justify-center text-xs shrink-0">
-                                {student.studentName ? student.studentName.charAt(0) : 'S'}
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h5 className="text-xs font-bold text-brand-charcoal truncate">
-                                  {student.studentName}
-                                </h5>
-                                <p className="text-[10px] text-gray-400 truncate">{student.email}</p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between text-[11px] pt-1 border-t border-brand-sand/40">
-                              <div>
-                                <span className="text-gray-500 font-medium block">Uploads: <strong className="text-brand-olive">{student.totalUploads || 0}</strong></span>
-                                <span className="text-gray-400 block text-[10px]">Storage: {formatSize(student.storageUsed)}</span>
-                              </div>
-                              <Link
-                                to={`/admin/uploads?student=${encodeURIComponent(student.studentName)}`}
-                                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-brand-cream hover:bg-brand-olive/10 border border-brand-sand/70 text-brand-olive text-[10px] font-bold transition-colors cursor-pointer"
-                                title="View Upload History"
-                              >
-                                <span>History</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </Link>
-                            </div>
-                          </div>
-                        ))}
+                  <div className="border-t border-brand-sand/60 bg-brand-cream/20 p-6 space-y-6">
+                    {/* Team Summary KPI Cards */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div className="bg-white border border-brand-sand/60 rounded-2xl p-4 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Students</span>
+                          <Users className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <h4 className="font-serif font-bold text-xl text-brand-charcoal">{totalStudents}</h4>
+                        <p className="text-[10px] text-gray-400 font-medium mt-1">
+                          <span className="text-emerald-600 font-bold">{uploadedStudents} uploaded</span> • <span className="text-amber-600 font-bold">{pendingStudents} pending</span>
+                        </p>
                       </div>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">No monitored students in this team.</p>
-                    )}
+
+                      <div className="bg-white border border-brand-sand/60 rounded-2xl p-4 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Uploads</span>
+                          <UploadCloud className="w-4 h-4 text-emerald-600" />
+                        </div>
+                        <h4 className="font-serif font-bold text-xl text-brand-charcoal">{team.totalUploads || 0}</h4>
+                        <p className="text-[10px] text-gray-400 font-medium mt-1">
+                          {team.uploadedFilesCount || 0} files, {team.folderCount || 0} folders, {team.uploadedVideosCount || 0} videos
+                        </p>
+                      </div>
+
+                      <div className="bg-white border border-brand-sand/60 rounded-2xl p-4 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Storage</span>
+                          <HardDrive className="w-4 h-4 text-indigo-600" />
+                        </div>
+                        <h4 className="font-serif font-bold text-xl text-brand-charcoal">{formatSize(team.storageUsed)}</h4>
+                        <p className="text-[10px] text-gray-400 font-medium mt-1">Total team storage consumed</p>
+                      </div>
+
+                      <div className="bg-white border border-brand-sand/60 rounded-2xl p-4 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-gray-400 mb-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Latest Activity</span>
+                          <Clock className="w-4 h-4 text-amber-600" />
+                        </div>
+                        <h4 className="font-serif font-bold text-xs text-brand-charcoal leading-snug">
+                          {team.latestUpload ? formatDate(team.latestUpload) : 'No uploads yet'}
+                        </h4>
+                        <p className="text-[10px] text-gray-400 font-medium mt-1">Most recent submission date</p>
+                      </div>
+                    </div>
+
+                    {/* Student Roster Table */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-brand-charcoal uppercase tracking-wider">
+                          Students Roster ({totalStudents})
+                        </h4>
+                        <span className="text-[11px] text-gray-400 font-medium">Click History to view student's files</span>
+                      </div>
+
+                      {team.students && team.students.length > 0 ? (
+                        <div className="bg-white border border-brand-sand/70 rounded-2xl overflow-hidden shadow-sm">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="border-b border-brand-sand/50 bg-brand-cream/40 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                  <th className="py-3 px-4">Student Name</th>
+                                  <th className="py-3 px-4">Email</th>
+                                  <th className="py-3 px-4 text-center">Uploads</th>
+                                  <th className="py-3 px-4">Storage Used</th>
+                                  <th className="py-3 px-4">Last Upload</th>
+                                  <th className="py-3 px-4">Status</th>
+                                  <th className="py-3 px-4 text-center">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-brand-sand/40 text-xs">
+                                {team.students.map((student) => {
+                                  const studUploads = student.totalUploads || ((student.uploadedFilesCount || 0) + (student.uploadedVideosCount || 0));
+                                  const hasUploaded = studUploads > 0;
+                                  return (
+                                    <tr key={student.id || student.email} className="hover:bg-brand-cream/30 transition-colors">
+                                      <td className="py-3.5 px-4 font-bold text-brand-charcoal">{student.studentName || student.name}</td>
+                                      <td className="py-3.5 px-4 text-gray-500 font-medium">{student.email}</td>
+                                      <td className="py-3.5 px-4 text-center font-bold text-brand-olive">{studUploads}</td>
+                                      <td className="py-3.5 px-4 font-semibold text-gray-700">{formatSize(student.storageUsed)}</td>
+                                      <td className="py-3.5 px-4 text-gray-500 font-medium">
+                                        {student.lastUpload ? formatDate(student.lastUpload) : 'Never'}
+                                      </td>
+                                      <td className="py-3.5 px-4">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                          hasUploaded 
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                                        }`}>
+                                          {hasUploaded ? 'Active' : 'Pending'}
+                                        </span>
+                                      </td>
+                                      <td className="py-3.5 px-4 text-center">
+                                        <Link
+                                          to={`/admin/uploads?student=${encodeURIComponent(student.studentName || student.name)}`}
+                                          className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl bg-brand-cream hover:bg-brand-olive/10 border border-brand-sand/70 text-brand-olive text-[11px] font-bold transition-colors cursor-pointer"
+                                          title="View Upload History"
+                                        >
+                                          <span>History</span>
+                                          <ExternalLink className="w-3 h-3" />
+                                        </Link>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-400 italic">No monitored students registered in this team.</p>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

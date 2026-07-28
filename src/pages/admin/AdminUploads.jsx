@@ -81,6 +81,10 @@ export default function AdminUploads() {
     if (studentParam) {
       setStudent(studentParam);
     }
+    const dateRangeParam = searchParams.get('dateRange');
+    if (dateRangeParam) {
+      setDateRange(dateRangeParam);
+    }
   }, [searchParams]);
 
   const [copiedId, setCopiedId] = useState(null);

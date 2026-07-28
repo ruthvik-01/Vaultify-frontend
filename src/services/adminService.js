@@ -108,15 +108,19 @@ export const adminService = {
 
   deleteUpload: async (id, fileType) => {
     const query = fileType ? `?type=${fileType}` : '';
-    return await fetchAdmin(`${API_URL}/admin/uploads/${id}${query}`, {
+    const res = await fetchAdmin(`${API_URL}/admin/uploads/${id}${query}`, {
       method: 'DELETE'
     });
+    cache.clear();
+    return res;
   },
 
   deleteTeamUploads: async (teamName) => {
-    return await fetchAdmin(`${API_URL}/admin/teams/${encodeURIComponent(teamName)}/uploads`, {
+    const res = await fetchAdmin(`${API_URL}/admin/teams/${encodeURIComponent(teamName)}/uploads`, {
       method: 'DELETE'
     });
+    cache.clear();
+    return res;
   },
 
   getActivity: async () => {
@@ -147,16 +151,20 @@ export const adminService = {
   },
 
   addMonitoredStudent: async (student) => {
-    return await fetchAdmin(`${API_URL}/admin/settings/monitored-emails`, {
+    const res = await fetchAdmin(`${API_URL}/admin/settings/monitored-emails`, {
       method: 'POST',
       body: JSON.stringify(student)
     });
+    cache.clear();
+    return res;
   },
 
   deleteMonitoredStudent: async (id) => {
-    return await fetchAdmin(`${API_URL}/admin/settings/monitored-emails/${id}`, {
+    const res = await fetchAdmin(`${API_URL}/admin/settings/monitored-emails/${id}`, {
       method: 'DELETE'
     });
+    cache.clear();
+    return res;
   },
 
   exportMonitoringData: async () => {
