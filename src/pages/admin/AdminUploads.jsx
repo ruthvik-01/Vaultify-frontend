@@ -451,7 +451,8 @@ export default function AdminUploads() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-brand-sand/60 bg-brand-cream/40 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                <th className="py-3.5 px-4">Student</th>
+                <th className="py-3.5 px-4">Student Name</th>
+                <th className="py-3.5 px-4">Student Email</th>
                 <th className="py-3.5 px-4">Team</th>
                 <th className="py-3.5 px-4">Folder</th>
                 <th className="py-3.5 px-4">File Name</th>
@@ -479,7 +480,7 @@ export default function AdminUploads() {
                 ))
               ) : (Array.isArray(uploads) ? uploads : []).length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-16 text-center text-gray-400 font-medium">
+                  <td colSpan={10} className="py-16 text-center text-gray-400 font-medium">
                     <FileCheck className="w-12 h-12 mx-auto mb-3 text-brand-sage" />
                     <p className="font-serif font-bold text-sm text-brand-charcoal">No uploads available.</p>
                   </td>
@@ -489,6 +490,9 @@ export default function AdminUploads() {
                   <tr key={file.id} className="hover:bg-brand-cream/30 transition-colors">
                     <td className="py-4 px-4 font-bold text-brand-charcoal truncate max-w-[140px]">
                       {file.student}
+                    </td>
+                    <td className="py-4 px-4 text-gray-600 font-medium truncate max-w-[150px]">
+                      {file.studentEmail || '—'}
                     </td>
                     <td className="py-4 px-4 text-brand-olive font-semibold">{file.team}</td>
                     <td className="py-4 px-4 text-gray-500 font-medium">
