@@ -70,7 +70,7 @@ export default function AdminUploads() {
 
   // Pagination State
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(25);
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
 
   const [searchParams] = useSearchParams();
@@ -404,6 +404,20 @@ export default function AdminUploads() {
               <option value="smallest">Smallest First</option>
               <option value="a-z">File Name (A-Z)</option>
               <option value="z-a">File Name (Z-A)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Per Page</label>
+            <select
+              value={limit}
+              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+              className="w-full bg-brand-cream/40 border border-brand-sand/70 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-brand-charcoal focus:outline-none focus:border-brand-olive cursor-pointer"
+            >
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={100}>100 per page</option>
             </select>
           </div>
         </div>
