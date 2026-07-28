@@ -14,6 +14,11 @@ const getHeaders = (isFormData = false) => {
 
 const handleResponse = async (response) => {
   if (!response.ok) {
+    if (response.status === 401) {
+      window.dispatchEvent(new CustomEvent('vaultify_session_expired', {
+        detail: { message: 'Your session has expired. Please login again.' }
+      }));
+    }
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || `HTTP Error ${response.status}`);
   }
@@ -251,6 +256,43 @@ export const api = {
   // ─── HEALTH ─────────────────────────────────────────────────────────────────
   health: async () => {
     const res = await fetch(`${API_URL}/health`);
+    return handleResponse(res);
+  },
+
+  // ─── TRASH ──────────────────────────────────────────────────────────────────
+  getTrash: async (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    if (params.search) query.append('search', params.search);
+    if (params.filter) query.append('filter', params.filter);
+    const res = await fetch(`${API_URL}/trash?${query.toString()}`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  restoreTrashItem: async (id, itemType = 'file') => {
+    const res = await fetch(`${API_URL}/trash/restore/${itemType}/${id}`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  permanentlyDeleteTrashItem: async (id, itemType = 'file') => {
+    const res = await fetch(`${API_URL}/trash/permanent/${itemType}/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
+    return handleResponse(res);
+  },
+
+  emptyTrash: async () => {
+    const res = await fetch(`${API_URL}/trash/empty`, {
+      method: 'DELETE',
+      headers: getHeaders(),
+    });
     return handleResponse(res);
   },
 };

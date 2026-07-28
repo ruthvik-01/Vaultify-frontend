@@ -207,6 +207,20 @@ export const FileProvider = ({ children }) => {
     }
   }, []);
 
+  // ─── Session Expiration Handler ──────────────────────────────────────────
+  useEffect(() => {
+    const handleSessionExpired = (e) => {
+      logout();
+      const msg = e.detail?.message || 'Your session has expired. Please login again.';
+      showNotification(msg, 'error', 'Session Expired');
+    };
+
+    window.addEventListener('vaultify_session_expired', handleSessionExpired);
+    return () => {
+      window.removeEventListener('vaultify_session_expired', handleSessionExpired);
+    };
+  }, [showNotification]);
+
   // ─── Bootstrap on auth ───────────────────────────────────────────────────
   useEffect(() => {
     if (isAuthenticated) {
@@ -379,8 +393,14 @@ export const FileProvider = ({ children }) => {
     }
   };
 
-  const fetchTrashFiles = async () => {
-    // Managed locally via localStorage and merged in fetchAllFiles
+  const fetchTrashFiles = async (params = {}) => {
+    try {
+      const res = await api.getTrash(params);
+      return res.data || { items: [], pagination: { total: 0, page: 1, limit: 12, totalPages: 1 } };
+    } catch (err) {
+      console.error('Fetch trash failed:', err.message);
+      return { items: [], pagination: { total: 0, page: 1, limit: 12, totalPages: 1 } };
+    }
   };
 
   const refreshAll = useCallback(async () => {
@@ -521,67 +541,40 @@ export const FileProvider = ({ children }) => {
   // Keep the old name as alias for backward compat (some components still call deleteFile)
   const deleteFile = moveToTrash;
 
-  // Restore: re-fetches files from backend (file was never actually deleted server-side in old soft-delete flow)
-  const restoreFile = async (id) => {
-    const file = files.find((f) => f.id === id);
-    if (file) {
-      // Remove from localTrash
-      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
-      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash.filter(t => t.id !== id)));
-
-      // Update files state locally
-      const updatedFile = { ...file, inTrash: false };
-      setFiles(prev => {
-        const remaining = prev.filter(f => f.id !== id);
-        return [...remaining, updatedFile];
-      });
-
-      showNotification(`"${file.name}" restored from trash`, 'success');
-      await fetchActivities();
+  const restoreFile = async (id, itemType = 'file') => {
+    try {
+      await api.restoreTrashItem(id, itemType);
+      setFiles(prev => prev.filter(f => f.id !== id));
+      showNotification('Item restored successfully', 'success');
+      await refreshAll();
+    } catch (err) {
+      console.error('Restore failed:', err.message);
+      showNotification('Failed to restore item', 'error');
     }
   };
 
-  // Permanent delete: removes file from backend (S3 + DB) — backend already logs 'Delete'
-  const permanentlyDeleteFile = async (id) => {
+  // Permanent delete: removes file from backend (S3 + DB)
+  const permanentlyDeleteFile = async (id, itemType = 'file') => {
     try {
-      const file = files.find((f) => f.id === id);
-      
-      // Call backend delete
-      try {
-        const isVideo = file && (file.category === 'Media' || file.mimeType?.startsWith('video/') || ['mp4', 'mov', 'avi', 'mkv', 'webm'].includes((file.name || '').split('.').pop().toLowerCase()));
-        if (isVideo) {
-          await videoService.deleteVideo(id);
-        } else {
-          await api.deleteFile(id);
-        }
-      } catch (apiErr) {
-        // Silently ignore if already deleted on server
-      }
-
-      // Remove from localStorage
-      const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
-      localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash.filter(t => t.id !== id)));
-      const localRestored = JSON.parse(localStorage.getItem('vaultify_local_restored_files') || '[]');
-      localStorage.setItem('vaultify_local_restored_files', JSON.stringify(localRestored.filter(t => t.id !== id)));
-
-      // Remove from files state
+      await api.permanentlyDeleteTrashItem(id, itemType);
       setFiles((prev) => prev.filter((f) => f.id !== id));
-      if (file) {
-        showNotification(`"${file.name}" permanently deleted`, 'success');
-      }
+      showNotification('Item permanently deleted', 'success');
       await fetchActivities();
     } catch (err) {
       console.error('Permanent delete failed:', err.message);
-      showNotification('Failed to permanently delete file', 'error');
+      showNotification('Failed to permanently delete item', 'error');
     }
   };
 
   const clearTrash = async () => {
-    const trashFiles = files.filter((f) => f.inTrash);
-    if (trashFiles.length === 0) return;
-    await Promise.all(trashFiles.map((f) => permanentlyDeleteFile(f.id)));
-    showNotification('Trash emptied successfully', 'success');
-    await fetchActivities();
+    try {
+      await api.emptyTrash();
+      showNotification('Trash emptied successfully', 'success');
+      await refreshAll();
+    } catch (err) {
+      console.error('Clear trash failed:', err.message);
+      showNotification('Failed to empty trash bin', 'error');
+    }
   };
 
   const moveFile = async (id, folderId) => {
