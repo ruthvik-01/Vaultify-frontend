@@ -456,6 +456,7 @@ export default function AdminUploads() {
                 <th className="py-3.5 px-4">Team</th>
                 <th className="py-3.5 px-4">Folder</th>
                 <th className="py-3.5 px-4">File Name</th>
+                <th className="py-3.5 px-4">Extension</th>
                 <th className="py-3.5 px-4">File Type</th>
                 <th className="py-3.5 px-4">Size</th>
                 <th className="py-3.5 px-4">Status</th>
@@ -480,7 +481,7 @@ export default function AdminUploads() {
                 ))
               ) : (Array.isArray(uploads) ? uploads : []).length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-16 text-center text-gray-400 font-medium">
+                  <td colSpan={11} className="py-16 text-center text-gray-400 font-medium">
                     <FileCheck className="w-12 h-12 mx-auto mb-3 text-brand-sage" />
                     <p className="font-serif font-bold text-sm text-brand-charcoal">No uploads available.</p>
                   </td>
@@ -503,6 +504,11 @@ export default function AdminUploads() {
                     </td>
                     <td className="py-4 px-4 font-bold text-brand-charcoal max-w-[180px] truncate">
                       {file.fileName}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span className="uppercase text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-700 border border-gray-200">
+                        {file.fileExtension || (file.fileName || '').split('.').pop() || 'file'}
+                      </span>
                     </td>
                     <td className="py-4 px-4">
                       <span className="uppercase text-[10px] font-bold px-2 py-0.5 rounded bg-brand-cream text-brand-olive border border-brand-sand/60">
