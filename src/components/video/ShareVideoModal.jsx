@@ -91,7 +91,7 @@ export default function ShareVideoModal({
 
         {/* Footer */}
         <div className="px-6 py-4 bg-brand-cream border-t border-brand-sand/65 text-[10px] text-gray-400 font-sans font-bold uppercase tracking-wider text-right">
-          Link Expiry • 24 Hours
+          Permanent Link
         </div>
       </div>
     </div>
