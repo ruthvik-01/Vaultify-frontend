@@ -300,14 +300,6 @@ export default function VideoPlayer({ video, playbackUrl, onClose }) {
             >
               <ExternalLink className="w-3.5 h-3.5 text-brand-olive" />
             </button>
-            <button
-              onClick={handleCopyLink}
-              className="flex items-center space-x-1 px-3 py-1.5 rounded-xl bg-white border border-brand-sand hover:bg-brand-sand/50 text-brand-charcoal text-xs font-semibold transition-colors cursor-pointer"
-              title="Copy Share Link"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5 text-brand-olive" />}
-              <span>{copied ? 'Copied' : 'Copy Link'}</span>
-            </button>
             {url && (
               <button
                 onClick={handleDownload}
