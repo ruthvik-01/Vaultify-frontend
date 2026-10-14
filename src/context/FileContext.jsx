@@ -529,7 +529,7 @@ export const FileProvider = ({ children }) => {
       const localTrash = JSON.parse(localStorage.getItem('vaultify_local_trash_files') || '[]');
       localStorage.setItem('vaultify_local_trash_files', JSON.stringify(localTrash.filter(t => t.id !== id)));
 
-      showNotification(`"${file.name}" deleted`, 'success');
+      showNotification(`"${file.name}" moved to trash`, 'success');
       // Refresh activities so dashboard picks up the Delete log
       await fetchActivities();
     } catch (err) {

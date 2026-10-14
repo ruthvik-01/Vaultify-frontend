@@ -43,7 +43,7 @@ export const videoService = {
         size: f.size || 0,
         dateAdded: f.createdAt,
         isStarred: false,
-        inTrash: f.status === 'Failed',
+        inTrash: f.inTrash === true || f.status === 'Failed',
         sharedWith: [],
         downloadCount: 0,
         s3_key: f.s3Key,
@@ -86,7 +86,7 @@ export const videoService = {
   deleteVideo: async (id, permanent = false) => {
     const token = localStorage.getItem('vaultify_token');
     const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const res = await fetch(`${API_URL}/videos/${id}`, {
+    const res = await fetch(`${API_URL}/videos/${id}${permanent ? '?permanent=true' : ''}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -96,10 +96,26 @@ export const videoService = {
       throw new Error('Failed to delete video.');
     }
     
-    // Clean up local folder mapping
-    const map = getFileFoldersMap();
-    delete map[id];
-    saveFileFoldersMap(map);
+    if (permanent) {
+      const map = getFileFoldersMap();
+      delete map[id];
+      saveFileFoldersMap(map);
+    }
+  },
+
+  restoreVideo: async (id) => {
+    const token = localStorage.getItem('vaultify_token');
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const res = await fetch(`${API_URL}/trash/restore/video/${id}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    if (!res.ok) {
+      throw new Error('Failed to restore video.');
+    }
+    return res.json();
   },
 
   downloadVideo: async (id) => {
